@@ -1,0 +1,1 @@
+ALTER TABLE "centrum_logowania"."user" ADD COLUMN "token_version" integer DEFAULT 1;
