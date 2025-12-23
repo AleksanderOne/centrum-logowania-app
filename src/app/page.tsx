@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ShieldCheck } from "lucide-react";
 import { LoginForm } from "@/components/auth/login-form";
 import { Toaster } from "@/components/ui/sonner";
-import { ModeToggle } from "@/components/mode-toggle";
 
 export default function Home() {
   return (
@@ -15,11 +14,6 @@ export default function Home() {
       <div className="absolute top-4 left-4 flex items-center gap-2 font-bold text-xl text-primary">
         <ShieldCheck className="w-8 h-8" suppressHydrationWarning />
         <span>Centrum Logowania</span>
-      </div>
-
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4">
-        <ModeToggle />
       </div>
 
       <main className="w-full max-w-md space-y-8">
