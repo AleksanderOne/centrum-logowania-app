@@ -103,14 +103,15 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // 8. Sukces - zwracamy dane użytkownika
+        // 8. Sukces - zwracamy dane użytkownika wraz z tokenVersion (dla Kill Switch)
         return NextResponse.json({
             user: {
                 id: user.id,
                 email: user.email,
                 name: user.name,
                 image: user.image,
-                role: user.role
+                role: user.role,
+                tokenVersion: user.tokenVersion || 1, // Wersja tokenu dla Kill Switch
             },
             project: {
                 id: project.id,
