@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LayoutGrid, User, LogOut, ShieldCheck } from "lucide-react"
-import { ModeToggle } from "@/components/mode-toggle"
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { signOut } from "next-auth/react"
 
@@ -91,10 +91,7 @@ export function SidebarNav({ className, user, ...props }: SidebarNavProps) {
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between px-2">
-                    <ModeToggle />
-                    {/* Tutaj przycisk wylogowania obsłużymy osobno lub jako link */}
-                </div>
+
             </div>
         </nav>
     )
