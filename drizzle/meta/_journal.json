@@ -15,6 +15,13 @@
       "when": 1766427846575,
       "tag": "0001_motionless_starfox",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766453398299,
+      "tag": "0002_plain_emma_frost",
+      "breakpoints": true
     }
   ]
 }

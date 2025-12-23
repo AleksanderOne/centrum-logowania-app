@@ -66,3 +66,18 @@ export const projects = mySchema.table("project", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// --- OAuth2 Authorization Codes ---
+// Jednorazowe kody autoryzacyjne generowane podczas flow SSO.
+// Kod jest wymieniany na dane użytkownika przez endpoint /api/v1/token.
+
+export const authorizationCodes = mySchema.table("authorization_code", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    code: text("code").notNull().unique(), // Losowy kod (32+ znaków)
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    projectId: uuid("project_id").notNull().references(() => projects.id, { onDelete: "cascade" }),
+    redirectUri: text("redirect_uri").notNull(), // URL do którego przekierować (dla weryfikacji)
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(), // Kod ważny tylko przez krótki czas (np. 5 min)
+    usedAt: timestamp("used_at", { mode: "date" }), // Null = nieużyty, data = wykorzystany
+    createdAt: timestamp("created_at").defaultNow(),
+});

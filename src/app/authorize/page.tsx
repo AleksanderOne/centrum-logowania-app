@@ -1,14 +1,24 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/drizzle";
-import { projects } from "@/lib/db/schema";
+import { projects, authorizationCodes } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import crypto from "crypto";
 
-// Ten page służy jako "bramka".
-// Inne aplikacje kierują tu użytkownika: 
-// http://localhost:3002/authorize?client_id=SLUG_PROJEKTU&redirect_uri=URL_POWROTU
-
+/**
+ * OAuth2 Authorization Endpoint
+ * 
+ * Inne aplikacje kierują tu użytkownika:
+ * /authorize?client_id=SLUG_PROJEKTU&redirect_uri=URL_POWROTU
+ * 
+ * Flow:
+ * 1. Użytkownik jest zalogowany (middleware wymusza login)
+ * 2. Weryfikujemy client_id i redirect_uri
+ * 3. Generujemy jednorazowy kod autoryzacyjny
+ * 4. Przekierowujemy do redirect_uri?code=AUTHORIZATION_CODE
+ * 5. Aplikacja kliencka wymienia kod na dane użytkownika przez POST /api/v1/token
+ */
 export default async function AuthorizePage({
     searchParams,
 }: {
@@ -21,7 +31,7 @@ export default async function AuthorizePage({
     const clientId = params.client_id as string; // slug projektu
     const redirectUri = params.redirect_uri as string;
 
-    if (!session) {
+    if (!session?.user?.id) {
         // Jeśli niezalogowany -> Middleware i tak by tu nie wpuścił (wymusił login),
         // ale dla pewności przekieruj na login z powrotem tutaj.
         const callbackUrl = encodeURIComponent(`/authorize?client_id=${clientId}&redirect_uri=${redirectUri}`);
@@ -60,43 +70,26 @@ export default async function AuthorizePage({
         )
     }
 
-    // 3. Sukces - Odsyłamy użytkownika z tokenem sesji
-    // UWAGA: W OAuth2 używa się tutaj "Code" a nie tokenu w URL, 
-    // ale dla uproszczenia (Implicit Flow / Internal use) przekażemy ID użytkownika/Token.
-    // Ponieważ session.sessionToken jest httpOnly, musimy wygenerować token JWE manualnie lub przekazać session ID.
-    // Najprościej dla Twoich apek: Przekażmy user_id, a Twoja apka odpyta API /verify.
-    // Ale API /verify wymaga TOKENU JWT.
+    // 3. Generujemy jednorazowy kod autoryzacyjny (OAuth2 Authorization Code)
+    const authCode = crypto.randomBytes(32).toString("hex"); // 64 znaki hex
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // Kod ważny 5 minut
 
-    // Hack na potrzeby MVP: Przekazujemy ciasteczko sesyjne jako token w URL (niezalecane produkcyjnie, ale działa).
-    // Lepsza opcja: Wygeneruj jednorazowy "code" w bazie, a Twoja apka wymieni go na token.
+    // Zapisujemy kod w bazie
+    await db.insert(authorizationCodes).values({
+        code: authCode,
+        userId: session.user.id,
+        projectId: project.id,
+        redirectUri: redirectUri,
+        expiresAt: expiresAt,
+    });
 
-    // Zróbmy prostszy, autorski flow: Przekieruj z "?token=..."
-    // Ponieważ mamy dostęp do ciasteczek, możemy pobrać token.
-    // W Auth.js (NextAuth v5) token sesji to często JWE.
-
-    // Pobieramy surowy token z sesji (wymaga modyfikacji auth.ts żeby go zwracał session? Nie, session object go nie ma).
-    // Użyjemy auth() który zwraca session user.
-
-    // ALTERNATYWA: Twoje API /verify przyjmuje teraz API_KEY + TOKEN.
-    // Musimy dać klientowi ten TOKEN.
-
-    // Spróbujmy odczytać ciasteczko authjs.session-token
-    // (Wymaga importu cookies z next/headers)
-
-    const { cookies } = await import("next/headers");
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("authjs.session-token")?.value
-        || cookieStore.get("__Secure-authjs.session-token")?.value;
-
-    if (!sessionToken) {
-        return <div>Błąd: Nie udało się pobrać tokenu sesji.</div>
-    }
-
-    const finalRedirectUrl = `${redirectUri}?token=${sessionToken}`;
+    // 4. Przekierowujemy z kodem autoryzacyjnym
+    const finalRedirectUrl = `${redirectUri}?code=${authCode}`;
 
     // Automatyczny redirect
     redirect(finalRedirectUrl);
 
+    // Fallback UI (nie powinien się pokazać bo redirect jest natychmiastowy)
     return (
         <div className="flex h-screen flex-col items-center justify-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
