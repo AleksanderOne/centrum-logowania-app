@@ -21,7 +21,7 @@ Ten dokument śledzi postępy w implementacji centralnego systemu uwierzytelnian
 ## 3. Integracja Zewnętrzna (Integration Layer)
 - [x] **Mechanizm "Wystawiania" Logowania**:
     - Opcja A: OAuth2 Provider (Twoje aplikacje przekierowują tutaj i wracają z tokenem).
-    - [x] **SDK / Wrapper (`auth.js`)**: Prosta biblioteka JS (`CentrumLogowania.protect`) umożliwiająca "owrapowanie" aplikacji i wymuszenie logowania jedną linią kodu.
+    - [x] **Template integracji**: Gotowy zestaw plików w `src/templates/sso-integration/` do skopiowania do nowej aplikacji.
 - [x] **API dla Aplikacji Klienckich**: Endpointy do walidacji sesji/tokenu przez inne Twoje aplikacje.
 
 ## 4. Centralny Dashboard Zarządzania (Admin Dashboard)
