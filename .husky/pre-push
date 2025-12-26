@@ -1,5 +1,15 @@
 #!/bin/sh
-# Pre-push hook: uruchamia testy e2e i build przed wypchnięciem na remote
+# Pre-push hook: uruchamia testy z coverage, e2e i build przed wypchnięciem na remote
+
+echo "📊 Sprawdzam pokrycie kodu testami (wymagane 100%)..."
+npm run test:coverage
+
+if [ $? -ne 0 ]; then
+  echo "❌ Coverage poniżej 100%! Push zablokowany."
+  echo "📋 Wymagane: 100% statements, branches, functions, lines"
+  echo "💡 Uruchom 'npm run test:coverage' aby zobaczyć szczegóły."
+  exit 1
+fi
 
 echo "🔨 Sprawdzam czy projekt się buduje..."
 npm run build

@@ -1,0 +1,175 @@
+name: Mutation Testing (Stryker)
+
+# Uruchamianie:
+# 1. Ręcznie przez GitHub Actions UI (workflow_dispatch)
+# 2. Automatycznie w niedzielę o 3:00 (scheduled)
+# 3. Na PR do main (opcjonalnie - wyłączone domyślnie bo wolne)
+on:
+  # Ręczne uruchomienie z GitHub UI
+  workflow_dispatch:
+    inputs:
+      concurrency:
+        description: 'Liczba równoległych procesów mutacji'
+        required: false
+        default: '4'
+        type: choice
+        options:
+          - '2'
+          - '4'
+          - '8'
+      incremental:
+        description: 'Tylko zmienione pliki (incremental)'
+        required: false
+        default: false
+        type: boolean
+
+  # Automatyczne uruchomienie w niedzielę o 3:00 UTC
+  schedule:
+    - cron: '0 3 * * 0'
+
+  # Opcjonalnie: na PR do main (odkomentuj jeśli chcesz)
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - 'src/**/*.ts'
+  #     - 'src/**/*.tsx'
+
+permissions:
+  contents: read
+  # Pozwala na komentowanie PR z wynikami
+  pull-requests: write
+
+jobs:
+  mutation-test:
+    name: 🧬 Mutation Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      - name: 📚 Install dependencies
+        run: npm ci
+
+      - name: 🧬 Run Stryker Mutation Testing
+        run: |
+          echo "🧬 Uruchamiam testy mutacyjne..."
+          echo "📊 Concurrency: ${{ github.event.inputs.concurrency || '4' }}"
+          echo "ℹ️ Używam command runner (kompatybilny z Vitest 4)"
+          npm run test:mutation -- --concurrency ${{ github.event.inputs.concurrency || '4' }}
+        env:
+          CI: true
+          NODE_OPTIONS: '--max-old-space-size=4096'
+
+      - name: 📊 Upload Mutation Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report-${{ github.run_id }}
+          path: reports/mutation/
+          retention-days: 30
+
+      - name: 📝 Generate Summary
+        if: always()
+        run: |
+          echo "## 🧬 Mutation Testing Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "reports/mutation/mutation-report.json" ]; then
+            # Parsowanie wyników z JSON
+            KILLED=$(cat reports/mutation/mutation-report.json | jq '.files | to_entries | map(.value.mutants | map(select(.status == "Killed")) | length) | add // 0')
+            SURVIVED=$(cat reports/mutation/mutation-report.json | jq '.files | to_entries | map(.value.mutants | map(select(.status == "Survived")) | length) | add // 0')
+            TIMEOUT=$(cat reports/mutation/mutation-report.json | jq '.files | to_entries | map(.value.mutants | map(select(.status == "Timeout")) | length) | add // 0')
+            NO_COVERAGE=$(cat reports/mutation/mutation-report.json | jq '.files | to_entries | map(.value.mutants | map(select(.status == "NoCoverage")) | length) | add // 0')
+            
+            TOTAL=$((KILLED + SURVIVED + TIMEOUT + NO_COVERAGE))
+            if [ $TOTAL -gt 0 ]; then
+              SCORE=$(echo "scale=2; ($KILLED * 100) / $TOTAL" | bc)
+            else
+              SCORE=0
+            fi
+            
+            echo "| Metryka | Wartość |" >> $GITHUB_STEP_SUMMARY
+            echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
+            echo "| 💀 Zabite mutanty | $KILLED |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🧟 Przeżyłe mutanty | $SURVIVED |" >> $GITHUB_STEP_SUMMARY
+            echo "| ⏱️ Timeout | $TIMEOUT |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🚫 Bez pokrycia | $NO_COVERAGE |" >> $GITHUB_STEP_SUMMARY
+            echo "| **📊 Mutation Score** | **${SCORE}%** |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            if (( $(echo "$SCORE >= 80" | bc -l) )); then
+              echo "✅ **Świetny wynik!** Testy są wysokiej jakości." >> $GITHUB_STEP_SUMMARY
+            elif (( $(echo "$SCORE >= 60" | bc -l) )); then
+              echo "⚠️ **Dobry wynik.** Jest miejsce na poprawę." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Niski wynik.** Rozważ dodanie lepszych asercji do testów." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚠️ Nie znaleziono raportu mutacji." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 Pełny raport HTML dostępny w Artifacts." >> $GITHUB_STEP_SUMMARY
+
+      # Opcjonalnie: komentarz na PR z wynikami
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 🧬 Mutation Testing Results\n\n';
+            
+            try {
+              const report = JSON.parse(fs.readFileSync('reports/mutation/mutation-report.json', 'utf8'));
+              const files = Object.entries(report.files || {});
+              
+              let killed = 0, survived = 0, timeout = 0, noCoverage = 0;
+              
+              files.forEach(([, file]) => {
+                (file.mutants || []).forEach(m => {
+                  if (m.status === 'Killed') killed++;
+                  else if (m.status === 'Survived') survived++;
+                  else if (m.status === 'Timeout') timeout++;
+                  else if (m.status === 'NoCoverage') noCoverage++;
+                });
+              });
+              
+              const total = killed + survived + timeout + noCoverage;
+              const score = total > 0 ? ((killed / total) * 100).toFixed(2) : 0;
+              
+              comment += `| Metryka | Wartość |\n`;
+              comment += `|---------|:-------:|\n`;
+              comment += `| 💀 Zabite | ${killed} |\n`;
+              comment += `| 🧟 Przeżyłe | ${survived} |\n`;
+              comment += `| **📊 Score** | **${score}%** |\n\n`;
+              
+              if (score >= 80) {
+                comment += '✅ Świetna jakość testów!';
+              } else if (score >= 60) {
+                comment += '⚠️ Dobra jakość, ale jest miejsce na poprawę.';
+              } else {
+                comment += '❌ Rozważ dodanie lepszych asercji.';
+              }
+            } catch (e) {
+              comment += '⚠️ Nie udało się sparsować raportu.';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+

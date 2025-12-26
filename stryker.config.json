@@ -1,0 +1,71 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker/master/packages/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "npm run test:unit"
+  },
+  "checkers": [],
+  "disableTypeChecks": "**/*.{ts,tsx}",
+  "reporters": ["html", "clear-text", "progress", "json"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/html/index.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation-report.json"
+  },
+  "mutate": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "!src/**/*.test.{ts,tsx}",
+    "!src/**/*.spec.{ts,tsx}",
+    "!src/**/tests/**",
+    "!src/**/*.config.{ts,tsx}",
+    "!src/**/schemas/**",
+    "!src/**/types/**",
+    "!src/**/layout.tsx",
+    "!src/**/loading.tsx",
+    "!src/**/error.tsx",
+    "!src/**/not-found.tsx",
+    "!src/**/global-error.tsx",
+    "!src/**/app/**/page.tsx",
+    "!src/**/app/page.tsx",
+    "!src/**/actions/**",
+    "!src/**/auth.ts",
+    "!src/**/auth.config.ts",
+    "!src/**/middleware.ts",
+    "!src/**/proxy.ts",
+    "!src/**/components/ui/**",
+    "!src/**/theme-provider.tsx",
+    "!src/**/mode-toggle.tsx",
+    "!src/**/create-project-form.tsx",
+    "!src/**/logout-buttons.tsx",
+    "!src/**/sidebar-nav.tsx",
+    "!src/**/theme-card.tsx",
+    "!src/**/dashboard-footer.tsx",
+    "!src/**/templates/**",
+    "!src/**/api/**",
+    "!src/**/db/**"
+  ],
+  "ignorePatterns": [
+    "node_modules",
+    "coverage",
+    ".next",
+    "drizzle",
+    "public",
+    "tests",
+    "playwright-report",
+    "test-results",
+    "reports"
+  ],
+  "timeoutMS": 60000,
+  "concurrency": 4,
+  "cleanTempDir": "always",
+  "tempDirName": ".stryker-tmp",
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": null
+  },
+  "coverageAnalysis": "off"
+}

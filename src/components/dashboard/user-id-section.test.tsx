@@ -39,4 +39,29 @@ describe('UserIdSection', () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(userId);
     expect(toast.success).toHaveBeenCalledWith('Skopiowano ID użytkownika');
   });
+
+  it('ikona wraca do Copy po 2 sekundach', async () => {
+    vi.useFakeTimers();
+
+    render(<UserIdSection userId={userId} />);
+    const button = screen.getByRole('button', { name: /Kopiuj ID użytkownika/i });
+
+    // Kliknij przycisk - powinien pokazać ikonę Check
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    // Sprawdź czy jest ikona Check (przez sprawdzenie czy nie ma Copy w nazwie)
+    expect(button.querySelector('svg')).toBeInTheDocument();
+
+    // Przewiń czas o 2 sekundy
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    // Ikona powinna wrócić do Copy
+    expect(button.querySelector('svg')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
 });

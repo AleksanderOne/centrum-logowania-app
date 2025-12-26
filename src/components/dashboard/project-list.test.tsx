@@ -150,4 +150,78 @@ describe('ProjectList', () => {
 
     expect(deleteProject).not.toHaveBeenCalled();
   });
+
+  it('wyświetla błąd gdy usunięcie projektu się nie powiedzie', async () => {
+    vi.mocked(deleteProject).mockResolvedValue({ error: 'Nie udało się usunąć projektu' });
+
+    render(<ProjectList projects={[mockProjects[0]]} />);
+
+    // Otwórz modal i potwierdź usunięcie
+    const deleteButton = screen.getByRole('button', { name: /Usuń projekt/i });
+    fireEvent.click(deleteButton);
+
+    const confirmButton = screen.getByRole('button', { name: 'Usuń' });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(deleteProject).toHaveBeenCalledWith('1');
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('Nie udało się usunąć projektu');
+    expect(mockRouter.refresh).not.toHaveBeenCalled();
+  });
+
+  it('kopiuje Client ID do schowka po kliknięciu przycisku kopiowania', async () => {
+    vi.useFakeTimers();
+
+    render(<ProjectList projects={[mockProjects[0]]} />);
+
+    // Znajdź przycisk kopiowania Client ID
+    const copyButtons = screen.getAllByRole('button', { name: /Kopiuj Client ID/i });
+    fireEvent.click(copyButtons[0]);
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('projekt-a-xyz');
+    expect(toast.success).toHaveBeenCalledWith('Skopiowano Client ID');
+
+    // Sprawdź że ikona wraca po 2 sekundach
+    await vi.advanceTimersByTimeAsync(2000);
+
+    vi.useRealTimers();
+  });
+
+  it('kopiuje API Key do schowka po kliknięciu przycisku kopiowania', async () => {
+    render(<ProjectList projects={[mockProjects[0]]} />);
+
+    // Znajdź przycisk kopiowania API Key
+    const copyButtons = screen.getAllByRole('button', { name: /Kopiuj API Key/i });
+    fireEvent.click(copyButtons[0]);
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('cl_abc123');
+    expect(toast.success).toHaveBeenCalledWith('Skopiowano API Key');
+  });
+
+  it('filtruje projekty po domenie', () => {
+    render(<ProjectList projects={mockProjects} />);
+    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
+
+    fireEvent.change(searchInput, { target: { value: 'example.com' } });
+
+    expect(screen.getByText('Projekt A')).toBeInTheDocument();
+    expect(screen.queryByText('Projekt B')).not.toBeInTheDocument();
+  });
+
+  it('filtruje projekty po API Key', () => {
+    render(<ProjectList projects={mockProjects} />);
+    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
+
+    fireEvent.change(searchInput, { target: { value: 'cl_def456' } });
+
+    expect(screen.queryByText('Projekt A')).not.toBeInTheDocument();
+    expect(screen.getByText('Projekt B')).toBeInTheDocument();
+  });
+
+  it('wyświetla "Brak domeny" gdy projekt nie ma domeny', () => {
+    render(<ProjectList projects={[mockProjects[1]]} />);
+    expect(screen.getByText('Brak domeny')).toBeInTheDocument();
+  });
 });

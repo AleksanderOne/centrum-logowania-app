@@ -7,13 +7,14 @@ import type { HealthStatus } from '@/app/api/health/route';
 function createHealthResponse(
   status: HealthStatus['status'],
   dbStatus: 'up' | 'down' = 'up',
-  authStatus: 'up' | 'down' = 'up'
+  authStatus: 'up' | 'down' = 'up',
+  dbLatency?: number
 ): HealthStatus {
   return {
     status,
     timestamp: new Date().toISOString(),
     services: {
-      database: { status: dbStatus, latency: 5 },
+      database: { status: dbStatus, latency: dbLatency },
       auth: { status: authStatus },
     },
     version: '1.0.0',
@@ -102,7 +103,7 @@ describe('SystemStatus', () => {
 
   it('pokazuje szczegóły serwisów gdy showDetails=true', async () => {
     mockFetch.mockResolvedValue({
-      json: () => Promise.resolve(createHealthResponse('operational')),
+      json: () => Promise.resolve(createHealthResponse('operational', 'up', 'up', 5)),
     });
 
     render(<SystemStatus showDetails />);
@@ -115,6 +116,22 @@ describe('SystemStatus', () => {
     expect(screen.getByText(/DB/)).toBeInTheDocument();
     expect(screen.getByText(/Auth/)).toBeInTheDocument();
     expect(screen.getByText(/5ms/)).toBeInTheDocument();
+  });
+
+  it('nie pokazuje latency gdy jest undefined', async () => {
+    mockFetch.mockResolvedValue({
+      json: () => Promise.resolve(createHealthResponse('operational', 'up', 'up', undefined)),
+    });
+
+    render(<SystemStatus showDetails />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Operational')).toBeInTheDocument();
+    });
+
+    // Sprawdź że jest "DB" ale bez "(ms)"
+    expect(screen.getByText('DB')).toBeInTheDocument();
+    expect(screen.queryByText(/ms\)/)).not.toBeInTheDocument();
   });
 
   it('nie pokazuje szczegółów serwisów domyślnie', async () => {
@@ -141,5 +158,55 @@ describe('SystemStatus', () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith('/api/health', { cache: 'no-store' });
     });
+  });
+
+  it('pokazuje czerwone kropki gdy serwisy są down', async () => {
+    mockFetch.mockResolvedValue({
+      json: () => Promise.resolve(createHealthResponse('outage', 'down', 'down')),
+    });
+
+    const { container } = render(<SystemStatus showDetails />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Outage')).toBeInTheDocument();
+    });
+
+    // Sprawdź że są czerwone kropki (h-1.5 w-1.5 rounded-full bg-red-500) dla obu serwisów
+    const redDots = container.querySelectorAll('.h-1\\.5.w-1\\.5.rounded-full.bg-red-500');
+    expect(redDots.length).toBe(2);
+  });
+
+  it('pokazuje zielone kropki gdy serwisy są up', async () => {
+    mockFetch.mockResolvedValue({
+      json: () => Promise.resolve(createHealthResponse('operational', 'up', 'up', 5)),
+    });
+
+    const { container } = render(<SystemStatus showDetails />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Operational')).toBeInTheDocument();
+    });
+
+    // Sprawdź że są zielone kropki (h-1.5 w-1.5 rounded-full bg-emerald-500) dla obu serwisów
+    const greenDots = container.querySelectorAll('.h-1\\.5.w-1\\.5.rounded-full.bg-emerald-500');
+    expect(greenDots.length).toBe(2);
+  });
+
+  it('pokazuje mieszane kolory gdy tylko jeden serwis jest down', async () => {
+    mockFetch.mockResolvedValue({
+      json: () => Promise.resolve(createHealthResponse('degraded', 'up', 'down')),
+    });
+
+    const { container } = render(<SystemStatus showDetails />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Degraded')).toBeInTheDocument();
+    });
+
+    // DB jest up = zielona, Auth jest down = czerwona
+    const greenDots = container.querySelectorAll('.h-1\\.5.w-1\\.5.rounded-full.bg-emerald-500');
+    const redDots = container.querySelectorAll('.h-1\\.5.w-1\\.5.rounded-full.bg-red-500');
+    expect(greenDots.length).toBe(1);
+    expect(redDots.length).toBe(1);
   });
 });
