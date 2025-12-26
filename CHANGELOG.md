@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v1.0.0...v1.1.0) (2025-12-26)
+
+
+### Features
+
+* dodano dynamiczny status systemu z health-check API ([21677da](https://github.com/AleksanderOne/centrum-logowania-app/commit/21677da7eac250cea51dd372843e02d5b1b2bf76))
+
 # 1.0.0 (2025-12-26)
 
 
