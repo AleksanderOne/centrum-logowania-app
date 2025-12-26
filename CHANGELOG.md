@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v1.1.0...v2.0.0) (2025-12-26)
+
+
+### Features
+
+* **testing:** dodanie mutation testing i 100% coverage ([c8bdabb](https://github.com/AleksanderOne/centrum-logowania-app/commit/c8bdabb5127bb44cf60f172d1358635a3dc97a59))
+
+
+### BREAKING CHANGES
+
+* **testing:** Wymagane 100% pokrycia testami dla każdego nowego pliku
+
 # [1.1.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v1.0.0...v1.1.0) (2025-12-26)
 
 
