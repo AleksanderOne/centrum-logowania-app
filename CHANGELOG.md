@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.0.0...v2.1.0) (2025-12-26)
+
+
+### Features
+
+* dodanie testera integracji, monitora sesji i ulepszeń UI ([21582ec](https://github.com/AleksanderOne/centrum-logowania-app/commit/21582ecc517a11a59745500dc0dc38005eb65c5b))
+
 # [2.0.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v1.1.0...v2.0.0) (2025-12-26)
 
 
