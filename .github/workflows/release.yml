@@ -34,6 +34,9 @@ jobs:
         run: npm run test:unit
 
       - name: Build
+        env:
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'dummy-secret-for-build-only' }}
+          AUTH_TRUST_HOST: true
         run: npm run build
 
       - name: Release
