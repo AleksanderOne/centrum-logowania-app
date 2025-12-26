@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
-import { projects, users, authorizationCodes } from '@/lib/db/schema';
+import { projects, users, authorizationCodes, projectSessions } from '@/lib/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 
 /**
@@ -84,6 +84,39 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // 7.5. Zapis sesji w projekcie (dla monitoringu)
+    const userAgent = req.headers.get('user-agent') || 'Unknown';
+    const forwarded = req.headers.get('x-forwarded-for');
+    const ipAddress = forwarded
+      ? forwarded.split(',')[0]
+      : req.headers.get('x-real-ip') || 'Unknown';
+
+    // Aktualizuj istniejącą sesję lub utwórz nową
+    const existingSession = await db.query.projectSessions.findFirst({
+      where: and(eq(projectSessions.userId, user.id), eq(projectSessions.projectId, project.id)),
+    });
+
+    if (existingSession) {
+      await db
+        .update(projectSessions)
+        .set({
+          lastSeenAt: new Date(),
+          userAgent,
+          ipAddress,
+          userName: user.name,
+        })
+        .where(eq(projectSessions.id, existingSession.id));
+    } else {
+      await db.insert(projectSessions).values({
+        userId: user.id,
+        projectId: project.id,
+        userEmail: user.email,
+        userName: user.name,
+        userAgent,
+        ipAddress,
+      });
     }
 
     // 8. Sukces - zwracamy dane użytkownika wraz z tokenVersion (dla Kill Switch)

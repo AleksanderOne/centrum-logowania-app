@@ -1,5 +1,5 @@
 import { CreateProjectForm } from '@/components/dashboard/create-project-form';
-import { ProjectList } from '@/components/dashboard/project-list';
+import { ProjectsContainer } from '@/components/dashboard/projects-container';
 import { getUserProjects } from '@/actions/project';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -10,8 +10,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Fixed Header Section */}
-      <div className="p-4 md:p-8 pt-6 pb-2 shrink-0 space-y-6">
+      {/* Nagłówek i formularz - stała pozycja */}
+      <div className="p-4 md:p-8 pt-6 pb-4 shrink-0 space-y-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h2 className="text-2xl font-bold tracking-tight">Twoje Projekty</h2>
@@ -27,9 +27,9 @@ export default async function DashboardPage() {
         <CreateProjectForm />
       </div>
 
-      {/* Scrollable Project List */}
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 md:p-8 pt-2">
-        <ProjectList projects={projects} />
+      {/* Kontener projektów z wyszukiwarką i scrollowalną listą */}
+      <div className="flex-1 min-h-0 px-4 md:px-8 pb-4">
+        <ProjectsContainer projects={projects} />
       </div>
     </div>
   );

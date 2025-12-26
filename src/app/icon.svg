@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <!-- Neonowa poświata -->
+    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Gradient tła -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a"/>
+      <stop offset="100%" style="stop-color:#0d1117"/>
+    </linearGradient>
+    <!-- Gradient neonowy zielony -->
+    <linearGradient id="neonGreen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff88"/>
+      <stop offset="100%" style="stop-color:#00cc55"/>
+    </linearGradient>
+    <!-- Ciemniejszy zielony dla wypełnienia -->
+    <linearGradient id="darkGreen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#003322"/>
+      <stop offset="100%" style="stop-color:#001a11"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Tło z zaokrąglonymi rogami -->
+  <rect x="0" y="0" width="32" height="32" rx="7" ry="7" fill="url(#bgGrad)"/>
+  
+  <!-- Tarcza z neonowym efektem -->
+  <g filter="url(#neonGlow)">
+    <!-- Tarcza - obrys -->
+    <path 
+      d="M16 4 
+         L6 8 
+         L6 15 
+         C6 21 10 26 16 28 
+         C22 26 26 21 26 15 
+         L26 8 
+         Z"
+      fill="url(#darkGreen)"
+      stroke="url(#neonGreen)"
+      stroke-width="1.5"
+    />
+    
+    <!-- Checkmark wewnątrz tarczy -->
+    <path
+      d="M11 16 L14.5 19.5 L21 12"
+      fill="none"
+      stroke="#00ff88"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>
+

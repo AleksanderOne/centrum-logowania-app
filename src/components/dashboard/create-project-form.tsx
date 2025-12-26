@@ -78,7 +78,7 @@ export const CreateProjectForm = () => {
               <FormItem>
                 <FormLabel>Domena / URL</FormLabel>
                 <FormControl>
-                  <Input disabled={isPending} placeholder="http://localhost:3001" {...field} />
+                  <Input disabled={isPending} placeholder="https://moja-aplikacja.pl" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

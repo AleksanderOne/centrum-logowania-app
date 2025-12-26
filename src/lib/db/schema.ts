@@ -89,3 +89,23 @@ export const authorizationCodes = mySchema.table('authorization_code', {
   usedAt: timestamp('used_at', { mode: 'date' }), // Null = nieużyty, data = wykorzystany
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// --- Aktywne sesje w projektach ---
+// Śledzenie użytkowników zalogowanych na stronach klienckich.
+// Aktualizowane przy każdym logowaniu przez SSO.
+
+export const projectSessions = mySchema.table('project_session', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  projectId: uuid('project_id')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  userEmail: text('user_email').notNull(), // Zdenormalizowane dla szybkiego wyświetlania
+  userName: text('user_name'), // Zdenormalizowane dla szybkiego wyświetlania
+  userAgent: text('user_agent'), // Informacje o przeglądarce
+  ipAddress: text('ip_address'), // Adres IP (dla diagnostyki)
+  lastSeenAt: timestamp('last_seen_at', { mode: 'date' }).defaultNow(), // Ostatnia aktywność
+  createdAt: timestamp('created_at').defaultNow(), // Kiedy sesja powstała
+});

@@ -57,50 +57,26 @@ describe('ProjectList', () => {
     vi.mocked(useRouter).mockReturnValue(mockRouter as unknown as ReturnType<typeof useRouter>);
   });
 
-  it('wyświetla informację o braku projektów gdy lista jest pusta', () => {
-    render(<ProjectList projects={[]} />);
+  it('wyświetla informację o braku projektów gdy lista jest pusta (brak projektów w ogóle)', () => {
+    render(<ProjectList projects={[]} totalCount={0} />);
     expect(screen.getByText(/Nie masz jeszcze żadnych projektów/i)).toBeInTheDocument();
   });
 
-  it('wyświetla listę projektów', () => {
-    render(<ProjectList projects={mockProjects} />);
-    expect(screen.getByText('Projekt A')).toBeInTheDocument();
-    expect(screen.getByText('Projekt B')).toBeInTheDocument();
-  });
-
-  it('filtruje projekty po nazwie', () => {
-    render(<ProjectList projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'Projekt A' } });
-
-    expect(screen.getByText('Projekt A')).toBeInTheDocument();
-    expect(screen.queryByText('Projekt B')).not.toBeInTheDocument();
-  });
-
-  it('filtruje projekty po Client ID (slug)', () => {
-    render(<ProjectList projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'projekt-b-uvw' } });
-
-    expect(screen.queryByText('Projekt A')).not.toBeInTheDocument();
-    expect(screen.getByText('Projekt B')).toBeInTheDocument();
-  });
-
-  it('pokazuje komunikat o braku wyników wyszukiwania', () => {
-    render(<ProjectList projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'nieistniejący' } });
-
+  it('wyświetla informację o braku wyników wyszukiwania gdy totalCount > 0 ale projects jest puste', () => {
+    render(<ProjectList projects={[]} totalCount={5} />);
     expect(
       screen.getByText(/Nie znaleziono projektów pasujących do wyszukiwania/i)
     ).toBeInTheDocument();
   });
 
+  it('wyświetla listę projektów', () => {
+    render(<ProjectList projects={mockProjects} totalCount={2} />);
+    expect(screen.getByText('Projekt A')).toBeInTheDocument();
+    expect(screen.getByText('Projekt B')).toBeInTheDocument();
+  });
+
   it('otwiera modal potwierdzenia usunięcia po kliknięciu kosza', async () => {
-    render(<ProjectList projects={[mockProjects[0]]} />);
+    render(<ProjectList projects={[mockProjects[0]]} totalCount={1} />);
 
     // Kliknij przycisk usuwania (kosz)
     const deleteButton = screen.getByRole('button', { name: /Usuń projekt/i });
@@ -115,7 +91,7 @@ describe('ProjectList', () => {
   it('wywołuje deleteProject po potwierdzeniu w modalu', async () => {
     vi.mocked(deleteProject).mockResolvedValue({ success: 'Projekt usunięty' });
 
-    render(<ProjectList projects={[mockProjects[0]]} />);
+    render(<ProjectList projects={[mockProjects[0]]} totalCount={1} />);
 
     // Otwórz modal
     const deleteButton = screen.getByRole('button', { name: /Usuń projekt/i });
@@ -134,7 +110,7 @@ describe('ProjectList', () => {
   });
 
   it('nie usuwa projektu po anulowaniu w modalu', async () => {
-    render(<ProjectList projects={[mockProjects[0]]} />);
+    render(<ProjectList projects={[mockProjects[0]]} totalCount={1} />);
 
     // Otwórz modal
     const deleteButton = screen.getByRole('button', { name: /Usuń projekt/i });
@@ -154,7 +130,7 @@ describe('ProjectList', () => {
   it('wyświetla błąd gdy usunięcie projektu się nie powiedzie', async () => {
     vi.mocked(deleteProject).mockResolvedValue({ error: 'Nie udało się usunąć projektu' });
 
-    render(<ProjectList projects={[mockProjects[0]]} />);
+    render(<ProjectList projects={[mockProjects[0]]} totalCount={1} />);
 
     // Otwórz modal i potwierdź usunięcie
     const deleteButton = screen.getByRole('button', { name: /Usuń projekt/i });
@@ -174,7 +150,7 @@ describe('ProjectList', () => {
   it('kopiuje Client ID do schowka i pokazuje ikonę Check', async () => {
     vi.useFakeTimers();
 
-    render(<ProjectList projects={[mockProjects[0]]} />);
+    render(<ProjectList projects={[mockProjects[0]]} totalCount={1} />);
 
     // Znajdź przycisk kopiowania Client ID
     const copyButton = screen.getAllByRole('button', { name: /Kopiuj Client ID/i })[0];
@@ -208,7 +184,7 @@ describe('ProjectList', () => {
   });
 
   it('kopiuje API Key do schowka i pokazuje ikonę Check', async () => {
-    render(<ProjectList projects={[mockProjects[0]]} />);
+    render(<ProjectList projects={[mockProjects[0]]} totalCount={1} />);
 
     // Znajdź przycisk kopiowania API Key
     const copyButton = screen.getAllByRole('button', { name: /Kopiuj API Key/i })[0];
@@ -229,28 +205,8 @@ describe('ProjectList', () => {
     expect(toast.success).toHaveBeenCalledWith('Skopiowano API Key');
   });
 
-  it('filtruje projekty po domenie', () => {
-    render(<ProjectList projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'example.com' } });
-
-    expect(screen.getByText('Projekt A')).toBeInTheDocument();
-    expect(screen.queryByText('Projekt B')).not.toBeInTheDocument();
-  });
-
-  it('filtruje projekty po API Key', () => {
-    render(<ProjectList projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'cl_def456' } });
-
-    expect(screen.queryByText('Projekt A')).not.toBeInTheDocument();
-    expect(screen.getByText('Projekt B')).toBeInTheDocument();
-  });
-
   it('wyświetla "Brak domeny" gdy projekt nie ma domeny', () => {
-    render(<ProjectList projects={[mockProjects[1]]} />);
+    render(<ProjectList projects={[mockProjects[1]]} totalCount={1} />);
     expect(screen.getByText('Brak domeny')).toBeInTheDocument();
   });
 });

@@ -32,7 +32,9 @@ export const createProject = async (values: z.infer<typeof CreateProjectSchema>)
   const validatedFields = CreateProjectSchema.safeParse(values);
 
   if (!validatedFields.success) {
-    return { error: 'Nieprawidłowe pola!' };
+    // Zwróć pierwszy błąd walidacji
+    const firstError = validatedFields.error.errors[0];
+    return { error: firstError?.message || 'Nieprawidłowe dane wejściowe' };
   }
 
   const { name, domain } = validatedFields.data;
@@ -74,11 +76,19 @@ export const getUserProjects = async () => {
   }
 };
 
+// Walidacja UUID
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const deleteProject = async (projectId: string) => {
   const session = await auth();
 
   if (!session?.user?.id) {
     return { error: 'Nieautoryzowany dostęp' };
+  }
+
+  // Walidacja projectId
+  if (!projectId || !uuidRegex.test(projectId)) {
+    return { error: 'Nieprawidłowy identyfikator projektu' };
   }
 
   try {
