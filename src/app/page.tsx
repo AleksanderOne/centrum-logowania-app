@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ShieldCheck } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Toaster } from '@/components/ui/sonner';
+import { SystemStatus } from '@/components/system-status';
 
 export default function Home() {
   return (
@@ -40,11 +41,9 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <div className="text-center text-sm text-muted-foreground">
-          <p>
-            Status systemu: <span className="text-green-500 font-medium">Operational</span>
-          </p>
-          <p className="mt-2 text-xs">
+        <div className="text-center text-sm text-muted-foreground space-y-2">
+          <SystemStatus refreshInterval={30000} />
+          <p className="text-xs">
             v{process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0'} • Wykonane z pasją przez{' '}
             <a
               href="https://github.com/AleksanderOne"
