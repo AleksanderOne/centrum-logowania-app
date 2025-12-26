@@ -2,34 +2,34 @@ import 'dotenv/config';
 import { Client } from 'pg';
 
 async function testConnection() {
-    console.log('Testowanie połączenia z bazą danych...');
+  console.warn('Testowanie połączenia z bazą danych...');
 
-    if (!process.env.DATABASE_URL) {
-        console.error('❌ Błąd: Brak zmiennej DATABASE_URL w pliku .env');
-        process.exit(1);
-    }
+  if (!process.env.DATABASE_URL) {
+    console.error('❌ Błąd: Brak zmiennej DATABASE_URL w pliku .env');
+    process.exit(1);
+  }
 
-    const client = new Client({
-        connectionString: process.env.DATABASE_URL,
-    });
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
 
-    try {
-        await client.connect();
-        console.log('✅ Połączono z bazą danych pomyślnie!');
+  try {
+    await client.connect();
+    console.warn('✅ Połączono z bazą danych pomyślnie!');
 
-        const res = await client.query('SELECT NOW() as now, current_database() as db_name, version()');
-        console.log('📊 Informacje o bazie:');
-        console.log(`   - Baza: ${res.rows[0].db_name}`);
-        console.log(`   - Czas serwera: ${res.rows[0].now}`);
-        console.log(`   - Wersja: ${res.rows[0].version}`);
+    const res = await client.query('SELECT NOW() as now, current_database() as db_name, version()');
+    console.warn('📊 Informacje o bazie:');
+    console.warn(`   - Baza: ${res.rows[0].db_name}`);
+    console.warn(`   - Czas serwera: ${res.rows[0].now}`);
+    console.warn(`   - Wersja: ${res.rows[0].version}`);
 
-        await client.end();
-        console.log('✅ Połączenie zamknięte.');
-        process.exit(0);
-    } catch (err) {
-        console.error('❌ Błąd połączenia:', err);
-        process.exit(1);
-    }
+    await client.end();
+    console.warn('✅ Połączenie zamknięte.');
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Błąd połączenia:', err);
+    process.exit(1);
+  }
 }
 
 testConnection();

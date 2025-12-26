@@ -1,0 +1,22 @@
+# Zależności
+node_modules
+
+# Build output
+.next
+out
+build
+dist
+coverage
+
+# Generowane pliki
+*.min.js
+*.min.css
+package-lock.json
+
+# Drizzle migracje
+drizzle/**/*.sql
+
+# Inne
+.git
+.husky
+.env*

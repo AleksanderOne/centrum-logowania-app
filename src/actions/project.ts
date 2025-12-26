@@ -1,99 +1,99 @@
-"use server"
+'use server';
 
-import * as z from "zod"
-import { auth } from "@/lib/auth"
-import { db } from "@/lib/db/drizzle"
-import { projects } from "@/lib/db/schema"
-import { CreateProjectSchema } from "@/schemas"
-import { nanoid } from "nanoid"
-import { eq, desc, and } from "drizzle-orm"
+import * as z from 'zod';
+import { auth } from '@/lib/auth';
+import { db } from '@/lib/db/drizzle';
+import { projects } from '@/lib/db/schema';
+import { CreateProjectSchema } from '@/schemas';
+import { nanoid } from 'nanoid';
+import { eq, desc, and } from 'drizzle-orm';
 
 // Pomocnik do generowania sluga
 const generateSlug = (name: string) => {
-    return name
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/[\s_-]+/g, "-")
-        .replace(/^-+|-+$/g, "") + "-" + nanoid(4);
-}
+  return (
+    name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') +
+    '-' +
+    nanoid(4)
+  );
+};
 
 export const createProject = async (values: z.infer<typeof CreateProjectSchema>) => {
-    const session = await auth()
+  const session = await auth();
 
-    if (!session?.user?.id) {
-        return { error: "Nie jesteś zalogowany!" }
-    }
+  if (!session?.user?.id) {
+    return { error: 'Nie jesteś zalogowany!' };
+  }
 
-    const validatedFields = CreateProjectSchema.safeParse(values)
+  const validatedFields = CreateProjectSchema.safeParse(values);
 
-    if (!validatedFields.success) {
-        return { error: "Nieprawidłowe pola!" }
-    }
+  if (!validatedFields.success) {
+    return { error: 'Nieprawidłowe pola!' };
+  }
 
-    const { name, domain } = validatedFields.data
-    const slug = generateSlug(name)
-    const apiKey = `cl_${nanoid(32)}` // cl = centrum logowania prefix
+  const { name, domain } = validatedFields.data;
+  const slug = generateSlug(name);
+  const apiKey = `cl_${nanoid(32)}`; // cl = centrum logowania prefix
 
-    try {
-        await db.insert(projects).values({
-            name,
-            slug,
-            domain,
-            apiKey,
-            ownerId: session.user.id,
-        })
+  try {
+    await db.insert(projects).values({
+      name,
+      slug,
+      domain,
+      apiKey,
+      ownerId: session.user.id,
+    });
 
-        return { success: "Projekt utworzony pomyślnie!" }
-    } catch (error) {
-        console.error("Project creation error:", error)
-        return { error: "Coś poszło nie tak przy tworzeniu projektu." }
-    }
-}
+    return { success: 'Projekt utworzony pomyślnie!' };
+  } catch (_error) {
+    console.error('Project creation error:', _error);
+    return { error: 'Coś poszło nie tak przy tworzeniu projektu.' };
+  }
+};
 
 export const getUserProjects = async () => {
-    const session = await auth()
+  const session = await auth();
 
-    if (!session?.user?.id) {
-        return []
-    }
+  if (!session?.user?.id) {
+    return [];
+  }
 
-    try {
-        const userProjects = await db.query.projects.findMany({
-            where: eq(projects.ownerId, session.user.id),
-            orderBy: [desc(projects.createdAt)],
-        })
+  try {
+    const userProjects = await db.query.projects.findMany({
+      where: eq(projects.ownerId, session.user.id),
+      orderBy: [desc(projects.createdAt)],
+    });
 
-        return userProjects
-    } catch (error) {
-        return []
-    }
-}
+    return userProjects;
+  } catch {
+    return [];
+  }
+};
 
 export const deleteProject = async (projectId: string) => {
-    const session = await auth()
+  const session = await auth();
 
-    if (!session?.user?.id) {
-        return { error: "Nieautoryzowany dostęp" }
+  if (!session?.user?.id) {
+    return { error: 'Nieautoryzowany dostęp' };
+  }
+
+  try {
+    // Usuwamy tylko jeśli ID projektu ORAZ ID właściciela się zgadzają
+    const result = await db
+      .delete(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.ownerId, session.user.id)))
+      .returning();
+
+    if (!result.length) {
+      return { error: 'Nie znaleziono projektu lub brak uprawnień' };
     }
 
-    try {
-        // Usuwamy tylko jeśli ID projektu ORAZ ID właściciela się zgadzają
-        const result = await db.delete(projects)
-            .where(
-                and(
-                    eq(projects.id, projectId),
-                    eq(projects.ownerId, session.user.id)
-                )
-            )
-            .returning()
-
-        if (!result.length) {
-            return { error: "Nie znaleziono projektu lub brak uprawnień" }
-        }
-
-        return { success: "Projekt usunięty" }
-    } catch (error) {
-        return { error: "Błąd usuwania projektu" }
-    }
-}
+    return { success: 'Projekt usunięty' };
+  } catch {
+    return { error: 'Błąd usuwania projektu' };
+  }
+};

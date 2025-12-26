@@ -1,0 +1,10 @@
+#!/bin/sh
+# Pre-commit hook: uruchamia lint-staged oraz testy jednostkowe i integracyjne
+
+echo "🔍 Uruchamiam lint-staged (ESLint + Prettier)..."
+npx lint-staged
+
+echo "🧪 Uruchamiam testy jednostkowe i integracyjne..."
+npm run test:unit
+
+echo "✅ Pre-commit checks zakończone pomyślnie!"

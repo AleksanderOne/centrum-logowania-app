@@ -17,8 +17,8 @@ Pobierz plik `auth.js` i dołącz go do swojego projektu:
 ```javascript
 const auth = new AuthClient({
   clientId: 'twoj-client-id-z-dashboardu', // Wymagane
-  authUrl: 'http://localhost:3002',       // Opcjonalnie (domyślnie localhost:3002)
-  storageKey: 'myapp_token'               // Opcjonalnie (klucz w localStorage)
+  authUrl: 'http://localhost:3002', // Opcjonalnie (domyślnie localhost:3002)
+  storageKey: 'myapp_token', // Opcjonalnie (klucz w localStorage)
 });
 ```
 
@@ -27,9 +27,9 @@ const auth = new AuthClient({
 ```javascript
 if (auth.isAuthenticated()) {
   const user = auth.getUser();
-  console.log("Zalogowany użytkownik:", user.email);
+  console.log('Zalogowany użytkownik:', user.email);
 } else {
-  console.log("Niezalogowany");
+  console.log('Niezalogowany');
 }
 ```
 

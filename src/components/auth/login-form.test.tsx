@@ -1,40 +1,40 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
-import { LoginForm } from './login-form'
-import { signIn } from 'next-auth/react'
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { LoginForm } from './login-form';
+import { signIn } from 'next-auth/react';
 
 // Mockowanie next-auth/react
 vi.mock('next-auth/react', () => ({
-    signIn: vi.fn(),
-}))
+  signIn: vi.fn(),
+}));
 
 describe('LoginForm', () => {
-    it('wyświetla przycisk logowania Google', () => {
-        render(<LoginForm />)
-        const button = screen.getByText(/Kontynuuj z Google/i)
-        expect(button).toBeInTheDocument()
-    })
+  it('wyświetla przycisk logowania Google', () => {
+    render(<LoginForm />);
+    const button = screen.getByText(/Kontynuuj z Google/i);
+    expect(button).toBeInTheDocument();
+  });
 
-    it('wywołuje signIn po kliknięciu', async () => {
-        render(<LoginForm />)
-        const button = screen.getByText(/Kontynuuj z Google/i)
+  it('wywołuje signIn po kliknięciu', async () => {
+    render(<LoginForm />);
+    const button = screen.getByText(/Kontynuuj z Google/i);
 
-        fireEvent.click(button)
+    fireEvent.click(button);
 
-        expect(signIn).toHaveBeenCalledWith('google', { callbackUrl: '/' })
-    })
+    expect(signIn).toHaveBeenCalledWith('google', { callbackUrl: '/' });
+  });
 
-    it('zmienia stan na loading po kliknięciu', async () => {
-        render(<LoginForm />)
-        const button = screen.getByRole('button', { name: /Kontynuuj z Google/i })
+  it('zmienia stan na loading po kliknięciu', async () => {
+    render(<LoginForm />);
+    const button = screen.getByRole('button', { name: /Kontynuuj z Google/i });
 
-        fireEvent.click(button)
+    fireEvent.click(button);
 
-        // Sprawdzamy czy przycisk jest disabled i czy pokazuje się spinner (class animate-spin)
-        expect(button).toBeDisabled()
-        // Możemy poszukać elementu z klasą animate-spin
-        // Uwaga: querySelector w testach jednostkowych react-testing-library działa na container
-        const spinner = screen.getByRole('button').querySelector('.animate-spin')
-        expect(spinner).toBeInTheDocument()
-    })
-})
+    // Sprawdzamy czy przycisk jest disabled i czy pokazuje się spinner (class animate-spin)
+    expect(button).toBeDisabled();
+    // Możemy poszukać elementu z klasą animate-spin
+    // Uwaga: querySelector w testach jednostkowych react-testing-library działa na container
+    const spinner = screen.getByRole('button').querySelector('.animate-spin');
+    expect(spinner).toBeInTheDocument();
+  });
+});

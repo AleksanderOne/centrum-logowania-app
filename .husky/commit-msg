@@ -1,0 +1,4 @@
+#!/bin/sh
+# Walidacja commit message zgodnie z konwencją Conventional Commits
+
+npx --no -- commitlint --edit "$1"

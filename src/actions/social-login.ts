@@ -1,7 +1,7 @@
-"use server"
+'use server';
 
-import { signIn } from "@/lib/auth"
+import { signIn } from '@/lib/auth';
 
-export const socialLogin = async (provider: "google") => {
-    await signIn(provider, { redirectTo: "/dashboard" })
-}
+export const socialLogin = async (provider: 'google') => {
+  await signIn(provider, { redirectTo: '/dashboard' });
+};

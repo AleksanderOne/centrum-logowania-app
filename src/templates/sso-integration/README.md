@@ -56,13 +56,13 @@ Lub z Drizzle ORM (szablon w `lib/db/schema-user.ts`).
 import { auth } from '@/lib/auth';
 
 export default async function DashboardPage() {
-    const session = await auth();
-    
-    if (!session) {
-        redirect('/login');
-    }
-    
-    return <div>Witaj, {session.user.name}!</div>;
+  const session = await auth();
+
+  if (!session) {
+    redirect('/login');
+  }
+
+  return <div>Witaj, {session.user.name}!</div>;
 }
 ```
 
@@ -97,10 +97,10 @@ Edytuj `middleware.ts`:
 
 ```typescript
 const protectedPaths = [
-    '/dashboard',
-    '/profile',
-    '/admin',
-    // Dodaj swoje trasy
+  '/dashboard',
+  '/profile',
+  '/admin',
+  // Dodaj swoje trasy
 ];
 ```
 
@@ -114,32 +114,35 @@ Rozszerz schemat w swojej bazie i zaktualizuj callback w `app/api/auth/sso-callb
 import { logout } from '@/app/actions/auth-actions';
 
 <form action={logout}>
-    <button type="submit">Wyloguj</button>
-</form>
+  <button type="submit">Wyloguj</button>
+</form>;
 ```
 
 ---
 
 ## API Centrum Logowania
 
-| Endpoint | Opis |
-|----------|------|
-| `GET /authorize` | Redirect do logowania |
-| `POST /api/v1/token` | Wymiana kodu na dane użytkownika |
-| `POST /api/v1/session/verify` | Weryfikacja Kill Switch |
+| Endpoint                      | Opis                             |
+| ----------------------------- | -------------------------------- |
+| `GET /authorize`              | Redirect do logowania            |
+| `POST /api/v1/token`          | Wymiana kodu na dane użytkownika |
+| `POST /api/v1/session/verify` | Weryfikacja Kill Switch          |
 
 ---
 
 ## Troubleshooting
 
 ### Błąd "Invalid API Key"
+
 - Sprawdź czy SSO_API_KEY jest poprawny
 - Sprawdź czy projekt istnieje w centrum
 
 ### Błąd "Invalid or expired code"
+
 - Kod autoryzacyjny jest jednorazowy
 - Sprawdź czy redirect_uri się zgadza
 
 ### Użytkownik nie widzi sesji
+
 - Sprawdź ciasteczko `sso-session` w DevTools
 - Sprawdź czy `auth()` jest wywoływane po stronie serwera

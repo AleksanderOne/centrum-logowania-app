@@ -1,0 +1,10 @@
+#!/bin/sh
+# Pre-push hook: uruchamia testy e2e i build przed wypchnięciem na remote
+
+echo "🔨 Sprawdzam czy projekt się buduje..."
+npm run build
+
+echo "🎭 Uruchamiam testy e2e..."
+npm run test:e2e
+
+echo "✅ Pre-push checks zakończone pomyślnie! Wypychanie dozwolone."
