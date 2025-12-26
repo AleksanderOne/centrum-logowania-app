@@ -57,9 +57,9 @@ export async function POST(
     }
 
     const results: TestResult = {
-      domain: { status: 'pending', message: '' },
+      domain: { status: 'skipped', message: '' },
       sessions: { status: 'info', message: '', count: 0 },
-      integration: { status: 'pending', message: '' },
+      integration: { status: 'warning', message: 'Trwa analiza...' },
     };
 
     // 3. Test domeny (jeśli ustawiona)

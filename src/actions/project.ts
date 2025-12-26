@@ -33,7 +33,7 @@ export const createProject = async (values: z.infer<typeof CreateProjectSchema>)
 
   if (!validatedFields.success) {
     // Zwróć pierwszy błąd walidacji
-    const firstError = validatedFields.error.errors[0];
+    const firstError = validatedFields.error.issues[0];
     return { error: firstError?.message || 'Nieprawidłowe dane wejściowe' };
   }
 

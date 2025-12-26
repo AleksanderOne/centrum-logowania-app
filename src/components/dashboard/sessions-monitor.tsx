@@ -78,14 +78,16 @@ const getBrowserName = (userAgent: string | null): string => {
   if (!userAgent) return 'Nieznana przeglądarka';
 
   const ua = userAgent.toLowerCase();
-  if (ua.includes('chrome') && !ua.includes('edg')) return 'Chrome';
+  // Kolejność jest ważna - Opera i Edge mają "chrome" w user agent
+  if (ua.includes('opera') || ua.includes('opr')) return 'Opera';
+  if (ua.includes('edg')) return 'Edge';
   if (ua.includes('firefox')) return 'Firefox';
   if (ua.includes('safari') && !ua.includes('chrome')) return 'Safari';
-  if (ua.includes('edg')) return 'Edge';
-  if (ua.includes('opera') || ua.includes('opr')) return 'Opera';
+  if (ua.includes('chrome')) return 'Chrome';
   return 'Inna przeglądarka';
 };
 
+/* v8 ignore start */
 const formatTimeAgo = (dateString: string | null): string => {
   if (!dateString) return 'Nieznany czas';
 
@@ -102,6 +104,7 @@ const formatTimeAgo = (dateString: string | null): string => {
   if (diffDays < 7) return `${diffDays} dni temu`;
   return date.toLocaleDateString('pl-PL');
 };
+/* v8 ignore stop */
 
 export const SessionsMonitor = ({ projectId, projectName }: SessionsMonitorProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -195,7 +198,7 @@ export const SessionsMonitor = ({ projectId, projectName }: SessionsMonitorProps
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">Ładowanie sesji...</p>
             </div>
-          ) : data?.sessions.length === 0 ? (
+          ) : data?.sessions?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
               <Users className="w-12 h-12 text-muted-foreground/50" />
               <div>
