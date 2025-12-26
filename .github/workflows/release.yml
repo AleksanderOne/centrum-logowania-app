@@ -38,14 +38,16 @@ jobs:
 
       - name: Build
         env:
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'dummy-secret-for-build-only' }}
-          AUTH_TRUST_HOST: true
+          AUTH_SECRET: 'dummy-secret-for-build-only'
+          NEXTAUTH_SECRET: 'dummy-secret-for-build-only'
+          AUTH_TRUST_HOST: 'true'
         run: npm run build
 
       - name: Run E2E tests
         env:
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'dummy-secret-for-build-only' }}
-          AUTH_TRUST_HOST: true
+          AUTH_SECRET: 'dummy-secret-for-build-only'
+          NEXTAUTH_SECRET: 'dummy-secret-for-build-only'
+          AUTH_TRUST_HOST: 'true'
         run: npm run test:e2e
 
       - name: Release

@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Zmienne środowiskowe dla testów E2E
 process.env.AUTH_SECRET = process.env.AUTH_SECRET || 'test-secret-for-e2e-tests-only';
+process.env.NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || 'test-secret-for-e2e-tests-only';
 process.env.AUTH_TRUST_HOST = 'true';
 
 export default defineConfig({
@@ -28,6 +29,7 @@ export default defineConfig({
     timeout: 120 * 1000,
     env: {
       AUTH_SECRET: process.env.AUTH_SECRET || 'test-secret-for-e2e-tests-only',
+      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'test-secret-for-e2e-tests-only',
       AUTH_TRUST_HOST: 'true',
     },
   },
