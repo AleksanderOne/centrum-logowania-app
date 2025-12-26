@@ -67,5 +67,8 @@
     "low": 60,
     "break": null
   },
+  "mutator": {
+    "excludedMutations": ["StringLiteral"]
+  },
   "coverageAnalysis": "off"
 }

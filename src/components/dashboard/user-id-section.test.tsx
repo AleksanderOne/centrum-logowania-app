@@ -28,13 +28,22 @@ describe('UserIdSection', () => {
     expect(screen.getByText(userId)).toBeInTheDocument();
   });
 
-  it('kopiuje ID do schowka po kliknięciu przycisku', async () => {
-    render(<UserIdSection userId={userId} />);
+  it('kopiuje ID do schowka i pokazuje ikonę Check', async () => {
+    const { container } = render(<UserIdSection userId={userId} />);
     const button = screen.getByRole('button', { name: /Kopiuj ID użytkownika/i });
+
+    // Przed kliknięciem - ikona Copy (bez scale-110)
+    let icon = button.querySelector('svg');
+    expect(icon).toBeInTheDocument();
+    expect(icon?.classList.contains('scale-110')).toBe(false);
 
     await act(async () => {
       fireEvent.click(button);
     });
+
+    // Po kliknięciu - ikona Check (ze scale-110)
+    icon = button.querySelector('svg');
+    expect(icon?.classList.contains('scale-110')).toBe(true);
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(userId);
     expect(toast.success).toHaveBeenCalledWith('Skopiowano ID użytkownika');
@@ -46,21 +55,27 @@ describe('UserIdSection', () => {
     render(<UserIdSection userId={userId} />);
     const button = screen.getByRole('button', { name: /Kopiuj ID użytkownika/i });
 
+    // Przed kliknięciem - ikona Copy
+    let icon = button.querySelector('svg');
+    expect(icon?.classList.contains('scale-110')).toBe(false);
+
     // Kliknij przycisk - powinien pokazać ikonę Check
     await act(async () => {
       fireEvent.click(button);
     });
 
-    // Sprawdź czy jest ikona Check (przez sprawdzenie czy nie ma Copy w nazwie)
-    expect(button.querySelector('svg')).toBeInTheDocument();
+    // Po kliknięciu - ikona Check (ze scale-110)
+    icon = button.querySelector('svg');
+    expect(icon?.classList.contains('scale-110')).toBe(true);
 
     // Przewiń czas o 2 sekundy
     await act(async () => {
       vi.advanceTimersByTime(2000);
     });
 
-    // Ikona powinna wrócić do Copy
-    expect(button.querySelector('svg')).toBeInTheDocument();
+    // Ikona powinna wrócić do Copy (bez scale-110)
+    icon = button.querySelector('svg');
+    expect(icon?.classList.contains('scale-110')).toBe(false);
 
     vi.useRealTimers();
   });

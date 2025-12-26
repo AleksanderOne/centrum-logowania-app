@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProjectList } from './project-list';
 import { deleteProject } from '@/actions/project';
@@ -171,30 +171,59 @@ describe('ProjectList', () => {
     expect(mockRouter.refresh).not.toHaveBeenCalled();
   });
 
-  it('kopiuje Client ID do schowka po kliknięciu przycisku kopiowania', async () => {
+  it('kopiuje Client ID do schowka i pokazuje ikonę Check', async () => {
     vi.useFakeTimers();
 
     render(<ProjectList projects={[mockProjects[0]]} />);
 
     // Znajdź przycisk kopiowania Client ID
-    const copyButtons = screen.getAllByRole('button', { name: /Kopiuj Client ID/i });
-    fireEvent.click(copyButtons[0]);
+    const copyButton = screen.getAllByRole('button', { name: /Kopiuj Client ID/i })[0];
+
+    // Przed kliknięciem - ikona Copy (bez text-green-500)
+    let icon = copyButton.querySelector('svg');
+    expect(icon).toBeInTheDocument();
+    expect(icon?.classList.contains('text-green-500')).toBe(false);
+
+    await act(async () => {
+      fireEvent.click(copyButton);
+    });
+
+    // Po kliknięciu - ikona Check (z text-green-500)
+    icon = copyButton.querySelector('svg');
+    expect(icon?.classList.contains('text-green-500')).toBe(true);
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('projekt-a-xyz');
     expect(toast.success).toHaveBeenCalledWith('Skopiowano Client ID');
 
     // Sprawdź że ikona wraca po 2 sekundach
-    await vi.advanceTimersByTimeAsync(2000);
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    // Ikona powinna wrócić do Copy (bez text-green-500)
+    icon = copyButton.querySelector('svg');
+    expect(icon?.classList.contains('text-green-500')).toBe(false);
 
     vi.useRealTimers();
   });
 
-  it('kopiuje API Key do schowka po kliknięciu przycisku kopiowania', async () => {
+  it('kopiuje API Key do schowka i pokazuje ikonę Check', async () => {
     render(<ProjectList projects={[mockProjects[0]]} />);
 
     // Znajdź przycisk kopiowania API Key
-    const copyButtons = screen.getAllByRole('button', { name: /Kopiuj API Key/i });
-    fireEvent.click(copyButtons[0]);
+    const copyButton = screen.getAllByRole('button', { name: /Kopiuj API Key/i })[0];
+
+    // Przed kliknięciem - ikona Copy
+    let icon = copyButton.querySelector('svg');
+    expect(icon?.classList.contains('text-green-500')).toBe(false);
+
+    await act(async () => {
+      fireEvent.click(copyButton);
+    });
+
+    // Po kliknięciu - ikona Check (z text-green-500)
+    icon = copyButton.querySelector('svg');
+    expect(icon?.classList.contains('text-green-500')).toBe(true);
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('cl_abc123');
     expect(toast.success).toHaveBeenCalledWith('Skopiowano API Key');
