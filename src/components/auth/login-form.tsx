@@ -26,13 +26,17 @@ const GoogleIcon = () => (
   </svg>
 );
 
+import { useSearchParams } from 'next/navigation';
+
 export const LoginForm = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
   // Logowanie przez Google
   const handleGoogleLogin = () => {
     setIsGoogleLoading(true);
-    signIn('google', { callbackUrl: '/' });
+    signIn('google', { callbackUrl });
   };
 
   return (

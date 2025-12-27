@@ -8,6 +8,11 @@ vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
 }));
 
+// Mockowanie next/navigation
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 describe('LoginForm', () => {
   it('wyświetla przycisk logowania Google', () => {
     render(<LoginForm />);
@@ -21,7 +26,7 @@ describe('LoginForm', () => {
 
     fireEvent.click(button);
 
-    expect(signIn).toHaveBeenCalledWith('google', { callbackUrl: '/' });
+    expect(signIn).toHaveBeenCalledWith('google', { callbackUrl: '/dashboard' });
   });
 
   it('zmienia stan na loading po kliknięciu', async () => {

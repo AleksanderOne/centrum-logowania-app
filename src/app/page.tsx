@@ -5,6 +5,7 @@ import { ShieldCheck } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Toaster } from '@/components/ui/sonner';
 import { SystemStatus } from '@/components/system-status';
+import { Suspense } from 'react';
 
 export default function Home() {
   return (
@@ -37,7 +38,9 @@ export default function Home() {
             <CardDescription>Użyj konta Google, aby uzyskać dostęp do panelu.</CardDescription>
           </CardHeader>
           <CardContent>
-            <LoginForm />
+            <Suspense fallback={<div className="h-10 w-full animate-pulse bg-muted rounded-md" />}>
+              <LoginForm />
+            </Suspense>
           </CardContent>
         </Card>
 
