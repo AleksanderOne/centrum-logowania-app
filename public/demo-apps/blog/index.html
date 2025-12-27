@@ -8,6 +8,9 @@
     <script>
       tailwind.config = { darkMode: 'class' };
     </script>
+    <!-- Wspólna konfiguracja demo -->
+    <script src="../demo-config.js"></script>
+    <!-- SDK Centrum Logowania -->
     <script src="../../sdk/auth.js"></script>
   </head>
 
@@ -59,10 +62,11 @@
       </div>
     </div>
 
-    <!-- Magia SDK -->
+    <!-- Inicjalizacja z użyciem wspólnej konfiguracji -->
     <script>
       CentrumLogowania.protect({
-        clientId: 'blog-premium-xov5',
+        clientId: window.DEMO_CONFIG.clientId,
+        authUrl: window.DEMO_CONFIG.authUrl, // undefined = auto-wykrywany
         appId: 'blog-app',
         onLogin: (user) => {
           document.getElementById('user-email').innerText = user.email;

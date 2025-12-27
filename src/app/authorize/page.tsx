@@ -3,8 +3,10 @@ import { db } from '@/lib/db/drizzle';
 import { projects, authorizationCodes } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldX } from 'lucide-react';
 import crypto from 'crypto';
+import { checkProjectAccess, logSuccess, logFailure } from '@/lib/security';
+import { headers } from 'next/headers';
 
 /**
  * OAuth2 Authorization Endpoint
@@ -72,6 +74,41 @@ export default async function AuthorizePage({
     );
   }
 
+  // 2.5. Sprawdzenie izolacji danych - czy użytkownik ma dostęp do projektu
+  const headersList = await headers();
+  const ipAddress =
+    headersList.get('x-forwarded-for')?.split(',')[0] || headersList.get('x-real-ip') || 'unknown';
+  const userAgent = headersList.get('user-agent') || 'unknown';
+
+  const accessResult = await checkProjectAccess(session.user.id, project.id);
+
+  if (!accessResult.allowed) {
+    await logFailure('access_denied', {
+      userId: session.user.id,
+      projectId: project.id,
+      ipAddress,
+      userAgent,
+      metadata: { reason: accessResult.reason, redirectUri },
+    });
+
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 px-4">
+        <div className="flex items-center gap-3 text-red-500">
+          <ShieldX className="h-8 w-8" />
+          <h1 className="text-xl font-semibold">Brak dostępu</h1>
+        </div>
+        <p className="text-center text-muted-foreground max-w-md">
+          Nie masz uprawnień do logowania się w aplikacji <strong>{project.name}</strong>.
+          {accessResult.reason === 'user_not_member' && (
+            <span className="block mt-2">
+              Ten projekt jest prywatny i wymaga zaproszenia. Skontaktuj się z administratorem.
+            </span>
+          )}
+        </p>
+      </div>
+    );
+  }
+
   // 3. Generujemy jednorazowy kod autoryzacyjny (OAuth2 Authorization Code)
   const authCode = crypto.randomBytes(32).toString('hex'); // 64 znaki hex
   // Obliczamy datę wygaśnięcia - w Server Component Date.now() jest bezpieczne
@@ -86,6 +123,19 @@ export default async function AuthorizePage({
     projectId: project.id,
     redirectUri: redirectUri,
     expiresAt: expiresAt,
+  });
+
+  // Logowanie sukcesu autoryzacji
+  await logSuccess('project_access', {
+    userId: session.user.id,
+    projectId: project.id,
+    ipAddress,
+    userAgent,
+    metadata: {
+      redirectUri,
+      projectName: project.name,
+      userEmail: session.user.email,
+    },
   });
 
   // 4. Przekierowujemy z kodem autoryzacyjnym

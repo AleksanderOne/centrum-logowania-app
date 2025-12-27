@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
 import { projects, users, authorizationCodes, projectSessions } from '@/lib/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
+import {
+  checkRateLimit,
+  generateRateLimitKey,
+  getClientIp,
+  RATE_LIMIT_CONFIGS,
+  logSuccess,
+  logFailure,
+  extractRequestInfo,
+  checkProjectAccess,
+} from '@/lib/security';
 
 /**
  * OAuth2 Token Exchange Endpoint
@@ -21,11 +31,42 @@ import { eq, and, isNull } from 'drizzle-orm';
  *   { "error": "message" }
  */
 export async function POST(req: NextRequest) {
+  const { ipAddress, userAgent } = extractRequestInfo(req);
+
   try {
+    // 0. Rate Limiting
+    const rateLimitKey = generateRateLimitKey(getClientIp(req), 'api/v1/token');
+    const rateLimitResult = await checkRateLimit(rateLimitKey, RATE_LIMIT_CONFIGS.tokenExchange);
+
+    if (!rateLimitResult.allowed) {
+      await logFailure('rate_limited', {
+        ipAddress,
+        userAgent,
+        metadata: { endpoint: 'api/v1/token', retryAfterMs: rateLimitResult.retryAfterMs },
+      });
+
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.retryAfterMs || 60000) / 1000)),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimitResult.resetAt.toISOString(),
+          },
+        }
+      );
+    }
+
     // 1. Walidacja API Key
     const apiKey = req.headers.get('x-api-key');
 
     if (!apiKey) {
+      await logFailure('token_exchange', {
+        ipAddress,
+        userAgent,
+        metadata: { reason: 'missing_api_key' },
+      });
       return NextResponse.json({ error: 'Missing API Key' }, { status: 401 });
     }
 
@@ -34,6 +75,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (!project) {
+      await logFailure('token_exchange', {
+        ipAddress,
+        userAgent,
+        metadata: { reason: 'invalid_api_key' },
+      });
       return NextResponse.json({ error: 'Invalid API Key' }, { status: 403 });
     }
 
@@ -83,16 +129,33 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
+      await logFailure('token_exchange', {
+        projectId: project.id,
+        ipAddress,
+        userAgent,
+        metadata: { reason: 'user_not_found', userId: authCode.userId },
+      });
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // 7.5. Zapis sesji w projekcie (dla monitoringu)
-    const userAgent = req.headers.get('user-agent') || 'Unknown';
-    const forwarded = req.headers.get('x-forwarded-for');
-    const ipAddress = forwarded
-      ? forwarded.split(',')[0]
-      : req.headers.get('x-real-ip') || 'Unknown';
+    // 7.1. Sprawdzenie izolacji danych - czy użytkownik ma dostęp do projektu
+    const accessResult = await checkProjectAccess(user.id, project.id);
 
+    if (!accessResult.allowed) {
+      await logFailure('access_denied', {
+        userId: user.id,
+        projectId: project.id,
+        ipAddress,
+        userAgent,
+        metadata: { reason: accessResult.reason },
+      });
+      return NextResponse.json(
+        { error: 'Access denied. User is not authorized for this project.' },
+        { status: 403 }
+      );
+    }
+
+    // 7.5. Zapis sesji w projekcie (dla monitoringu)
     // Aktualizuj istniejącą sesję lub utwórz nową
     const existingSession = await db.query.projectSessions.findFirst({
       where: and(eq(projectSessions.userId, user.id), eq(projectSessions.projectId, project.id)),
@@ -119,23 +182,49 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 8. Sukces - zwracamy dane użytkownika wraz z tokenVersion (dla Kill Switch)
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        image: user.image,
-        role: user.role,
-        tokenVersion: user.tokenVersion || 1, // Wersja tokenu dla Kill Switch
-      },
-      project: {
-        id: project.id,
-        name: project.name,
+    // 8. Logowanie sukcesu z informacją o stronie docelowej
+    await logSuccess('token_exchange', {
+      userId: user.id,
+      projectId: project.id,
+      ipAddress,
+      userAgent,
+      metadata: {
+        redirectUri: authCode.redirectUri,
+        projectName: project.name,
+        userEmail: user.email,
       },
     });
+
+    // 9. Sukces - zwracamy dane użytkownika wraz z tokenVersion (dla Kill Switch)
+    return NextResponse.json(
+      {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          role: user.role,
+          tokenVersion: user.tokenVersion || 1, // Wersja tokenu dla Kill Switch
+        },
+        project: {
+          id: project.id,
+          name: project.name,
+        },
+      },
+      {
+        headers: {
+          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+          'X-RateLimit-Reset': rateLimitResult.resetAt.toISOString(),
+        },
+      }
+    );
   } catch (error) {
     console.error('Token exchange error:', error);
+    await logFailure('token_exchange', {
+      ipAddress,
+      userAgent,
+      metadata: { reason: 'internal_error', error: String(error) },
+    });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

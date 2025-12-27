@@ -67,6 +67,7 @@ export const projects = mySchema.table('project', {
   description: text('description'),
   ownerId: uuid('ownerId').references(() => users.id), // Właściciel projektu (admin w tym systemie)
   apiKey: text('api_key').unique(), // Klucz API dla projektu do komunikacji z backendem tego systemu
+  isPublic: text('is_public').default('true'), // 'true' = każdy może się logować, 'false' = tylko zaproszeni (project_users)
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
@@ -108,4 +109,48 @@ export const projectSessions = mySchema.table('project_session', {
   ipAddress: text('ip_address'), // Adres IP (dla diagnostyki)
   lastSeenAt: timestamp('last_seen_at', { mode: 'date' }).defaultNow(), // Ostatnia aktywność
   createdAt: timestamp('created_at').defaultNow(), // Kiedy sesja powstała
+});
+
+// --- Izolacja Danych (Security) ---
+// Tabela łącząca użytkowników z projektami do których mają dostęp.
+// Jeśli projekt jest "publiczny" (isPublic=true w projects), ta tabela nie jest sprawdzana.
+// Dla projektów prywatnych tylko użytkownicy w tej tabeli mogą się logować.
+
+export const projectUsers = mySchema.table('project_user', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  projectId: uuid('project_id')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  role: text('role').default('member'), // member | admin (w kontekście projektu)
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// --- Audyt Logów (Security) ---
+// Historia zdarzeń związanych z uwierzytelnianiem dla celów audytu.
+
+export const auditLogs = mySchema.table('audit_log', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }), // Może być null jeśli user usunięty
+  projectId: uuid('project_id').references(() => projects.id, { onDelete: 'set null' }), // Może być null dla zdarzeń globalnych
+  action: text('action').notNull(), // np. 'login', 'logout', 'token_exchange', 'session_verify', 'access_denied'
+  status: text('status').notNull(), // 'success' | 'failure'
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  metadata: text('metadata'), // JSON z dodatkowymi danymi (np. reason, error)
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// --- Rate Limiting (Security) ---
+// Tabela do śledzenia prób dostępu dla ochrony przed brute force.
+// Używana do limitowania requestów per IP/endpoint.
+
+export const rateLimitEntries = mySchema.table('rate_limit_entry', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  key: text('key').notNull(), // np. "ip:192.168.1.1:api/v1/token" lub "user:uuid:login"
+  count: integer('count').default(1),
+  windowStart: timestamp('window_start', { mode: 'date' }).defaultNow(),
+  expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
 });

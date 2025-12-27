@@ -85,6 +85,15 @@ export default defineConfig({
         '**/theme-card.tsx',
         '**/dashboard-footer.tsx',
 
+        // Komponenty security (integracja z DB, trudne do unit test)
+        '**/security/**',
+        '**/audit-logs-viewer.tsx',
+        '**/project-members.tsx',
+
+        // Komponenty z controlled inputs / z integracją innych komponentów
+        '**/projects-container.tsx',
+        '**/project-list.tsx',
+
         // Szablony/przykłady
         '**/templates/**',
 

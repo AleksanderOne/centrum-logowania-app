@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Key, Globe, Trash2, Copy, Check } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Key, Globe, Trash2, Copy, Check, Users, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteProject } from '@/actions/project';
 import { useTransition, useState } from 'react';
@@ -18,8 +19,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { IntegrationTester } from './integration-tester';
 import { SessionsMonitor } from './sessions-monitor';
+import { ProjectMembers } from './project-members';
 
 interface Project {
   id: string;
@@ -27,6 +36,7 @@ interface Project {
   slug: string;
   domain: string | null;
   apiKey: string | null;
+  isPublic: string | null;
   createdAt: Date | null;
 }
 
@@ -62,9 +72,17 @@ const CopyButton = ({ text, label }: { text: string; label: string }) => {
   );
 };
 
-export const ProjectList = ({ projects, totalCount }: ProjectListProps) => {
+export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectListProps) => {
   const [isPending, startTransition] = useTransition();
+  const [projects, setProjects] = useState(initialProjects);
   const router = useRouter();
+
+  // Aktualizacja stanu projektu przy zmianie widoczności
+  const handleVisibilityChange = (projectId: string, isPublic: boolean) => {
+    setProjects((prev) =>
+      prev.map((p) => (p.id === projectId ? { ...p, isPublic: isPublic ? 'true' : 'false' } : p))
+    );
+  };
 
   const handleDelete = (id: string) => {
     startTransition(() => {
@@ -101,7 +119,25 @@ export const ProjectList = ({ projects, totalCount }: ProjectListProps) => {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle className="text-xl">{project.name}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-xl">{project.name}</CardTitle>
+                  <Badge
+                    variant={project.isPublic === 'true' ? 'default' : 'secondary'}
+                    className="text-xs"
+                  >
+                    {project.isPublic === 'true' ? (
+                      <>
+                        <Globe className="w-3 h-3 mr-1" />
+                        Publiczny
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-3 h-3 mr-1" />
+                        Prywatny
+                      </>
+                    )}
+                  </Badge>
+                </div>
                 <CardDescription className="flex items-center gap-1 mt-1">
                   <Globe className="w-3 h-3" />
                   {project.domain || 'Brak domeny'}
@@ -168,10 +204,31 @@ export const ProjectList = ({ projects, totalCount }: ProjectListProps) => {
               </div>
             </div>
 
-            {/* Przyciski testowania i monitoringu */}
-            <div className="flex gap-2 pt-2 border-t border-dashed">
+            {/* Przyciski testowania, monitoringu i członków */}
+            <div className="flex gap-2 pt-2 border-t border-dashed flex-wrap">
               <IntegrationTester projectId={project.id} projectName={project.name} />
               <SessionsMonitor projectId={project.id} projectName={project.name} />
+
+              {/* Zarządzanie członkami */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <Users className="w-4 h-4" />
+                    <span className="hidden sm:inline">Członkowie</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Zarządzanie dostępem</DialogTitle>
+                  </DialogHeader>
+                  <ProjectMembers
+                    projectId={project.id}
+                    projectName={project.name}
+                    isPublic={project.isPublic === 'true'}
+                    onVisibilityChange={(isPublic) => handleVisibilityChange(project.id, isPublic)}
+                  />
+                </DialogContent>
+              </Dialog>
             </div>
           </CardContent>
         </Card>

@@ -1,6 +1,6 @@
 # SSO Integration Template
 
-Ten folder zawiera wszystkie pliki potrzebne do integracji z Centrum Logowania.
+Ten folder zawiera wszystkie pliki potrzebne do integracji aplikacji Next.js z Centrum Logowania.
 
 ## Szybki start (5 kroków)
 
@@ -17,23 +17,29 @@ cp src/templates/sso-integration/middleware.ts YOUR_APP/
 
 ```env
 # .env.local
-SSO_CENTER_URL=https://centrum-logowania-app-y7gt.vercel.app
-SSO_CLIENT_ID=twoj-projekt-slug
-SSO_API_KEY=twoj_api_key_z_dashboardu
 
-# Dla client-side (strona logowania)
-NEXT_PUBLIC_SSO_CENTER_URL=https://centrum-logowania-app-y7gt.vercel.app
+# URL Centrum Logowania
+# - Lokalnie: http://localhost:3000
+# - Produkcja: https://auth.twoja-domena.pl
+SSO_CENTER_URL=http://localhost:3000
+NEXT_PUBLIC_SSO_CENTER_URL=http://localhost:3000
+
+# Client ID (slug projektu z dashboardu)
+SSO_CLIENT_ID=twoj-projekt-slug
 NEXT_PUBLIC_SSO_CLIENT_ID=twoj-projekt-slug
+
+# API Key z dashboardu (POUFNE - tylko server-side!)
+SSO_API_KEY=twoj_api_key_z_dashboardu
 ```
 
 ### 3. Utwórz projekt w Centrum Logowania
 
-1. Zaloguj się do [Centrum Logowania](https://centrum-logowania-app-y7gt.vercel.app)
+1. Zaloguj się do Centrum Logowania
 2. Przejdź do Dashboard
 3. Stwórz nowy projekt (np. "moja-aplikacja")
 4. Skopiuj **Client ID** (slug) i **API Key**
 
-### 4. Dodaj tabelę users do swojej bazy
+### 4. Dodaj tabelę users do swojej bazy (opcjonalnie)
 
 ```sql
 CREATE TABLE users (
@@ -89,6 +95,35 @@ middleware.ts               # Ochrona tras (Edge Runtime)
 
 ---
 
+## Konfiguracja URL
+
+### Dla aplikacji Next.js (ten template)
+
+Używaj zmiennych środowiskowych - pozwala to na różne wartości dla dev/staging/prod:
+
+```env
+SSO_CENTER_URL=http://localhost:3000        # dev
+SSO_CENTER_URL=https://auth.example.com     # prod
+```
+
+### Dla prostych stron HTML (SDK)
+
+SDK (`/sdk/auth.js`) automatycznie wykrywa URL centrum z którego jest ładowany:
+
+```html
+<!-- URL wykryty automatycznie z src -->
+<script src="http://localhost:3000/sdk/auth.js"></script>
+
+<script>
+  CentrumLogowania.protect({
+    clientId: 'moj-projekt', // tylko clientId wymagany!
+    appId: 'my-app',
+  });
+</script>
+```
+
+---
+
 ## Dostosowanie
 
 ### Zmiana chronionych tras
@@ -122,11 +157,12 @@ import { logout } from '@/app/actions/auth-actions';
 
 ## API Centrum Logowania
 
-| Endpoint                      | Opis                             |
-| ----------------------------- | -------------------------------- |
-| `GET /authorize`              | Redirect do logowania            |
-| `POST /api/v1/token`          | Wymiana kodu na dane użytkownika |
-| `POST /api/v1/session/verify` | Weryfikacja Kill Switch          |
+| Endpoint                      | Opis                                              |
+| ----------------------------- | ------------------------------------------------- |
+| `GET /authorize`              | Redirect do logowania                             |
+| `POST /api/v1/token`          | Wymiana kodu na dane użytkownika (wymaga API Key) |
+| `POST /api/v1/public/token`   | Wymiana kodu (bez API Key, dla frontend SDK)      |
+| `POST /api/v1/session/verify` | Weryfikacja Kill Switch                           |
 
 ---
 
@@ -134,15 +170,21 @@ import { logout } from '@/app/actions/auth-actions';
 
 ### Błąd "Invalid API Key"
 
-- Sprawdź czy SSO_API_KEY jest poprawny
+- Sprawdź czy `SSO_API_KEY` jest poprawny
 - Sprawdź czy projekt istnieje w centrum
 
 ### Błąd "Invalid or expired code"
 
-- Kod autoryzacyjny jest jednorazowy
-- Sprawdź czy redirect_uri się zgadza
+- Kod autoryzacyjny jest jednorazowy i wygasa po 5 minutach
+- Sprawdź czy `redirect_uri` się zgadza (musi być identyczny przy autoryzacji i wymianie kodu)
 
 ### Użytkownik nie widzi sesji
 
 - Sprawdź ciasteczko `sso-session` w DevTools
 - Sprawdź czy `auth()` jest wywoływane po stronie serwera
+
+### Różne porty/domeny między środowiskami
+
+- Upewnij się, że zmienne `SSO_CENTER_URL` i `NEXT_PUBLIC_SSO_CENTER_URL` mają poprawne wartości dla każdego środowiska
+- W `.env.local` - wartości dla dev
+- W Vercel/produkcji - ustaw przez panel Environment Variables

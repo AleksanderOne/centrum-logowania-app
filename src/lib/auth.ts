@@ -4,6 +4,7 @@ import { db } from '@/lib/db/drizzle';
 import { users, accounts, sessions, verificationTokens } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import authConfig from '@/lib/auth.config';
+import { logSuccess, logFailure } from '@/lib/security';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -22,9 +23,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       // Tylko Google logowanie
-      if (account?.provider !== 'google') return false;
+      if (account?.provider !== 'google') {
+        await logFailure('login', {
+          metadata: { reason: 'invalid_provider', provider: account?.provider },
+        });
+        return false;
+      }
 
-      if (!user.email) return false;
+      if (!user.email) {
+        await logFailure('login', {
+          metadata: { reason: 'missing_email' },
+        });
+        return false;
+      }
 
       // Sprawdź czy użytkownik istnieje w bazie
       const dbUser = await db.query.users.findFirst({
@@ -32,7 +43,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
 
       // Jeśli nie istnieje -> zablokuj logowanie (brak rejestracji)
-      return !!dbUser;
+      if (!dbUser) {
+        await logFailure('login', {
+          metadata: { reason: 'user_not_registered', email: user.email },
+        });
+        return false;
+      }
+
+      // Logowanie sukcesu
+      await logSuccess('login', {
+        userId: dbUser.id,
+        metadata: { email: user.email, provider: 'google' },
+      });
+
+      return true;
     },
     async session({ session, token }) {
       if (token.sub && session.user) {

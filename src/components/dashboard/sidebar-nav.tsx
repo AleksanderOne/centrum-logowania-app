@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, User, ShieldCheck } from 'lucide-react';
+import { LayoutGrid, User, ShieldCheck, History } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -24,6 +24,11 @@ export function SidebarNav({ className, user, ...props }: SidebarNavProps) {
       title: 'Projekty',
       href: '/dashboard',
       icon: LayoutGrid,
+    },
+    {
+      title: 'Logi Audytu',
+      href: '/dashboard/audit',
+      icon: History,
     },
     {
       title: 'Użytkownik',

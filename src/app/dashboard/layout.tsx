@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { DashboardFooter } from '@/components/dashboard/dashboard-footer';
 import Link from 'next/link';
-import { LayoutGrid, User } from 'lucide-react';
+import { LayoutGrid, User, History } from 'lucide-react';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -26,20 +26,27 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Link href="/dashboard" className="font-bold text-lg flex items-center gap-2">
             <span className="text-primary">Centrum</span>
           </Link>
-          <nav className="flex gap-4">
+          <nav className="flex gap-3">
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+              className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors"
             >
               <LayoutGrid className="w-4 h-4" suppressHydrationWarning />
-              Projekty
+              <span className="hidden xs:inline">Projekty</span>
+            </Link>
+            <Link
+              href="/dashboard/audit"
+              className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors"
+            >
+              <History className="w-4 h-4" suppressHydrationWarning />
+              <span className="hidden xs:inline">Logi</span>
             </Link>
             <Link
               href="/dashboard/user"
-              className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+              className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors"
             >
               <User className="w-4 h-4" suppressHydrationWarning />
-              Profil
+              <span className="hidden xs:inline">Profil</span>
             </Link>
           </nav>
         </div>

@@ -40,9 +40,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Test artifacts
+# Test artifacts - Playwright E2E
 playwright-report/
 test-results/
+blob-report/
+playwright/.cache/
+
+# Pliki tymczasowe testów E2E
+tests/.test-port
+tests/.server-info.json
 
 # Mutation testing (Stryker)
 reports/

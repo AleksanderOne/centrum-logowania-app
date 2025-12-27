@@ -1,121 +1,223 @@
 /**
- * Centrum Logowania SDK (Simple & Powerful)
+ * Centrum Logowania SDK v2.1 (OAuth2 Authorization Code Flow)
  *
  * Umożliwia zabezpieczenie aplikacji (lub jej części) jedną metodą.
  * Działa jako "Wrapper" - albo pokazuje treść aplikacji (jak użytkownik zalogowany),
  * albo pokazuje ekran zachęcający do logowania.
+ *
+ * AUTOMATYCZNE WYKRYWANIE URL:
+ * SDK automatycznie wykrywa adres Centrum Logowania na podstawie:
+ * 1. Atrybutu data-auth-url na tagu <script>
+ * 2. URL skąd SDK jest ładowany (jeśli z /sdk/auth.js)
+ * 3. Parametru authUrl w konfiguracji (fallback)
+ *
+ * FLOW:
+ * 1. Użytkownik klika "Zaloguj się"
+ * 2. Przekierowanie do /authorize z client_id i redirect_uri
+ * 3. Po zalogowaniu, przekierowanie z powrotem z ?code=XXX
+ * 4. SDK wymienia kod na dane użytkownika przez /api/v1/public/token
+ * 5. Dane użytkownika zapisywane w localStorage
  */
+
+// Automatyczne wykrywanie URL serwera auth
+const _detectAuthUrl = () => {
+  // 1. Sprawdź atrybut data-auth-url na tagu script
+  const currentScript = document.currentScript;
+  if (currentScript) {
+    const dataUrl = currentScript.getAttribute('data-auth-url');
+    if (dataUrl) {
+      return dataUrl.replace(/\/$/, ''); // Usuń trailing slash
+    }
+
+    // 2. Wykryj z URL skryptu (np. http://localhost:3000/sdk/auth.js)
+    const scriptSrc = currentScript.src;
+    if (scriptSrc && scriptSrc.includes('/sdk/auth.js')) {
+      const url = new URL(scriptSrc);
+      return `${url.protocol}//${url.host}`;
+    }
+  }
+
+  // 3. Fallback - szukaj wszystkich tagów script
+  const scripts = document.querySelectorAll('script[src*="/sdk/auth.js"]');
+  for (const script of scripts) {
+    const dataUrl = script.getAttribute('data-auth-url');
+    if (dataUrl) return dataUrl.replace(/\/$/, '');
+
+    try {
+      const url = new URL(script.src);
+      return `${url.protocol}//${url.host}`;
+    } catch {
+      // Ignoruj błędy parsowania
+    }
+  }
+
+  // 4. Ostateczny fallback - ten sam origin co strona
+  console.warn(
+    '[CentrumLogowania] Nie wykryto URL serwera auth. Używam bieżącego origin:',
+    window.location.origin
+  );
+  return window.location.origin;
+};
+
+// Wykryj URL przy ładowaniu SDK
+const _AUTO_AUTH_URL = _detectAuthUrl();
+console.log('[CentrumLogowania] Auto-detected auth URL:', _AUTO_AUTH_URL);
+
 class CentrumLogowania {
   /**
    * Główna metoda inicjalizująca.
    * @param {Object} config Konfiguracja SDK
-   * @param {string} config.clientId ID klienta (slug)
+   * @param {string} config.clientId ID klienta (slug projektu)
    * @param {string} config.appId ID elementu HTML, który zawiera główną aplikację (chronioną).
-   * @param {string} [config.authUrl] Adres serwera logowania (domyślnie http://localhost:3002)
+   * @param {string} [config.authUrl] Adres serwera logowania (automatycznie wykrywany jeśli nie podano)
    * @param {function} [config.onLogin] Callback wywoływany po zalogowaniu (otrzymuje obiekt user)
    * @param {Object} [config.style] Opcjonalne style dla wygenerowanego przycisku logowania
    */
-  static protect({
-    clientId,
-    appId,
-    authUrl = 'http://localhost:3002',
-    onLogin,
-    style: _style = {},
-  }) {
+  static protect({ clientId, appId, authUrl, onLogin, style: _style = {} }) {
     const appElement = document.getElementById(appId);
     if (!appElement) {
-      console.error(`Błąd SDK: Nie znaleziono elementu o ID: ${appId}`);
+      console.error(`[CentrumLogowania] Nie znaleziono elementu o ID: ${appId}`);
       return;
     }
 
-    const sdk = new CentrumLogowaniaInternal(clientId, authUrl);
+    // Użyj automatycznie wykrytego URL jeśli nie podano
+    const finalAuthUrl = authUrl || _AUTO_AUTH_URL;
+    console.log('[CentrumLogowania] Using auth URL:', finalAuthUrl);
 
-    // 1. Sprawdź czy wracamy z logowania (URL token)
-    sdk.handleCallback();
+    const sdk = new CentrumLogowaniaInternal(clientId, finalAuthUrl);
 
-    // 2. Sprawdź status
-    if (sdk.isAuthenticated()) {
-      // ZALOGOWANY
-      console.warn('SDK: Użytkownik zalogowany.');
-
-      // Pokaż aplikację
-      appElement.classList.remove('hidden');
-      appElement.style.display = ''; // Reset display if hidden by inline style
-
-      // Wstrzyknij dane użytkownika jeśli zdefiniowano callback
-      const user = sdk.getUser();
-      if (onLogin && user) {
-        onLogin(user);
+    // 1. Obsłuż callback z kodem autoryzacyjnym
+    sdk.handleCallback().then((handled) => {
+      if (handled) {
+        // Kod został wymieniony, przeładuj stronę
+        return;
       }
 
-      // Obsługa wylogowania (szukamy przycisków z atrybutem data-logout)
-      sdk.attachLogoutHandlers();
-    } else {
-      // NIEZALOGOWANY
-      console.warn('SDK: Użytkownik niezalogowany.');
+      // 2. Sprawdź status
+      if (sdk.isAuthenticated()) {
+        // ZALOGOWANY
+        console.log('[CentrumLogowania] Użytkownik zalogowany.');
 
-      // Ukryj aplikację
-      appElement.classList.add('hidden');
-      appElement.style.display = 'none';
+        // Pokaż aplikację
+        appElement.classList.remove('hidden');
+        appElement.style.display = '';
 
-      // Stwórz i pokaż ekran logowania (Placeholder)
-      sdk.renderLoginScreen(appElement.parentNode, appId);
-    }
+        // Wstrzyknij dane użytkownika jeśli zdefiniowano callback
+        const user = sdk.getUser();
+        if (onLogin && user) {
+          onLogin(user);
+        }
+
+        // Obsługa wylogowania
+        sdk.attachLogoutHandlers();
+      } else {
+        // NIEZALOGOWANY
+        console.log('[CentrumLogowania] Użytkownik niezalogowany.');
+
+        // Ukryj aplikację
+        appElement.classList.add('hidden');
+        appElement.style.display = 'none';
+
+        // Stwórz i pokaż ekran logowania
+        sdk.renderLoginScreen(appElement.parentNode, appId);
+      }
+    });
 
     return sdk;
+  }
+
+  /**
+   * Zwraca automatycznie wykryty URL serwera auth
+   */
+  static getAuthUrl() {
+    return _AUTO_AUTH_URL;
   }
 }
 
 /**
- * Klasa wewnętrzna (Internal) - nie musi być wywoływana bezpośrednio przez użytkownika.
+ * Klasa wewnętrzna - obsługuje logikę OAuth2
  */
 class CentrumLogowaniaInternal {
   constructor(clientId, authUrl) {
     this.clientId = clientId;
     this.authUrl = authUrl;
     this.storageKey = `auth_${clientId}`;
-    this.redirectUri = window.location.href.split('?')[0];
+    this.redirectUri = window.location.href.split('?')[0].split('#')[0];
   }
 
-  handleCallback() {
+  /**
+   * Obsługuje callback z kodem autoryzacyjnym
+   * @returns {Promise<boolean>} true jeśli kod został obsłużony
+   */
+  async handleCallback() {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    if (token) {
-      localStorage.setItem(this.storageKey, token);
+    const code = urlParams.get('code');
+
+    if (!code) {
+      return false;
+    }
+
+    console.log('[CentrumLogowania] Otrzymano kod autoryzacyjny, wymieniam na dane użytkownika...');
+
+    try {
+      // Wymień kod na dane użytkownika przez publiczny endpoint
+      const response = await fetch(`${this.authUrl}/api/v1/public/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: code,
+          redirect_uri: this.redirectUri,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('[CentrumLogowania] Błąd wymiany kodu:', error);
+        // Wyczyść URL z kodem
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return false;
+      }
+
+      const data = await response.json();
+      console.log('[CentrumLogowania] Zalogowano pomyślnie:', data.user?.email);
+
+      // Zapisz dane użytkownika
+      localStorage.setItem(this.storageKey, JSON.stringify(data.user));
+
+      // Wyczyść URL z kodem i przeładuj
       window.history.replaceState({}, document.title, window.location.pathname);
+      window.location.reload();
+
+      return true;
+    } catch (error) {
+      console.error('[CentrumLogowania] Błąd podczas wymiany kodu:', error);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return false;
     }
   }
 
   isAuthenticated() {
-    return !!this.getToken();
-  }
-
-  getToken() {
-    return localStorage.getItem(this.storageKey);
+    return !!this.getUser();
   }
 
   getUser() {
-    const token = this.getToken();
-    if (!token) return null;
+    const data = localStorage.getItem(this.storageKey);
+    if (!data) return null;
+
     try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        window
-          .atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      return JSON.parse(jsonPayload);
+      return JSON.parse(data);
     } catch (e) {
-      console.error('SDK: Błąd dekodowania tokena', e);
+      console.error('[CentrumLogowania] Błąd parsowania danych użytkownika:', e);
       return null;
     }
   }
 
   login() {
-    window.location.href = `${this.authUrl}/authorize?client_id=${this.clientId}&redirect_uri=${this.redirectUri}`;
+    const authorizeUrl = `${this.authUrl}/authorize?client_id=${encodeURIComponent(this.clientId)}&redirect_uri=${encodeURIComponent(this.redirectUri)}`;
+    console.log('[CentrumLogowania] Przekierowuję do:', authorizeUrl);
+    window.location.href = authorizeUrl;
   }
 
   logout() {
@@ -130,7 +232,7 @@ class CentrumLogowaniaInternal {
   }
 
   /**
-   * Generuje prosty UI zachęcający do logowania w miejscu gdzie powinna być aplikacja.
+   * Generuje prosty UI zachęcający do logowania
    */
   renderLoginScreen(parentElement, elementIdToInsertBefore) {
     // Sprawdź czy już nie wygenerowaliśmy

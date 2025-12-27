@@ -11,6 +11,7 @@ interface Project {
   slug: string;
   domain: string | null;
   apiKey: string | null;
+  isPublic: string | null;
   createdAt: Date | null;
 }
 

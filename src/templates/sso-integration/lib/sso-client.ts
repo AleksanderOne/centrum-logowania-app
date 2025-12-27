@@ -3,11 +3,11 @@
  *
  * KONFIGURACJA:
  * Ustaw zmienne środowiskowe w .env.local:
- * - SSO_CENTER_URL (np. https://centrum-logowania-app-y7gt.vercel.app)
+ * - SSO_CENTER_URL (np. http://localhost:3000 lub https://auth.twoja-domena.pl)
  * - SSO_CLIENT_ID (slug projektu z dashboardu centrum)
  * - SSO_API_KEY (klucz API z dashboardu centrum)
- * - NEXT_PUBLIC_SSO_CENTER_URL (dla client-side)
- * - NEXT_PUBLIC_SSO_CLIENT_ID (dla client-side)
+ * - NEXT_PUBLIC_SSO_CENTER_URL (dla client-side - ten sam URL co SSO_CENTER_URL)
+ * - NEXT_PUBLIC_SSO_CLIENT_ID (dla client-side - ten sam co SSO_CLIENT_ID)
  */
 
 import { cookies } from 'next/headers';

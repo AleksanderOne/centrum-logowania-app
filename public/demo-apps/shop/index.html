@@ -8,6 +8,9 @@
     <script>
       tailwind.config = { darkMode: 'class' };
     </script>
+    <!-- Wspólna konfiguracja demo -->
+    <script src="../demo-config.js"></script>
+    <!-- SDK Centrum Logowania -->
     <script src="../../sdk/auth.js"></script>
   </head>
 
@@ -47,15 +50,15 @@
       </button>
     </div>
 
-    <!-- Inicjalizacja SDK -->
+    <!-- Inicjalizacja z użyciem wspólnej konfiguracji -->
     <script>
-      // Jedna metoda, która "ogarnia wszystko"
       CentrumLogowania.protect({
-        clientId: 'super-shop-kfm_',
+        clientId: window.DEMO_CONFIG.clientId,
+        authUrl: window.DEMO_CONFIG.authUrl, // undefined = auto-wykrywany
         appId: 'shop-app',
         onLogin: (user) => {
           document.getElementById('user-display').innerHTML = `
-                    <p>ID: ${user.sub}</p>
+                    <p>ID: ${user.id}</p>
                     <p>Email: ${user.email}</p>
                 `;
         },

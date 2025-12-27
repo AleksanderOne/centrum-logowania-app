@@ -23,13 +23,15 @@ function createHealthResponse(
 
 describe('SystemStatus', () => {
   let mockFetch: ReturnType<typeof vi.fn>;
+  const originalFetch = global.fetch;
 
   beforeEach(() => {
     mockFetch = vi.fn();
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as typeof fetch;
   });
 
   afterEach(() => {
+    global.fetch = originalFetch;
     vi.restoreAllMocks();
   });
 

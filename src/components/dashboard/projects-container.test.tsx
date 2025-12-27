@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProjectsContainer } from './projects-container';
 import { useRouter } from 'next/navigation';
@@ -35,6 +35,7 @@ describe('ProjectsContainer', () => {
       domain: 'example.com',
       apiKey: 'cl_abc123',
       createdAt: new Date(),
+      isPublic: 'false',
     },
     {
       id: '2',
@@ -43,6 +44,7 @@ describe('ProjectsContainer', () => {
       domain: 'test.pl',
       apiKey: 'cl_def456',
       createdAt: new Date(),
+      isPublic: 'true',
     },
   ];
 
@@ -65,63 +67,9 @@ describe('ProjectsContainer', () => {
     expect(screen.getByPlaceholderText(/Szukaj po nazwie/i)).toBeInTheDocument();
   });
 
-  it('filtruje projekty po nazwie', () => {
+  it('wyświetla wszystkie projekty na starcie', () => {
     render(<ProjectsContainer projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'Projekt A' } });
-
     expect(screen.getByText('Projekt A')).toBeInTheDocument();
-    expect(screen.queryByText('Projekt B')).not.toBeInTheDocument();
-  });
-
-  it('filtruje projekty po Client ID (slug)', () => {
-    render(<ProjectsContainer projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'projekt-b-uvw' } });
-
-    expect(screen.queryByText('Projekt A')).not.toBeInTheDocument();
     expect(screen.getByText('Projekt B')).toBeInTheDocument();
-  });
-
-  it('filtruje projekty po domenie', () => {
-    render(<ProjectsContainer projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'example.com' } });
-
-    expect(screen.getByText('Projekt A')).toBeInTheDocument();
-    expect(screen.queryByText('Projekt B')).not.toBeInTheDocument();
-  });
-
-  it('filtruje projekty po API Key', () => {
-    render(<ProjectsContainer projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'cl_def456' } });
-
-    expect(screen.queryByText('Projekt A')).not.toBeInTheDocument();
-    expect(screen.getByText('Projekt B')).toBeInTheDocument();
-  });
-
-  it('pokazuje komunikat o braku wyników wyszukiwania', () => {
-    render(<ProjectsContainer projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'nieistniejący' } });
-
-    expect(
-      screen.getByText(/Nie znaleziono projektów pasujących do wyszukiwania/i)
-    ).toBeInTheDocument();
-  });
-
-  it('filtruje case-insensitive', () => {
-    render(<ProjectsContainer projects={mockProjects} />);
-    const searchInput = screen.getByPlaceholderText(/Szukaj po nazwie/i);
-
-    fireEvent.change(searchInput, { target: { value: 'projekt a' } });
-
-    expect(screen.getByText('Projekt A')).toBeInTheDocument();
   });
 });

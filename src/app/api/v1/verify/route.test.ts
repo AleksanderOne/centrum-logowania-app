@@ -22,6 +22,25 @@ vi.mock('next-auth/jwt', () => ({
   decode: vi.fn(),
 }));
 
+// Mockowanie funkcji security - zwracają zawsze sukces w testach
+vi.mock('@/lib/security', () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({
+    allowed: true,
+    remaining: 100,
+    resetAt: new Date(),
+  }),
+  generateRateLimitKey: vi.fn().mockReturnValue('test-key'),
+  getClientIp: vi.fn().mockReturnValue('127.0.0.1'),
+  logSuccess: vi.fn().mockResolvedValue(undefined),
+  logFailure: vi.fn().mockResolvedValue(undefined),
+  extractRequestInfo: vi.fn().mockReturnValue({ ipAddress: '127.0.0.1', userAgent: 'test' }),
+  checkProjectAccess: vi.fn().mockResolvedValue({ allowed: true }),
+  RATE_LIMIT_CONFIGS: {
+    default: { windowMs: 60000, maxRequests: 100 },
+    token_verify: { windowMs: 60000, maxRequests: 100 },
+  },
+}));
+
 describe('API /api/v1/verify', () => {
   beforeEach(() => {
     vi.clearAllMocks();

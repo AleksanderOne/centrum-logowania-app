@@ -36,6 +36,7 @@ describe('ProjectList', () => {
       slug: 'projekt-a-xyz',
       domain: 'example.com',
       apiKey: 'cl_abc123',
+      isPublic: 'true',
       createdAt: new Date(),
     },
     {
@@ -44,6 +45,7 @@ describe('ProjectList', () => {
       slug: 'projekt-b-uvw',
       domain: null,
       apiKey: 'cl_def456',
+      isPublic: 'false',
       createdAt: new Date(),
     },
   ];

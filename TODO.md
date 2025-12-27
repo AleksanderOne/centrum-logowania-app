@@ -36,9 +36,18 @@ Ten dokument śledzi postępy w implementacji centralnego systemu uwierzytelnian
 
 ## 5. Bezpieczeństwo (Security)
 
-- [ ] **Izolacja Danych**: Gwarancja, że user z Projektu A nie zaloguje się do Projektu B (chyba że tak skonfigurujemy).
-- [ ] **Rate Limiting & Brute Force Protection**.
-- [ ] **Audyt Logów**: Historia logowań (kto, kiedy, z jakiego IP).
+- [x] **Izolacja Danych**: Gwarancja, że user z Projektu A nie zaloguje się do Projektu B (chyba że tak skonfigurujemy).
+  - Tabela `project_users` łącząca użytkowników z projektami.
+  - Projekty publiczne (domyślnie) lub prywatne (tylko zaproszeni członkowie).
+  - Weryfikacja dostępu na stronie `/authorize` i w endpointach API.
+- [x] **Rate Limiting & Brute Force Protection**.
+  - Tabela `rate_limit_entries` do śledzenia requestów.
+  - Konfiguracje per endpoint: auth (10/15min), tokenExchange (30/min), sessionVerify (100/min).
+  - Nagłówki HTTP: `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`.
+- [x] **Audyt Logów**: Historia logowań (kto, kiedy, z jakiego IP).
+  - Tabela `audit_logs` z pełną historią zdarzeń.
+  - Logowanie: login, logout, token_exchange, session_verify, access_denied, rate_limited, kill_switch.
+  - Komponent `AuditLogsViewer` do przeglądania logów w dashboardzie.
 
 ## 6. Testy i Jakość (QA & Testing)
 
