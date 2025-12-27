@@ -40,6 +40,7 @@ export default async function globalSetup() {
       AUTH_SECRET: process.env.AUTH_SECRET || 'test-secret-for-e2e-tests-only',
       NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'test-secret-for-e2e-tests-only',
       AUTH_TRUST_HOST: 'true',
+      DATABASE_URL: process.env.DATABASE_URL,
     },
   });
 
