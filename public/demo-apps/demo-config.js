@@ -13,4 +13,5 @@ window.DEMO_CONFIG = {
   // authUrl: 'http://localhost:3000',
 };
 
+// eslint-disable-next-line no-console
 console.log('[DemoConfig] Załadowano konfigurację:', window.DEMO_CONFIG);

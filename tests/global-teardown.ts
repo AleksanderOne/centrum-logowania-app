@@ -23,6 +23,7 @@ function killProcessOnPort(port: number): void {
 }
 
 export default async function globalTeardown() {
+  // eslint-disable-next-line no-console
   console.log('\n🧹 Sprzątanie po testach...');
 
   if (!fs.existsSync(SERVER_INFO_FILE)) return;
@@ -33,6 +34,7 @@ export default async function globalTeardown() {
     await new Promise((r) => setTimeout(r, 1000));
     killProcessOnPort(info.port);
     fs.unlinkSync(SERVER_INFO_FILE);
+    // eslint-disable-next-line no-console
     console.log(`✅ Serwer zatrzymany (PID: ${info.pid})\n`);
   } catch (e) {
     console.error('⚠️ Błąd podczas sprzątania:', e);

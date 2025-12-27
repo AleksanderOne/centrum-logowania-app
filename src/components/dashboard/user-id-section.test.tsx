@@ -29,7 +29,7 @@ describe('UserIdSection', () => {
   });
 
   it('kopiuje ID do schowka i pokazuje ikonę Check', async () => {
-    const { container } = render(<UserIdSection userId={userId} />);
+    render(<UserIdSection userId={userId} />);
     const button = screen.getByRole('button', { name: /Kopiuj ID użytkownika/i });
 
     // Przed kliknięciem - ikona Copy (bez scale-110)

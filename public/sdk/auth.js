@@ -61,6 +61,7 @@ const _detectAuthUrl = () => {
 
 // Wykryj URL przy ładowaniu SDK
 const _AUTO_AUTH_URL = _detectAuthUrl();
+// eslint-disable-next-line no-console
 console.log('[CentrumLogowania] Auto-detected auth URL:', _AUTO_AUTH_URL);
 
 class CentrumLogowania {
@@ -82,6 +83,7 @@ class CentrumLogowania {
 
     // Użyj automatycznie wykrytego URL jeśli nie podano
     const finalAuthUrl = authUrl || _AUTO_AUTH_URL;
+    // eslint-disable-next-line no-console
     console.log('[CentrumLogowania] Using auth URL:', finalAuthUrl);
 
     const sdk = new CentrumLogowaniaInternal(clientId, finalAuthUrl);
@@ -96,6 +98,7 @@ class CentrumLogowania {
       // 2. Sprawdź status
       if (sdk.isAuthenticated()) {
         // ZALOGOWANY
+        // eslint-disable-next-line no-console
         console.log('[CentrumLogowania] Użytkownik zalogowany.');
 
         // Pokaż aplikację
@@ -112,6 +115,7 @@ class CentrumLogowania {
         sdk.attachLogoutHandlers();
       } else {
         // NIEZALOGOWANY
+        // eslint-disable-next-line no-console
         console.log('[CentrumLogowania] Użytkownik niezalogowany.');
 
         // Ukryj aplikację
@@ -157,6 +161,7 @@ class CentrumLogowaniaInternal {
       return false;
     }
 
+    // eslint-disable-next-line no-console
     console.log('[CentrumLogowania] Otrzymano kod autoryzacyjny, wymieniam na dane użytkownika...');
 
     try {
@@ -181,6 +186,7 @@ class CentrumLogowaniaInternal {
       }
 
       const data = await response.json();
+      // eslint-disable-next-line no-console
       console.log('[CentrumLogowania] Zalogowano pomyślnie:', data.user?.email);
 
       // Zapisz dane użytkownika
@@ -216,6 +222,7 @@ class CentrumLogowaniaInternal {
 
   login() {
     const authorizeUrl = `${this.authUrl}/authorize?client_id=${encodeURIComponent(this.clientId)}&redirect_uri=${encodeURIComponent(this.redirectUri)}`;
+    // eslint-disable-next-line no-console
     console.log('[CentrumLogowania] Przekierowuję do:', authorizeUrl);
     window.location.href = authorizeUrl;
   }

@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { NextResponse } from 'next/server';
 
 // Mockowane funkcje pg
 const mockQuery = vi.fn();

@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
  */
 test.describe('Dashboard', () => {
   test('niezalogowany użytkownik nie widzi dashboardu', async ({ page }) => {
-    const response = await page.goto('/dashboard');
+    await page.goto('/dashboard');
 
     // Middleware powinno przekierować (30x) lub odmówić dostępu
     // Sprawdzamy że nie jesteśmy na /dashboard lub widzimy ekran logowania
@@ -28,7 +28,7 @@ test.describe('Dashboard', () => {
   });
 
   test('strona audit wymaga autoryzacji', async ({ page }) => {
-    const response = await page.goto('/dashboard/audit');
+    await page.goto('/dashboard/audit');
 
     // Sprawdzamy że dostęp jest chroniony
     const url = page.url();
@@ -39,7 +39,7 @@ test.describe('Dashboard', () => {
   });
 
   test('strona user wymaga autoryzacji', async ({ page }) => {
-    const response = await page.goto('/dashboard/user/test-id');
+    await page.goto('/dashboard/user/test-id');
 
     // Sprawdzamy że dostęp jest chroniony
     const url = page.url();

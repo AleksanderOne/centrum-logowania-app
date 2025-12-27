@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
 import { projects, projectSessions } from '@/lib/db/schema';
-import { eq, and, desc, gt } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 
 /**

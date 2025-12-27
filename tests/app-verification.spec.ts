@@ -13,8 +13,7 @@ test.describe('Weryfikacja aplikacji', () => {
     // Sprawdź że serwer odpowiada
     expect(response?.status()).toBe(200);
 
-    // Sprawdź tytuł strony - musi zawierać "Centrum Logowania" lub być pusta (przed załadowaniem)
-    const title = await page.title();
+    // Sprawdź zawartość strony
     const pageContent = await page.content();
 
     // Weryfikacja że to właściwa aplikacja - sprawdź charakterystyczne elementy

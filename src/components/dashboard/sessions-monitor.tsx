@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -112,7 +112,7 @@ export const SessionsMonitor = ({ projectId, projectName }: SessionsMonitorProps
   const [data, setData] = useState<SessionsData | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/v1/project/${projectId}/sessions`);
@@ -125,7 +125,7 @@ export const SessionsMonitor = ({ projectId, projectName }: SessionsMonitorProps
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [projectId]);
 
   const deleteSession = async (sessionId: string) => {
     setDeletingId(sessionId);
@@ -148,7 +148,7 @@ export const SessionsMonitor = ({ projectId, projectName }: SessionsMonitorProps
     if (isOpen) {
       fetchSessions();
     }
-  }, [isOpen, projectId]);
+  }, [isOpen, fetchSessions]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
