@@ -1,3 +1,13 @@
+# [2.2.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.1.0...v2.2.0) (2025-12-27)
+
+
+### Features
+
+* **auth:** dodaj stronę błędów z formularzem kontaktowym ([ecf4aaa](https://github.com/AleksanderOne/centrum-logowania-app/commit/ecf4aaa18913dc3b0cb46ce15635a11b0b5d9f91))
+* **auth:** dodanie pełnej obsługi wylogowania z projektu ([8813bf8](https://github.com/AleksanderOne/centrum-logowania-app/commit/8813bf850afc03d0082a1718219646cd9a34f97c))
+* **security:** implementacja izolacji danych, rate limiting, audit logów i ulepszenia SDK ([2a705fb](https://github.com/AleksanderOne/centrum-logowania-app/commit/2a705fbfa7db33dc6df8e3244b5934291c00b643))
+* **security:** implementacja izolacji danych, rate limiting, audit logów i ulepszenia SDK ([9cf7ab3](https://github.com/AleksanderOne/centrum-logowania-app/commit/9cf7ab3c23b0e1759d526ba2a5529a964acbcde4))
+
 # [2.1.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.0.0...v2.1.0) (2025-12-26)
 
 
