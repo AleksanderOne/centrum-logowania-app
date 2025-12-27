@@ -15,11 +15,22 @@ vi.mock('sonner', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+// Wycisz console.error w testach (błędy sieciowe są oczekiwane)
+const originalConsoleError = console.error;
+
 describe('IntegrationTester', () => {
   const defaultProps = {
     projectId: 'test-project-id',
     projectName: 'Test Project',
   };
+
+  beforeEach(() => {
+    console.error = vi.fn();
+  });
+
+  afterEach(() => {
+    console.error = originalConsoleError;
+  });
 
   const mockSuccessResults = {
     results: {
