@@ -322,6 +322,94 @@ Pobiera logi audytu (wymaga zalogowanego użytkownika).
 - `rate_limited` - Przekroczony limit requestów
 - `kill_switch` - Unieważnienie sesji przez admina
 - `project_access` - Próba/sukces dostępu do projektu
+- `setup_code` - Operacje na setup codes (generowanie, claim, usuwanie)
+
+---
+
+## Endpointy Setup Codes
+
+### POST /api/v1/project/[projectId]/setup-code
+
+Generuje nowy setup code dla projektu (tylko właściciel).
+
+**Response:**
+
+```json
+{
+  "id": "uuid",
+  "code": "setup_abc123...",
+  "expiresAt": "2024-01-02T00:00:00.000Z",
+  "createdAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+---
+
+### GET /api/v1/project/[projectId]/setup-code
+
+Pobiera listę aktywnych (nieużytych, niewygasłych) setup codes.
+
+**Response:**
+
+```json
+{
+  "codes": [
+    {
+      "id": "uuid",
+      "code": "setup_abc123...",
+      "expiresAt": "2024-01-02T00:00:00.000Z",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### DELETE /api/v1/project/[projectId]/setup-code/[codeId]
+
+Usuwa (unieważnia) setup code.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Setup code został usunięty"
+}
+```
+
+---
+
+### POST /api/v1/projects/claim
+
+Używa setup code do pobrania konfiguracji projektu. **Nie wymaga autentykacji** - sam kod jest jednorazowym tokenem.
+
+**Request:**
+
+```json
+{
+  "setupCode": "setup_abc123..."
+}
+```
+
+**Response (sukces):**
+
+```json
+{
+  "apiKey": "cl_XXXXXXXX",
+  "slug": "moj-projekt",
+  "centerUrl": "https://centrum-logowania.app",
+  "projectName": "Mój Projekt",
+  "projectId": "uuid"
+}
+```
+
+**Response (błędy):**
+
+- `400` - Brak kodu lub nieprawidłowy format
+- `404` - Kod nie istnieje
+- `410` - Kod już użyty lub wygasł
 
 ---
 

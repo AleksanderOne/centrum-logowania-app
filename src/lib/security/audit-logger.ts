@@ -22,7 +22,8 @@ export type AuditAction =
   | 'access_denied' // Odmowa dostępu (izolacja danych)
   | 'rate_limited' // Przekroczony limit requestów
   | 'kill_switch' // Unieważnienie sesji przez admina
-  | 'project_access'; // Próba dostępu do projektu
+  | 'project_access' // Próba dostępu do projektu
+  | 'setup_code'; // Operacje na setup codes (generowanie, claim, usuwanie)
 
 export type AuditStatus = 'success' | 'failure';
 

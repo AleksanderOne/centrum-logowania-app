@@ -29,6 +29,7 @@ import {
 import { IntegrationTester } from './integration-tester';
 import { SessionsMonitor } from './sessions-monitor';
 import { ProjectMembers } from './project-members';
+import { SetupCodeManager } from './setup-code-manager';
 
 interface Project {
   id: string;
@@ -208,6 +209,7 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
             <div className="flex gap-2 pt-2 border-t border-dashed flex-wrap">
               <IntegrationTester projectId={project.id} projectName={project.name} />
               <SessionsMonitor projectId={project.id} projectName={project.name} />
+              <SetupCodeManager projectId={project.id} projectName={project.name} />
 
               {/* Zarządzanie członkami */}
               <Dialog>

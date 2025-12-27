@@ -154,3 +154,19 @@ export const rateLimitEntries = mySchema.table('rate_limit_entry', {
   windowStart: timestamp('window_start', { mode: 'date' }).defaultNow(),
   expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
 });
+
+// --- Setup Codes (dla łatwej integracji nowych aplikacji) ---
+// Jednorazowe kody umożliwiające nowym aplikacjom pobranie konfiguracji projektu.
+// Kod jest ważny przez 24h i może być użyty tylko raz.
+
+export const projectSetupCodes = mySchema.table('project_setup_code', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  projectId: uuid('project_id')
+    .notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  code: text('code').notNull().unique(), // np. "setup_abc123xyz..."
+  expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+  usedAt: timestamp('used_at', { mode: 'date' }), // null = nieużyty
+  usedByIp: text('used_by_ip'), // IP które użyło kodu (dla audytu)
+  createdAt: timestamp('created_at').defaultNow(),
+});
