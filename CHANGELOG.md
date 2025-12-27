@@ -1,3 +1,16 @@
+# [2.3.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.2.0...v2.3.0) (2025-12-27)
+
+
+### Bug Fixes
+
+* **audit:** dodaj pełne dane do logów wylogowania ([ca2b6f0](https://github.com/AleksanderOne/centrum-logowania-app/commit/ca2b6f029d15d913092edc7fc0b694e43c16266c))
+
+
+### Features
+
+* **audit:** dodaj kasowanie logów audytu ([24242af](https://github.com/AleksanderOne/centrum-logowania-app/commit/24242af78302d361158c7374cfd88cce058f750c))
+* **auth:** obsługa callbackUrl przy logowaniu ([c9a1472](https://github.com/AleksanderOne/centrum-logowania-app/commit/c9a1472f34388d1e94183f0be1d03d6b7191f3bc))
+
 # [2.2.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.1.0...v2.2.0) (2025-12-27)
 
 
