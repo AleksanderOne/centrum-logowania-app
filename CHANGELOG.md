@@ -1,3 +1,10 @@
+## [2.3.1](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.3.0...v2.3.1) (2025-12-27)
+
+
+### Bug Fixes
+
+* naprawa przekierowań callbackUrl i obsługa localhost w API ([a6239a8](https://github.com/AleksanderOne/centrum-logowania-app/commit/a6239a801bef73abd755f564fbbce286f8b0d5dd))
+
 # [2.3.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.2.0...v2.3.0) (2025-12-27)
 
 

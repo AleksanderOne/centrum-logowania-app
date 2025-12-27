@@ -66,9 +66,12 @@ export async function POST(
     if (project.domain) {
       try {
         const startTime = Date.now();
-        const domainUrl = project.domain.startsWith('http')
-          ? project.domain
-          : `https://${project.domain}`;
+        let domainUrl = project.domain;
+        if (!domainUrl.startsWith('http')) {
+          domainUrl = project.domain.includes('localhost')
+            ? `http://${project.domain}`
+            : `https://${project.domain}`;
+        }
 
         // Próba połączenia z domeną
         const response = await fetch(domainUrl, {

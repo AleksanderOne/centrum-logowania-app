@@ -31,7 +31,18 @@ import { useSearchParams } from 'next/navigation';
 export const LoginForm = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  let callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+
+  // Security FIX: NextAuth odrzuca absolutne URL jeśli nie pasują idealnie do baseUrl
+  // Konwertujemy na relatywny, jeśli to możliwe, aby upewnić się, że redirect zadziała
+  if (callbackUrl.startsWith('http')) {
+    try {
+      const url = new URL(callbackUrl);
+      callbackUrl = url.pathname + url.search;
+    } catch {
+      // Jeśli nie udało się sparsować, zostawiamy jak jest (lub fallback)
+    }
+  }
 
   // Logowanie przez Google
   const handleGoogleLogin = () => {
