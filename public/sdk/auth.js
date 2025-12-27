@@ -228,6 +228,27 @@ class CentrumLogowaniaInternal {
   }
 
   logout() {
+    const user = this.getUser();
+
+    // Usuń sesję z serwera używając sendBeacon (niezawodne przy zamykaniu strony)
+    if (user?.id) {
+      const logoutData = JSON.stringify({
+        userId: user.id,
+        projectSlug: this.clientId,
+      });
+
+      // sendBeacon jest zaprojektowany do wysyłania danych przy zamykaniu/reloadzie
+      const beaconSent = navigator.sendBeacon(
+        `${this.authUrl}/api/v1/public/logout`,
+        new Blob([logoutData], { type: 'application/json' })
+      );
+
+      if (!beaconSent) {
+        // Fallback do fetch jeśli sendBeacon nie zadziałał
+        console.warn('[CentrumLogowania] sendBeacon nie zadziałał, próbuję fetch');
+      }
+    }
+
     localStorage.removeItem(this.storageKey);
     window.location.reload();
   }

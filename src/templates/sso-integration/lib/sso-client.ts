@@ -82,11 +82,45 @@ export async function getSSOSession(): Promise<SSOSession | null> {
 }
 
 /**
- * Usuwa sesję SSO
+ * Usuwa sesję SSO (lokalnie i z centrum logowania)
  */
 export async function clearSSOSession(): Promise<void> {
   const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('sso-session');
+
+  // Powiadom centrum logowania o wylogowaniu (jeśli mamy sesję)
+  if (sessionCookie?.value) {
+    try {
+      const session: SSOSession = JSON.parse(sessionCookie.value);
+      await logoutFromCenter(session.userId);
+    } catch {
+      // Ignoruj błędy - wylogowanie lokalne jest ważniejsze
+    }
+  }
+
   cookieStore.delete('sso-session');
+}
+
+/**
+ * Informuje centrum logowania o wylogowaniu użytkownika
+ */
+export async function logoutFromCenter(userId: string): Promise<void> {
+  const { centerUrl, clientId } = SSO_CONFIG;
+
+  try {
+    await fetch(`${centerUrl}/api/v1/public/logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        projectSlug: clientId,
+      }),
+    });
+  } catch (error) {
+    console.warn('Błąd wylogowania z centrum:', error);
+  }
 }
 
 // ============================================================================

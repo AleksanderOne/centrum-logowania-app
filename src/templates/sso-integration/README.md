@@ -162,6 +162,7 @@ import { logout } from '@/app/actions/auth-actions';
 | `GET /authorize`              | Redirect do logowania                             |
 | `POST /api/v1/token`          | Wymiana kodu na dane użytkownika (wymaga API Key) |
 | `POST /api/v1/public/token`   | Wymiana kodu (bez API Key, dla frontend SDK)      |
+| `POST /api/v1/public/logout`  | Wylogowanie użytkownika z projektu                |
 | `POST /api/v1/session/verify` | Weryfikacja Kill Switch                           |
 
 ---

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
-import { projects, users, authorizationCodes } from '@/lib/db/schema';
+import { projects, users, authorizationCodes, projectSessions } from '@/lib/db/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import {
   checkRateLimit,
@@ -146,6 +146,36 @@ export async function POST(req: NextRequest) {
         { error: 'Access denied. User is not authorized for this project.' },
         { status: 403 }
       );
+    }
+
+    // 8.5. Zapis sesji w projekcie (dla monitoringu)
+    // Aktualizuj istniejącą sesję lub utwórz nową
+    const existingSession = await db.query.projectSessions.findFirst({
+      where: and(
+        eq(projectSessions.userId, user.id),
+        eq(projectSessions.projectId, authCode.projectId)
+      ),
+    });
+
+    if (existingSession) {
+      await db
+        .update(projectSessions)
+        .set({
+          lastSeenAt: new Date(),
+          userAgent,
+          ipAddress,
+          userName: user.name,
+        })
+        .where(eq(projectSessions.id, existingSession.id));
+    } else {
+      await db.insert(projectSessions).values({
+        userId: user.id,
+        projectId: authCode.projectId,
+        userEmail: user.email,
+        userName: user.name,
+        userAgent,
+        ipAddress,
+      });
     }
 
     // 9. Logowanie sukcesu z informacją o stronie docelowej

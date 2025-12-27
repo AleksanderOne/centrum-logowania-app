@@ -134,6 +134,63 @@ curl -X POST https://your-domain.com/api/v1/session/verify \
 
 ---
 
+## Endpointy Publiczne (bez API Key)
+
+Endpointy dla prostych aplikacji frontendowych bez backendu (używane przez SDK).
+
+### POST /api/v1/public/token
+
+Wymienia jednorazowy kod autoryzacyjny na dane użytkownika (bez API Key).
+
+**Request:**
+
+```bash
+curl -X POST https://your-domain.com/api/v1/public/token \
+  -H "Content-Type: application/json" \
+  -d '{"code": "AUTHORIZATION_CODE", "redirect_uri": "https://your-app.com/callback"}'
+```
+
+**Response (sukces):**
+
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "image": "https://..."
+  },
+  "project": {
+    "id": "uuid",
+    "name": "My App"
+  }
+}
+```
+
+---
+
+### POST /api/v1/public/logout
+
+Usuwa sesję użytkownika z projektu (wylogowanie).
+
+**Request:**
+
+```bash
+curl -X POST https://your-domain.com/api/v1/public/logout \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "uuid", "projectSlug": "moj-projekt"}'
+```
+
+**Response:**
+
+```json
+{
+  "success": true
+}
+```
+
+---
+
 ## Endpointy Zarządzania Projektem
 
 ### GET /api/v1/project/[projectId]/members
