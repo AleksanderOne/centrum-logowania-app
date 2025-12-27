@@ -7,6 +7,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
   History,
   RefreshCw,
   CheckCircle,
@@ -16,6 +27,7 @@ import {
   LogOut,
   Key,
   AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 
 interface AuditLog {
@@ -52,6 +64,7 @@ export function AuditLogsViewer({ projectId, limit = 50 }: AuditLogsViewerProps)
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -79,6 +92,30 @@ export function AuditLogsViewer({ projectId, limit = 50 }: AuditLogsViewerProps)
     fetchLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, limit]);
+
+  const deleteLogs = async () => {
+    setDeleting(true);
+    try {
+      const body = projectId ? { projectId } : { all: true };
+
+      const response = await fetch('/api/v1/audit-logs', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error('Nie udało się usunąć logów');
+      }
+
+      // Odśwież listę logów
+      await fetchLogs();
+    } catch {
+      setError('Błąd podczas usuwania logów');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -170,10 +207,41 @@ export function AuditLogsViewer({ projectId, limit = 50 }: AuditLogsViewerProps)
               {projectId ? 'dla projektu' : '(wszystkie projekty)'}
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchLogs}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Odśwież
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={fetchLogs}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Odśwież
+            </Button>
+            {logs.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={deleting}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {deleting ? 'Usuwanie...' : 'Wyczyść'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Usunąć wszystkie logi?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Ta operacja jest nieodwracalna. Wszystkie logi audytu{' '}
+                      {projectId ? 'dla tego projektu' : 'ze wszystkich projektów'} zostaną trwale
+                      usunięte.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={deleteLogs}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Usuń wszystkie
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
