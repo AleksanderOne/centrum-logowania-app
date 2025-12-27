@@ -50,9 +50,44 @@ export async function logAuditEvent(entry: AuditLogEntry): Promise<void> {
       userAgent: entry.userAgent || null,
       metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
     });
-  } catch (error) {
-    // Logujemy błąd ale nie przerywamy flow - audyt nie powinien blokować głównej logiki
-    console.error('[AuditLogger] Failed to log event:', error, entry);
+  } catch (error: unknown) {
+    // Specjalna obsługa błędu braku użytkownika (Foreign Key Violation - code 23503)
+    // Błąd może być bezpośrednio w obiekcie lub w .cause (node-postgres)
+    const err = error as { code?: string; cause?: { code?: string } };
+    const errorCode = err?.code || err?.cause?.code;
+
+    if (errorCode === '23503' && entry.userId) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`[AuditLogger] User ${entry.userId} not found in DB. Logging as anonymous.`);
+      }
+
+      // Próbujemy zapisać ponownie, ale bez powiązania z użytkownikiem (userId: null)
+      // Oryginalne ID zapisujemy w metadanych
+      try {
+        const newMetadata = {
+          ...(entry.metadata || {}),
+          originalUserId: entry.userId,
+          fkViolationRef: 'user_id',
+        };
+
+        await db.insert(auditLogs).values({
+          userId: null, // Ustawiamy na NULL
+          projectId: entry.projectId || null,
+          action: entry.action,
+          status: entry.status,
+          ipAddress: entry.ipAddress || null,
+          userAgent: entry.userAgent || null,
+          metadata: JSON.stringify(newMetadata),
+        });
+        return; // Sukces przy drugim podejściu
+      } catch (retryError) {
+        console.error('[AuditLogger] Failed to log event (retry):', retryError, entry);
+      }
+    } else {
+      // Inne błędy logujemy normalnie
+      // Logujemy błąd ale nie przerywamy flow - audyt nie powinien blokować głównej logiki
+      console.error('[AuditLogger] Failed to log event:', error, entry);
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
-import { projects, projectSessions } from '@/lib/db/schema';
+import { projects, projectSessions, users } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import {
   checkRateLimit,
@@ -72,18 +72,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
+    // Pobierz dane użytkownika do logowania
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
     // Usuń sesję użytkownika z projektu
     await db
       .delete(projectSessions)
       .where(and(eq(projectSessions.userId, userId), eq(projectSessions.projectId, project.id)));
 
-    // Loguj sukces
+    // Loguj sukces z pełnymi danymi
     await logSuccess('logout', {
       userId,
       projectId: project.id,
       ipAddress,
       userAgent,
-      metadata: { endpoint: 'public' },
+      metadata: {
+        projectName: project.name,
+        userEmail: user?.email,
+        endpoint: 'public',
+      },
     });
 
     return NextResponse.json({ success: true });
