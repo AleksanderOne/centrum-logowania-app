@@ -62,28 +62,57 @@ export async function logAuditEvent(entry: AuditLogEntry): Promise<void> {
       metadata: entry.metadata ? JSON.stringify(entry.metadata) : null,
     });
   } catch (error: unknown) {
-    // Specjalna obsługa błędu braku użytkownika (Foreign Key Violation - code 23503)
+    // Specjalna obsługa błędu FK Violation (code 23503)
     // Błąd może być bezpośrednio w obiekcie lub w .cause (node-postgres)
-    const err = error as { code?: string; cause?: { code?: string } };
+    const err = error as {
+      code?: string;
+      constraint?: string;
+      cause?: { code?: string; constraint?: string };
+    };
     const errorCode = err?.code || err?.cause?.code;
+    const constraint = err?.constraint || err?.cause?.constraint || '';
 
-    if (errorCode === '23503' && entry.userId) {
+    if (errorCode === '23503') {
+      // Sprawdzamy, który FK jest naruszony
+      const isUserFk =
+        constraint.includes('user_id') || (entry.userId && !constraint.includes('project_id'));
+      const isProjectFk = constraint.includes('project_id');
+
       if (process.env.NODE_ENV === 'development') {
-        console.warn(`[AuditLogger] User ${entry.userId} not found in DB. Logging as anonymous.`);
+        if (isUserFk && entry.userId) {
+          console.warn(`[AuditLogger] User ${entry.userId} not found in DB. Logging as anonymous.`);
+        }
+        if (isProjectFk && entry.projectId) {
+          console.warn(
+            `[AuditLogger] Project ${entry.projectId} not found in DB. Logging without project reference.`
+          );
+        }
       }
 
-      // Próbujemy zapisać ponownie, ale bez powiązania z użytkownikiem (userId: null)
-      // Oryginalne ID zapisujemy w metadanych
-      try {
-        const newMetadata = {
-          ...(entry.metadata || {}),
-          originalUserId: entry.userId,
-          fkViolationRef: 'user_id',
-        };
+      // Przygotuj nowe metadane z oryginalnymi ID
+      const newMetadata: Record<string, unknown> = { ...(entry.metadata || {}) };
+      let newUserId: string | null = entry.userId || null;
+      let newProjectId: string | null = entry.projectId || null;
 
+      // Obsługa FK violation dla user_id
+      if (isUserFk && entry.userId) {
+        newMetadata.originalUserId = entry.userId;
+        newMetadata.fkViolationRef = 'user_id';
+        newUserId = null;
+      }
+
+      // Obsługa FK violation dla project_id
+      if (isProjectFk && entry.projectId) {
+        newMetadata.originalProjectId = entry.projectId;
+        newMetadata.fkViolationRef = isUserFk ? 'user_id,project_id' : 'project_id';
+        newProjectId = null;
+      }
+
+      // Próbujemy zapisać ponownie bez powiązań, które naruszają FK
+      try {
         await db.insert(auditLogs).values({
-          userId: null, // Ustawiamy na NULL
-          projectId: entry.projectId || null,
+          userId: newUserId,
+          projectId: newProjectId,
           action: entry.action,
           status: entry.status,
           ipAddress: entry.ipAddress || null,
