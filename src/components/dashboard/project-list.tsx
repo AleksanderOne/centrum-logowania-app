@@ -29,7 +29,7 @@ import {
 import { IntegrationTester } from './integration-tester';
 import { SessionsMonitor } from './sessions-monitor';
 import { ProjectMembers } from './project-members';
-import { SetupCodeManager } from './setup-code-manager';
+import { QuickConnectManager } from './quick-connect-manager';
 
 interface Project {
   id: string;
@@ -220,7 +220,7 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
             <div className="grid grid-cols-2 gap-2 pt-3 border-t border-dashed">
               <IntegrationTester projectId={project.id} projectName={project.name} />
               <SessionsMonitor projectId={project.id} projectName={project.name} />
-              <SetupCodeManager projectId={project.id} projectName={project.name} />
+              <QuickConnectManager projectId={project.id} projectName={project.name} />
 
               {/* Zarządzanie członkami */}
               <Dialog>

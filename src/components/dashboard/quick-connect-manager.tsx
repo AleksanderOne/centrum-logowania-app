@@ -15,14 +15,14 @@ import { Loader2, Plus, Copy, Check, Trash2, Clock, KeyRound, AlertCircle } from
 import { toast } from 'sonner';
 import { devLog } from '@/lib/utils';
 
-interface SetupCode {
+interface QuickConnectCode {
   id: string;
   code: string;
   expiresAt: string;
   createdAt: string;
 }
 
-interface SetupCodeManagerProps {
+interface QuickConnectManagerProps {
   projectId: string;
   projectName: string;
 }
@@ -74,11 +74,11 @@ const formatTimeRemaining = (
   return { text: `${seconds}s`, expired: false, seconds: totalSeconds };
 };
 
-export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerProps) => {
+export const QuickConnectManager = ({ projectId, projectName }: QuickConnectManagerProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [codes, setCodes] = useState<SetupCode[]>([]);
+  const [codes, setCodes] = useState<QuickConnectCode[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [, setTick] = useState(0); // Wymusza re-render co sekundę
 
@@ -107,10 +107,10 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
       const response = await fetch(`/api/v1/project/${projectId}/setup-code`);
       if (!response.ok) throw new Error('Błąd pobierania kodów');
       const data = await response.json();
-      devLog(`[SETUP-UI] ✅ Pbrano ${data.codes?.length || 0} kodów`);
+      devLog(`[QUICK-CONNECT] ✅ Pobrano ${data.codes?.length || 0} kodów`);
       setCodes(data.codes || []);
     } catch (error) {
-      console.error('Błąd pobierania setup codes:', error);
+      console.error('Błąd pobierania Quick Connect:', error);
       toast.error('Nie udało się pobrać kodów');
     } finally {
       setIsLoading(false);
@@ -126,11 +126,11 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
       });
       if (!response.ok) throw new Error('Błąd generowania kodu');
       const newCode = await response.json();
-      devLog(`[SETUP-UI] ✅ Wygenerowano kod: ${newCode.code.substring(0, 15)}...`);
+      devLog(`[QUICK-CONNECT] ✅ Wygenerowano kod: ${newCode.code.substring(0, 15)}...`);
       setCodes((prev) => [newCode, ...prev]);
-      toast.success('Wygenerowano nowy Setup Code!');
+      toast.success('Wygenerowano nowy Quick Connect!');
     } catch (error) {
-      console.error('Błąd generowania setup code:', error);
+      console.error('Błąd generowania Quick Connect:', error);
       toast.error('Nie udało się wygenerować kodu');
     } finally {
       setIsGenerating(false);
@@ -146,10 +146,10 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
       });
       if (!response.ok) throw new Error('Błąd usuwania kodu');
       setCodes((prev) => prev.filter((c) => c.id !== codeId));
-      devLog(`[SETUP-UI] ✅ Usunięto kod: ${codeId}`);
-      toast.success('Usunięto Setup Code');
+      devLog(`[QUICK-CONNECT] ✅ Usunięto kod: ${codeId}`);
+      toast.success('Usunięto Quick Connect');
     } catch (error) {
-      console.error('Błąd usuwania setup code:', error);
+      console.error('Błąd usuwania Quick Connect:', error);
       toast.error('Nie udało się usunąć kodu');
     } finally {
       setDeletingId(null);
@@ -159,7 +159,7 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
   const handleOpen = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      devLog(`[SETUP-UI] 📥 Otwieranie managera kodów dla: ${projectId}`);
+      devLog(`[QUICK-CONNECT] 📥 Otwieranie managera kodów dla: ${projectId}`);
       fetchCodes();
     }
   };
@@ -173,17 +173,17 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
           variant="outline"
         >
           <KeyRound className="w-4 h-4" />
-          <span className="text-xs">Setup</span>
+          <span className="text-xs">Quick Connect</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <KeyRound className="w-5 h-5 text-violet-500" />
-            Setup Codes
+            Quick Connect
           </DialogTitle>
           <DialogDescription>
-            Jednorazowe kody do szybkiej konfiguracji nowych aplikacji z projektem{' '}
+            Jednorazowe kody do szybkiego podłączenia nowych aplikacji do projektu{' '}
             <strong>{projectName}</strong>
           </DialogDescription>
         </DialogHeader>
@@ -192,8 +192,9 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
           {/* Instrukcja */}
           <div className="bg-muted/50 p-3 rounded-lg border text-sm">
             <p className="text-muted-foreground">
-              Setup Code pozwala nowej aplikacji automatycznie pobrać konfigurację (API Key, Slug).
-              Kod jest ważny <strong>1 minutę</strong> i może być użyty <strong>tylko raz</strong>.
+              Quick Connect pozwala nowej aplikacji automatycznie pobrać konfigurację (API Key,
+              Slug). Kod jest ważny <strong>1 minutę</strong> i może być użyty{' '}
+              <strong>tylko raz</strong>.
             </p>
           </div>
 

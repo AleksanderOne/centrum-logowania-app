@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { SetupCodeManager } from './setup-code-manager';
+import { QuickConnectManager } from './quick-connect-manager';
 import { toast } from 'sonner';
 
 // Mock sonner toast
@@ -15,7 +15,7 @@ vi.mock('sonner', () => ({
 const fetchMock = vi.fn();
 global.fetch = fetchMock;
 
-describe('SetupCodeManager', () => {
+describe('QuickConnectManager', () => {
   const projectId = 'proj_123';
   const projectName = 'Test Project';
   const mockCode = {
@@ -42,12 +42,12 @@ describe('SetupCodeManager', () => {
       json: async () => ({ codes: [mockCode] }),
     });
 
-    render(<SetupCodeManager projectId={projectId} projectName={projectName} />);
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
 
-    // Kliknij przycisk otwierający (Setup)
-    fireEvent.click(screen.getByText('Setup'));
+    // Kliknij przycisk otwierający (Quick Connect)
+    fireEvent.click(screen.getByText('Quick Connect'));
 
-    expect(screen.getByText('Setup Codes')).toBeInTheDocument();
+    expect(screen.getByText(/Jednorazowe kody do szybkiego podłączenia/i)).toBeInTheDocument();
 
     // Check if fetch was called
     expect(fetchMock).toHaveBeenCalledWith(`/api/v1/project/${projectId}/setup-code`);
@@ -61,8 +61,8 @@ describe('SetupCodeManager', () => {
   it('obsługuje błąd pobierania kodów', async () => {
     fetchMock.mockResolvedValueOnce({ ok: false });
 
-    render(<SetupCodeManager projectId={projectId} projectName={projectName} />);
-    fireEvent.click(screen.getByText('Setup'));
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Nie udało się pobrać kodów');
@@ -76,8 +76,8 @@ describe('SetupCodeManager', () => {
       json: async () => ({ codes: [] }),
     });
 
-    render(<SetupCodeManager projectId={projectId} projectName={projectName} />);
-    fireEvent.click(screen.getByText('Setup'));
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
 
     // Czekaj na załadowanie (brak kodów)
     await waitFor(() => expect(screen.getByText('Brak aktywnych kodów')).toBeInTheDocument());
@@ -93,7 +93,7 @@ describe('SetupCodeManager', () => {
 
     await waitFor(() => {
       expect(screen.getByText('setup_new')).toBeInTheDocument();
-      expect(toast.success).toHaveBeenCalledWith('Wygenerowano nowy Setup Code!');
+      expect(toast.success).toHaveBeenCalledWith('Wygenerowano nowy Quick Connect!');
     });
   });
 
@@ -104,8 +104,8 @@ describe('SetupCodeManager', () => {
       json: async () => ({ codes: [mockCode] }),
     });
 
-    render(<SetupCodeManager projectId={projectId} projectName={projectName} />);
-    fireEvent.click(screen.getByText('Setup'));
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
 
     await waitFor(() => expect(screen.getByText('setup_abc123')).toBeInTheDocument());
 
@@ -118,7 +118,7 @@ describe('SetupCodeManager', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('setup_abc123')).not.toBeInTheDocument();
-      expect(toast.success).toHaveBeenCalledWith('Usunięto Setup Code');
+      expect(toast.success).toHaveBeenCalledWith('Usunięto Quick Connect');
     });
   });
 
@@ -135,8 +135,8 @@ describe('SetupCodeManager', () => {
       json: async () => ({ codes: [expiringCode] }),
     });
 
-    render(<SetupCodeManager projectId={projectId} projectName={projectName} />);
-    fireEvent.click(screen.getByText('Setup'));
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
 
     await waitFor(() =>
       expect(
@@ -168,8 +168,8 @@ describe('SetupCodeManager', () => {
       json: async () => ({ codes: [expiringSoon] }),
     });
 
-    render(<SetupCodeManager projectId={projectId} projectName={projectName} />);
-    fireEvent.click(screen.getByText('Setup'));
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
 
     await waitFor(() => expect(screen.getByText('setup_abc123')).toBeInTheDocument());
 
