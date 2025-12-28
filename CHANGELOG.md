@@ -1,3 +1,10 @@
+# [2.5.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.4.0...v2.5.0) (2025-12-28)
+
+
+### Features
+
+* zdejmuje blokade dla - "user_not_registered" ([48b4eae](https://github.com/AleksanderOne/centrum-logowania-app/commit/48b4eae6d2347c0576199fecbf94f234f038839a))
+
 # [2.4.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.3.1...v2.4.0) (2025-12-28)
 
 
