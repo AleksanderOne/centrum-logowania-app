@@ -1,3 +1,13 @@
+# [2.4.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.3.1...v2.4.0) (2025-12-28)
+
+
+### Features
+
+* implementacja setup code (backend + ui) ([dcef497](https://github.com/AleksanderOne/centrum-logowania-app/commit/dcef4970c8a6e80d432623adf7f9441ffff88942))
+* infrastruktura logowania i debugowania ([6969703](https://github.com/AleksanderOne/centrum-logowania-app/commit/69697031e88529e09a785c5d0e771831eafaee7d))
+* logika biznesowa dashboardu i API ([48d298c](https://github.com/AleksanderOne/centrum-logowania-app/commit/48d298ce0d026ff60969dbb07274451ceebf45b9))
+* redesign strony logowania i ulepszenia UI ([8b6dc36](https://github.com/AleksanderOne/centrum-logowania-app/commit/8b6dc36d16a8d6356122fcf81e40af45cd640233))
+
 ## [2.3.1](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.3.0...v2.3.1) (2025-12-27)
 
 
