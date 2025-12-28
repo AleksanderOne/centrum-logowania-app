@@ -5,6 +5,7 @@ import { projects, projectSetupCodes } from '@/lib/db/schema';
 import { eq, and, isNull, gt } from 'drizzle-orm';
 import { logSuccess, logFailure } from '@/lib/security';
 import crypto from 'crypto';
+import { devLog } from '@/lib/utils';
 
 type Params = Promise<{ projectId: string }>;
 
@@ -22,13 +23,18 @@ function generateSetupCode(): string {
  */
 export async function POST(req: NextRequest, segmentData: { params: Params }) {
   const params = await segmentData.params;
+  devLog(
+    `\n[SETUP-CODE] 📥 POST /api/v1/project/${params.projectId}/setup-code - Generowanie nowego kodu`
+  );
 
   try {
     const session = await auth();
 
     if (!session?.user?.id) {
+      devLog(`[SETUP-CODE] ❌ Brak sesji użytkownika`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    devLog(`[SETUP-CODE] 👤 Użytkownik: ${session.user.email} (${session.user.id})`);
 
     // Sprawdź czy użytkownik jest właścicielem projektu
     const project = await db.query.projects.findFirst({
@@ -36,6 +42,9 @@ export async function POST(req: NextRequest, segmentData: { params: Params }) {
     });
 
     if (!project) {
+      devLog(
+        `[SETUP-CODE] ⛔ Odmowa dostępu: Użytkownik nie jest właścicielem projektu ${params.projectId}`
+      );
       await logFailure('access_denied', {
         userId: session.user.id,
         projectId: params.projectId,
@@ -43,10 +52,11 @@ export async function POST(req: NextRequest, segmentData: { params: Params }) {
       });
       return NextResponse.json({ error: 'Project not found or access denied' }, { status: 403 });
     }
+    devLog(`[SETUP-CODE] ✅ Weryfikacja właściciela OK. Generowanie unikalnego kodu...`);
 
     // Generuj nowy kod
     const code = generateSetupCode();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+    const expiresAt = new Date(Date.now() + 60 * 1000); // 1 minuta (jednorazowe użycie)
 
     const [setupCode] = await db
       .insert(projectSetupCodes)
@@ -57,11 +67,17 @@ export async function POST(req: NextRequest, segmentData: { params: Params }) {
       })
       .returning();
 
-    await logSuccess('setup_code', {
+    await logSuccess('setup_code_generate', {
       userId: session.user.id,
       projectId: params.projectId,
-      metadata: { action: 'generated', codeId: setupCode.id },
+      metadata: { codeId: setupCode.id },
     });
+
+    devLog(
+      `[SETUP-CODE] 💾 Zapisano kod w bazie: ${setupCode.code.substring(0, 15)}... (ID: ${setupCode.id})`
+    );
+    devLog(`[SETUP-CODE] 🕒 Wygasa: ${setupCode.expiresAt?.toLocaleString('pl-PL')}`);
+    devLog(`[SETUP-CODE] 🚀 Sukces! Zwracam wygenerowany kod.\n`);
 
     return NextResponse.json({
       id: setupCode.id,
@@ -81,6 +97,9 @@ export async function POST(req: NextRequest, segmentData: { params: Params }) {
  */
 export async function GET(req: NextRequest, segmentData: { params: Params }) {
   const params = await segmentData.params;
+  devLog(
+    `\n[SETUP-CODE] 📥 GET /api/v1/project/${params.projectId}/setup-code - Pobieranie listy kodów`
+  );
 
   try {
     const session = await auth();
@@ -108,6 +127,8 @@ export async function GET(req: NextRequest, segmentData: { params: Params }) {
       ),
       orderBy: (codes, { desc }) => [desc(codes.createdAt)],
     });
+
+    devLog(`[SETUP-CODE] ✅ Znaleziono ${activeCodes.length} aktywnych kodów.\n`);
 
     return NextResponse.json({
       codes: activeCodes.map((code) => ({

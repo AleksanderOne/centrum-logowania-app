@@ -13,6 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Plus, Copy, Check, Trash2, Clock, KeyRound, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { devLog } from '@/lib/utils';
 
 interface SetupCode {
   id: string;
@@ -49,21 +50,28 @@ const CopyButton = ({ text }: { text: string }) => {
   );
 };
 
-// Formatowanie czasu pozostałego do wygaśnięcia
-const formatTimeRemaining = (expiresAt: string): string => {
+// Formatowanie czasu pozostałego do wygaśnięcia (z sekundami)
+const formatTimeRemaining = (
+  expiresAt: string
+): { text: string; expired: boolean; seconds: number } => {
   const now = new Date();
   const expires = new Date(expiresAt);
   const diffMs = expires.getTime() - now.getTime();
 
-  if (diffMs <= 0) return 'Wygasł';
+  if (diffMs <= 0) return { text: 'Wygasł', expired: true, seconds: 0 };
 
-  const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}min`;
+  if (minutes > 0) {
+    return {
+      text: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+      expired: false,
+      seconds: totalSeconds,
+    };
   }
-  return `${minutes}min`;
+  return { text: `${seconds}s`, expired: false, seconds: totalSeconds };
 };
 
 export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerProps) => {
@@ -72,6 +80,25 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
   const [isGenerating, setIsGenerating] = useState(false);
   const [codes, setCodes] = useState<SetupCode[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [, setTick] = useState(0); // Wymusza re-render co sekundę
+
+  // Interwał do odświeżania countdown co sekundę
+  useEffect(() => {
+    if (!isOpen || codes.length === 0) return;
+
+    const interval = setInterval(() => {
+      setTick((t) => t + 1);
+      // Automatyczne usuwanie wygasłych kodów (bez zamykania modala)
+      setCodes((prev) =>
+        prev.filter((code) => {
+          const { expired } = formatTimeRemaining(code.expiresAt);
+          return !expired;
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isOpen, codes.length]);
 
   // Pobierz aktywne kody
   const fetchCodes = async () => {
@@ -80,6 +107,7 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
       const response = await fetch(`/api/v1/project/${projectId}/setup-code`);
       if (!response.ok) throw new Error('Błąd pobierania kodów');
       const data = await response.json();
+      devLog(`[SETUP-UI] ✅ Pbrano ${data.codes?.length || 0} kodów`);
       setCodes(data.codes || []);
     } catch (error) {
       console.error('Błąd pobierania setup codes:', error);
@@ -98,6 +126,7 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
       });
       if (!response.ok) throw new Error('Błąd generowania kodu');
       const newCode = await response.json();
+      devLog(`[SETUP-UI] ✅ Wygenerowano kod: ${newCode.code.substring(0, 15)}...`);
       setCodes((prev) => [newCode, ...prev]);
       toast.success('Wygenerowano nowy Setup Code!');
     } catch (error) {
@@ -117,6 +146,7 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
       });
       if (!response.ok) throw new Error('Błąd usuwania kodu');
       setCodes((prev) => prev.filter((c) => c.id !== codeId));
+      devLog(`[SETUP-UI] ✅ Usunięto kod: ${codeId}`);
       toast.success('Usunięto Setup Code');
     } catch (error) {
       console.error('Błąd usuwania setup code:', error);
@@ -129,6 +159,7 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
   const handleOpen = (open: boolean) => {
     setIsOpen(open);
     if (open) {
+      devLog(`[SETUP-UI] 📥 Otwieranie managera kodów dla: ${projectId}`);
       fetchCodes();
     }
   };
@@ -138,11 +169,11 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
       <DialogTrigger asChild>
         <Button
           size="sm"
-          className="gap-1 bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30 hover:bg-violet-500/20 hover:border-violet-500/50 transition-all"
+          className="w-full gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           variant="outline"
         >
           <KeyRound className="w-4 h-4" />
-          <span className="hidden sm:inline">Setup Code</span>
+          <span className="text-xs">Setup</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
@@ -162,8 +193,7 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
           <div className="bg-muted/50 p-3 rounded-lg border text-sm">
             <p className="text-muted-foreground">
               Setup Code pozwala nowej aplikacji automatycznie pobrać konfigurację (API Key, Slug).
-              Kod jest ważny <strong>24 godziny</strong> i może być użyty <strong>tylko raz</strong>
-              .
+              Kod jest ważny <strong>1 minutę</strong> i może być użyty <strong>tylko raz</strong>.
             </p>
           </div>
 
@@ -208,10 +238,21 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
                       {code.code}
                     </code>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-[10px] gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatTimeRemaining(code.expiresAt)}
-                      </Badge>
+                      {(() => {
+                        const { text, seconds } = formatTimeRemaining(code.expiresAt);
+                        const isUrgent = seconds <= 15;
+                        return (
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] gap-1 tabular-nums transition-colors duration-300 ${
+                              isUrgent ? 'border-red-500/50 text-red-500 animate-pulse' : ''
+                            }`}
+                          >
+                            <Clock className={`w-3 h-3 ${isUrgent ? 'text-red-500' : ''}`} />
+                            {text}
+                          </Badge>
+                        );
+                      })()}
                     </div>
                   </div>
                   <CopyButton text={code.code} />

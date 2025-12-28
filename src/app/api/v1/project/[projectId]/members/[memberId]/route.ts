@@ -54,10 +54,10 @@ export async function DELETE(req: NextRequest, segmentData: { params: Params }) 
         and(eq(projectUsers.id, params.memberId), eq(projectUsers.projectId, params.projectId))
       );
 
-    await logSuccess('project_access', {
+    await logSuccess('member_remove', {
       userId: member.userId,
       projectId: params.projectId,
-      metadata: { action: 'member_removed', removedBy: session.user.id },
+      metadata: { removedBy: session.user.id },
     });
 
     return NextResponse.json({ success: true, message: 'Członek został usunięty' });

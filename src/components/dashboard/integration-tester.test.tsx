@@ -98,9 +98,9 @@ describe('IntegrationTester', () => {
     vi.restoreAllMocks();
   });
 
-  it('renderuje przycisk "Testuj integrację"', () => {
+  it('renderuje przycisk "Testuj"', () => {
     render(<IntegrationTester {...defaultProps} />);
-    expect(screen.getByRole('button', { name: /Testuj integrację/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Testuj/i })).toBeInTheDocument();
   });
 
   it('otwiera dialog i rozpoczyna test po kliknięciu przycisku', async () => {
@@ -111,7 +111,7 @@ describe('IntegrationTester', () => {
 
     render(<IntegrationTester {...defaultProps} />);
 
-    const button = screen.getByRole('button', { name: /Testuj integrację/i });
+    const button = screen.getByRole('button', { name: /Testuj/i });
     fireEvent.click(button);
 
     // Sprawdź czy dialog się otworzył
@@ -134,7 +134,7 @@ describe('IntegrationTester', () => {
 
     render(<IntegrationTester {...defaultProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Trwa testowanie...')).toBeInTheDocument();
@@ -158,7 +158,7 @@ describe('IntegrationTester', () => {
     });
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Domena dostępna')).toBeInTheDocument();
@@ -177,7 +177,7 @@ describe('IntegrationTester', () => {
     });
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Brak skonfigurowanej domeny')).toBeInTheDocument();
@@ -192,7 +192,7 @@ describe('IntegrationTester', () => {
     });
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Domena niedostępna')).toBeInTheDocument();
@@ -204,7 +204,7 @@ describe('IntegrationTester', () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Nie udało się wykonać testu');
@@ -218,7 +218,7 @@ describe('IntegrationTester', () => {
     });
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Nie udało się wykonać testu');
@@ -232,7 +232,7 @@ describe('IntegrationTester', () => {
     });
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Test integracji')).toBeInTheDocument();
@@ -257,7 +257,7 @@ describe('IntegrationTester', () => {
       });
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Integracja działa prawidłowo')).toBeInTheDocument();
@@ -272,8 +272,8 @@ describe('IntegrationTester', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
-  it('nie uruchamia testu ponownie przy otwarciu dialogu gdy wyniki już są', async () => {
-    mockFetch.mockResolvedValueOnce({
+  it('uruchamia test ponownie przy otwarciu dialogu nawet gdy wyniki już są', async () => {
+    mockFetch.mockResolvedValue({
       ok: true,
       json: async () => mockSuccessResults,
     });
@@ -281,7 +281,7 @@ describe('IntegrationTester', () => {
     render(<IntegrationTester {...defaultProps} />);
 
     // Pierwszy klik - otwiera i testuje
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Integracja działa prawidłowo')).toBeInTheDocument();
@@ -294,15 +294,15 @@ describe('IntegrationTester', () => {
       expect(screen.queryByText('Test integracji')).not.toBeInTheDocument();
     });
 
-    // Drugi klik - nie powinien uruchomić testu ponownie (są już wyniki)
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    // Drugi klik - powinien uruchomić test ponownie (zawsze odświeża)
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Test integracji')).toBeInTheDocument();
     });
 
-    // Fetch został wywołany tylko raz
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    // Fetch został wywołany dwa razy
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
   it('wyświetla nazwę projektu w opisie dialogu', async () => {
@@ -312,7 +312,7 @@ describe('IntegrationTester', () => {
     });
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Test Project')).toBeInTheDocument();
@@ -327,7 +327,7 @@ describe('IntegrationTester', () => {
     });
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       // Sprawdzamy czy badge "OK" jest widoczny (dla statusu success)
@@ -361,7 +361,7 @@ describe('IntegrationTester', () => {
     });
 
     render(<IntegrationTester {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Testuj integrację/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
 
     await waitFor(() => {
       // Fallback dla nieznanych statusów - wyświetla sam status

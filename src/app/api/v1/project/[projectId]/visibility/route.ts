@@ -52,10 +52,10 @@ export async function PATCH(req: NextRequest, segmentData: { params: Params }) {
       })
       .where(eq(projects.id, params.projectId));
 
-    await logSuccess('project_access', {
+    await logSuccess('visibility_change', {
       userId: session.user.id,
       projectId: params.projectId,
-      metadata: { action: 'visibility_changed', isPublic },
+      metadata: { isPublic },
     });
 
     return NextResponse.json({

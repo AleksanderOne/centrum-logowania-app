@@ -7,6 +7,8 @@ import { projects } from '@/lib/db/schema';
 import { CreateProjectSchema } from '@/schemas';
 import { nanoid } from 'nanoid';
 import { eq, desc, and } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
+import { logSuccess } from '@/lib/security';
 
 // Pomocnik do generowania sluga
 const generateSlug = (name: string) => {
@@ -42,13 +44,26 @@ export const createProject = async (values: z.infer<typeof CreateProjectSchema>)
   const apiKey = `cl_${nanoid(32)}`; // cl = centrum logowania prefix
 
   try {
-    await db.insert(projects).values({
-      name,
-      slug,
-      domain,
-      apiKey,
-      ownerId: session.user.id,
+    const [newProject] = await db
+      .insert(projects)
+      .values({
+        name,
+        slug,
+        domain,
+        apiKey,
+        ownerId: session.user.id,
+      })
+      .returning();
+
+    // Loguj utworzenie projektu do audytu
+    await logSuccess('project_create', {
+      userId: session.user.id,
+      projectId: newProject.id,
+      metadata: { projectName: name, slug, domain },
     });
+
+    // Wymuś odświeżenie cache'a dashboardu
+    revalidatePath('/dashboard');
 
     return { success: 'Projekt utworzony pomyślnie!' };
   } catch (_error) {
@@ -101,6 +116,17 @@ export const deleteProject = async (projectId: string) => {
     if (!result.length) {
       return { error: 'Nie znaleziono projektu lub brak uprawnień' };
     }
+
+    // Loguj usunięcie projektu do audytu
+    const deletedProject = result[0];
+    await logSuccess('project_delete', {
+      userId: session.user.id,
+      projectId: projectId,
+      metadata: { projectName: deletedProject.name, slug: deletedProject.slug },
+    });
+
+    // Wymuś odświeżenie cache'a dashboardu
+    revalidatePath('/dashboard');
 
     return { success: 'Projekt usunięty' };
   } catch {

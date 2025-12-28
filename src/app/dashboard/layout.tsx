@@ -5,6 +5,8 @@ import { DashboardFooter } from '@/components/dashboard/dashboard-footer';
 import Link from 'next/link';
 import { LayoutGrid, User, History } from 'lucide-react';
 
+import { ClaLogo } from '@/components/cla-logo';
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
 
@@ -24,6 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {/* Mobile Navigation */}
         <div className="md:hidden border-b p-4 bg-card flex justify-between items-center shrink-0">
           <Link href="/dashboard" className="font-bold text-lg flex items-center gap-2">
+            <ClaLogo size={24} />
             <span className="text-primary">Centrum</span>
           </Link>
           <nav className="flex gap-3">

@@ -3,6 +3,8 @@ import { db } from '@/lib/db/drizzle';
 import { projects, projectSetupCodes } from '@/lib/db/schema';
 import { eq, and, isNull, gt } from 'drizzle-orm';
 import { logSuccess, logFailure, getClientIp } from '@/lib/security';
+import { devLog } from '@/lib/utils';
+import { serverLog } from '@/lib/debug-logger';
 
 /**
  * POST /api/v1/projects/claim
@@ -17,13 +19,22 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { setupCode } = body;
+    devLog(`\n[CLAIM] 📥 POST / api / v1 / projects / claim - Próba pobrania konfiguracji`);
+    devLog(`[CLAIM] 🔍 Kod: ${setupCode} `);
+    serverLog('[CLAIM] Attempting to claim setup code', {
+      setupCode: setupCode ? setupCode.substring(0, 15) + '...' : 'N/A',
+    });
 
     if (!setupCode || typeof setupCode !== 'string') {
+      serverLog('[CLAIM] Setup code is missing or invalid type', { setupCode });
       return NextResponse.json({ error: 'Setup code is required' }, { status: 400 });
     }
 
     // Walidacja formatu kodu
     if (!setupCode.startsWith('setup_') || setupCode.length < 10) {
+      serverLog('[CLAIM] Invalid setup code format', {
+        setupCode: setupCode.substring(0, 15) + '...',
+      });
       return NextResponse.json({ error: 'Invalid setup code format' }, { status: 400 });
     }
 
@@ -42,6 +53,10 @@ export async function POST(req: NextRequest) {
           providedCode: setupCode.substring(0, 15) + '...', // Loguj tylko początek kodu
         },
       });
+      devLog(`[CLAIM] ❌ Nie znaleziono kodu lub błędny`);
+      serverLog('[CLAIM] Setup code not found in DB', {
+        setupCode: setupCode.substring(0, 15) + '...',
+      });
       return NextResponse.json({ error: 'Invalid or expired setup code' }, { status: 404 });
     }
 
@@ -51,6 +66,7 @@ export async function POST(req: NextRequest) {
         projectId: code.projectId,
         metadata: { action: 'claim_failed', reason: 'already_used', codeId: code.id },
       });
+      serverLog('[CLAIM] Setup code already used', { codeId: code.id, projectId: code.projectId });
       return NextResponse.json(
         { error: 'Setup code has already been used' },
         { status: 410 } // Gone
@@ -62,6 +78,11 @@ export async function POST(req: NextRequest) {
       await logFailure('setup_code', {
         projectId: code.projectId,
         metadata: { action: 'claim_failed', reason: 'expired', codeId: code.id },
+      });
+      serverLog('[CLAIM] Setup code expired', {
+        codeId: code.id,
+        projectId: code.projectId,
+        expiresAt: code.expiresAt,
       });
       return NextResponse.json(
         { error: 'Setup code has expired' },
@@ -75,8 +96,19 @@ export async function POST(req: NextRequest) {
     });
 
     if (!project) {
+      devLog(`[CLAIM] ❌ Nie znaleziono projektu powiązanego z kodem`);
+      serverLog('[CLAIM] Project not found for setup code', {
+        codeId: code.id,
+        projectId: code.projectId,
+      });
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
+    devLog(`[CLAIM] ✅ Kod poprawny(Projekt: ${project.name})`);
+    serverLog('[CLAIM] Setup code valid, project found', {
+      codeId: code.id,
+      projectId: project.id,
+      projectName: project.name,
+    });
 
     // Oznacz kod jako użyty
     const clientIp = getClientIp(req);
@@ -88,18 +120,23 @@ export async function POST(req: NextRequest) {
       })
       .where(eq(projectSetupCodes.id, code.id));
 
-    await logSuccess('setup_code', {
+    await logSuccess('setup_code_use', {
       projectId: code.projectId,
       metadata: {
-        action: 'claimed',
         codeId: code.id,
         usedByIp: clientIp,
       },
     });
 
     // Zwróć konfigurację projektu
-    // Używamy zmiennej środowiskowej lub domyślnego URL
-    const centerUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    // W trybie development, używaj origin z requestu, aby obsłużyć różne porty (np. demo apps)
+    let centerUrl = process.env.NEXTAUTH_URL;
+    if (!centerUrl || (process.env.NODE_ENV === 'development' && req.nextUrl.origin)) {
+      centerUrl = req.nextUrl.origin;
+    }
+
+    devLog(`[CLAIM] 🔖 Oznaczam kod jako użyty(IP: ${clientIp})`);
+    devLog(`[CLAIM] 🚀 Sukces! Zwracam konfigurację.\n`);
 
     return NextResponse.json({
       apiKey: project.apiKey,

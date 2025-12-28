@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Key, Globe, Trash2, Copy, Check, Users, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteProject } from '@/actions/project';
-import { useTransition, useState } from 'react';
+import { useTransition, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -78,6 +78,11 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
   const [projects, setProjects] = useState(initialProjects);
   const router = useRouter();
 
+  // Synchronizuj stan gdy props się zmienia (np. po router.refresh())
+  useEffect(() => {
+    setProjects(initialProjects);
+  }, [initialProjects]);
+
   // Aktualizacja stanu projektu przy zmianie widoczności
   const handleVisibilityChange = (projectId: string, isPublic: boolean) => {
     setProjects((prev) =>
@@ -90,6 +95,8 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
       deleteProject(id).then((data) => {
         if (data.success) {
           toast.success(data.success);
+          // Optymistyczna aktualizacja stanu - usuń z listy natychmiast
+          setProjects((prev) => prev.filter((p) => p.id !== id));
           router.refresh();
         } else {
           toast.error(data.error);
@@ -123,8 +130,12 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
                 <div className="flex items-center gap-2">
                   <CardTitle className="text-xl">{project.name}</CardTitle>
                   <Badge
-                    variant={project.isPublic === 'true' ? 'default' : 'secondary'}
-                    className="text-xs"
+                    variant="outline"
+                    className={`text-xs font-medium ${
+                      project.isPublic === 'true'
+                        ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/40'
+                        : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/40'
+                    }`}
                   >
                     {project.isPublic === 'true' ? (
                       <>
@@ -205,8 +216,8 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
               </div>
             </div>
 
-            {/* Przyciski testowania, monitoringu i członków */}
-            <div className="flex gap-2 pt-2 border-t border-dashed flex-wrap">
+            {/* Przyciski akcji - siatka 2x2 */}
+            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-dashed">
               <IntegrationTester projectId={project.id} projectName={project.name} />
               <SessionsMonitor projectId={project.id} projectName={project.name} />
               <SetupCodeManager projectId={project.id} projectName={project.name} />
@@ -214,9 +225,13 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
               {/* Zarządzanie członkami */}
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-1.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/20 hover:border-indigo-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
+                  >
                     <Users className="w-4 h-4" />
-                    <span className="hidden sm:inline">Członkowie</span>
+                    <span className="text-xs">Członkowie</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">

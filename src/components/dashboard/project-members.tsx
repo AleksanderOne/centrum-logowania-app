@@ -146,7 +146,17 @@ export function ProjectMembers({
               Zarządzaj dostępem do <strong>{projectName}</strong>
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={handleToggleVisibility} disabled={isPending}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleVisibility}
+            disabled={isPending}
+            className={
+              isPublic
+                ? 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/40 hover:bg-green-500/20 hover:border-green-500/60'
+                : 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/40 hover:bg-orange-500/20 hover:border-orange-500/60'
+            }
+          >
             {isPublic ? (
               <>
                 <Globe className="h-4 w-4 mr-2" />

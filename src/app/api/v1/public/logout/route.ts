@@ -10,6 +10,8 @@ import {
   logFailure,
   extractRequestInfo,
 } from '@/lib/security';
+import { devLog } from '@/lib/utils';
+import { serverLog } from '@/lib/debug-logger';
 
 /**
  * Public Logout Endpoint (dla aplikacji frontendowych korzystających z SDK)
@@ -81,6 +83,25 @@ export async function POST(req: NextRequest) {
     await db
       .delete(projectSessions)
       .where(and(eq(projectSessions.userId, userId), eq(projectSessions.projectId, project.id)));
+
+    if (user) {
+      devLog(`[LOGOUT] Wylogowano użytkownika: ${user.email} z projektu: ${project.name}`);
+      serverLog('[LOGOUT] User logged out from project', {
+        email: user.email,
+        userId: user.id,
+        projectId: project.id,
+        projectName: project.name,
+      });
+    } else {
+      devLog(
+        `[LOGOUT] Próba wylogowania dla nieznanego użytkownika (ID: ${userId}) z projektu: ${project.name}`
+      );
+      serverLog('[LOGOUT] Attempted logout for unknown user', {
+        userId,
+        projectId: project.id,
+        projectName: project.name,
+      });
+    }
 
     // Loguj sukces z pełnymi danymi
     await logSuccess('logout', {

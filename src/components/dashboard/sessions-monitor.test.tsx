@@ -86,9 +86,9 @@ describe('SessionsMonitor', () => {
     vi.restoreAllMocks();
   });
 
-  it('renderuje przycisk "Aktywne sesje"', () => {
+  it('renderuje przycisk "Sesje"', () => {
     render(<SessionsMonitor {...defaultProps} />);
-    expect(screen.getByRole('button', { name: /Aktywne sesje/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Sesje/i })).toBeInTheDocument();
   });
 
   it('otwiera dialog i pobiera sesje po kliknięciu przycisku', async () => {
@@ -99,7 +99,7 @@ describe('SessionsMonitor', () => {
 
     render(<SessionsMonitor {...defaultProps} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -115,7 +115,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Wszystkie sesje')).toBeInTheDocument();
@@ -136,7 +136,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
@@ -153,7 +153,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('192.168.1.1')).toBeInTheDocument();
@@ -169,7 +169,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Chrome')).toBeInTheDocument();
@@ -185,7 +185,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Brak aktywnych sesji')).toBeInTheDocument();
@@ -200,7 +200,7 @@ describe('SessionsMonitor', () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Nie udało się pobrać sesji');
@@ -214,7 +214,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Nie udało się pobrać sesji');
@@ -237,7 +237,7 @@ describe('SessionsMonitor', () => {
       });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
@@ -281,7 +281,7 @@ describe('SessionsMonitor', () => {
       });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
@@ -318,7 +318,7 @@ describe('SessionsMonitor', () => {
       });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
@@ -341,7 +341,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -362,7 +362,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Test Project')).toBeInTheDocument();
@@ -376,7 +376,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Jan Kowalski')).toBeInTheDocument();
@@ -457,7 +457,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Firefox')).toBeInTheDocument();
@@ -490,7 +490,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       const emailElements = screen.getAllByText('noname@example.com');
@@ -538,7 +538,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Mobile User')).toBeInTheDocument();
@@ -575,7 +575,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Nieznany czas')).toBeInTheDocument();
@@ -607,7 +607,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       // Powinna być wyświetlona pełna data w formacie polskim
@@ -641,7 +641,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('1 godz. temu')).toBeInTheDocument();
@@ -673,7 +673,7 @@ describe('SessionsMonitor', () => {
     });
 
     render(<SessionsMonitor {...defaultProps} />);
-    fireEvent.click(screen.getByRole('button', { name: /Aktywne sesje/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
       expect(screen.getByText('1 dni temu')).toBeInTheDocument();

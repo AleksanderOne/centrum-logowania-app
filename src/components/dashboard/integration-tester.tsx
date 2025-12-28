@@ -116,7 +116,9 @@ export const IntegrationTester = ({ projectId, projectName }: IntegrationTesterP
 
   const handleOpen = (open: boolean) => {
     setIsOpen(open);
-    if (open && !results) {
+    if (open) {
+      // Zawsze wykonuj test przy otwarciu modala
+      setResults(null);
       runTest();
     }
   };
@@ -126,11 +128,11 @@ export const IntegrationTester = ({ projectId, projectName }: IntegrationTesterP
       <DialogTrigger asChild>
         <Button
           size="sm"
-          className="gap-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-500/50 transition-all"
+          className="w-full gap-1.5 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/20 hover:border-cyan-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           variant="outline"
         >
           <TestTube className="w-4 h-4" />
-          Testuj integrację
+          <span className="text-xs">Testuj</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

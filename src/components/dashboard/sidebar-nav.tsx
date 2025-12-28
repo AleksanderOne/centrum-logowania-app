@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, User, ShieldCheck, History } from 'lucide-react';
-
+import { LayoutGrid, User, History } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ClaLogo } from '@/components/cla-logo';
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
   user: {
@@ -42,7 +42,7 @@ export function SidebarNav({ className, user, ...props }: SidebarNavProps) {
       {/* Logo */}
       <div className="p-6">
         <div className="flex items-center gap-2 font-bold text-xl text-primary">
-          <ShieldCheck className="w-6 h-6" suppressHydrationWarning />
+          <ClaLogo size={32} />
           <span>Centrum</span>
         </div>
       </div>

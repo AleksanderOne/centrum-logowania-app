@@ -11,6 +11,9 @@ import {
   extractRequestInfo,
   checkProjectAccess,
 } from '@/lib/security';
+import { devLog } from '@/lib/utils';
+import { signSessionToken } from '@/lib/jwt';
+import { serverLog } from '@/lib/debug-logger';
 
 /**
  * Public Token Exchange Endpoint (dla prostych aplikacji frontendowych)
@@ -62,12 +65,20 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { code, redirect_uri } = body;
 
+    devLog(`\n[TOKEN] 📥 POST /api/v1/public/token - Wymiana kodu autoryzacyjnego`);
+    devLog(`[TOKEN] 🔍 Code: ${code?.substring(0, 6)}... Redirect: ${redirect_uri}`);
+    serverLog('[TOKEN] Exchange Request start', {
+      code: code?.substring(0, 10) + '...',
+      redirect_uri,
+    });
+
     if (!code || !redirect_uri) {
       await logFailure('token_exchange', {
         ipAddress,
         userAgent,
         metadata: { reason: 'missing_params', endpoint: 'public' },
       });
+      serverLog('[TOKEN] Missing parameters', { code, redirect_uri });
       return NextResponse.json(
         { error: 'Missing authorization code or redirect_uri' },
         { status: 400 }
@@ -80,19 +91,28 @@ export async function POST(req: NextRequest) {
     });
 
     if (!authCode) {
+      devLog('[TOKEN] Nieprawidłowy kod autoryzacyjny');
+      serverLog('[TOKEN] Invalid or expired code', { code });
       await logFailure('token_exchange', {
         ipAddress,
         userAgent,
         metadata: { reason: 'invalid_code', endpoint: 'public' },
       });
       return NextResponse.json(
-        { error: 'Invalid or already used authorization code' },
-        { status: 401 }
+        { error: 'invalid_grant', error_description: 'Invalid authorization code' },
+        { status: 400 }
       );
     }
 
     // 3. WAŻNE: Weryfikacja redirect_uri (musi dokładnie pasować!)
     if (authCode.redirectUri !== redirect_uri) {
+      devLog(
+        `[TOKEN] ❌ Niezgodny Redirect URI: Oczekiwano ${authCode.redirectUri}, otrzymano ${redirect_uri}`
+      );
+      serverLog('[TOKEN] Redirect URI mismatch', {
+        expected: authCode.redirectUri,
+        received: redirect_uri,
+      });
       await logFailure('token_exchange', {
         ipAddress,
         userAgent,
@@ -103,6 +123,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Sprawdzenie czy kod nie wygasł
     if (authCode.expiresAt < new Date()) {
+      serverLog('[TOKEN] Authorization code expired', { code });
       await logFailure('token_exchange', {
         ipAddress,
         userAgent,
@@ -123,6 +144,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
+      serverLog('[TOKEN] User not found for authCode', { userId: authCode.userId });
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -135,6 +157,7 @@ export async function POST(req: NextRequest) {
     const accessResult = await checkProjectAccess(user.id, authCode.projectId);
 
     if (!accessResult.allowed) {
+      devLog(`[TOKEN] ⛔ Odmowa dostępu do projektu: ${accessResult.reason}`);
       await logFailure('access_denied', {
         userId: user.id,
         projectId: authCode.projectId,
@@ -192,6 +215,16 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // 10. Generowanie Session Token (dla weryfikacji dostępu w SDK)
+    const sessionToken = await signSessionToken({
+      userId: user.id,
+      projectId: authCode.projectId,
+      tokenVersion: user.tokenVersion || 0,
+    });
+
+    devLog(`[TOKEN] ✅ Wymiana sukces! Zalogowano: ${user.email} (Projekt: ${project?.name})`);
+    serverLog(`[TOKEN] Success`, { user: user.email, project: project?.name });
+
     // 10. Sukces - zwracamy podstawowe dane użytkownika (bez tokenVersion!)
     return NextResponse.json({
       user: {
@@ -206,6 +239,7 @@ export async function POST(req: NextRequest) {
             name: project.name,
           }
         : null,
+      sessionToken,
     });
   } catch (error) {
     console.error('Public token exchange error:', error);

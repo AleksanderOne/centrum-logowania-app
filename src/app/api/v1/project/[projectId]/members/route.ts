@@ -130,10 +130,10 @@ export async function POST(req: NextRequest, segmentData: { params: Params }) {
       role,
     });
 
-    await logSuccess('project_access', {
+    await logSuccess('member_add', {
       userId: userToAdd.id,
       projectId: params.projectId,
-      metadata: { action: 'member_added', addedBy: session.user.id, role },
+      metadata: { addedBy: session.user.id, role, email },
     });
 
     return NextResponse.json({ success: true, message: 'Członek został dodany' });

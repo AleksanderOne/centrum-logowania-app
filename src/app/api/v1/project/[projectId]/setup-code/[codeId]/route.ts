@@ -4,6 +4,7 @@ import { db } from '@/lib/db/drizzle';
 import { projects, projectSetupCodes } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { logSuccess, logFailure } from '@/lib/security';
+import { devLog } from '@/lib/utils';
 
 type Params = Promise<{ projectId: string; codeId: string }>;
 
@@ -13,11 +14,15 @@ type Params = Promise<{ projectId: string; codeId: string }>;
  */
 export async function DELETE(req: NextRequest, segmentData: { params: Params }) {
   const params = await segmentData.params;
+  devLog(
+    `\n[SETUP-CODE] 📥 DELETE /api/v1/project/${params.projectId}/setup-code/${params.codeId} - Usuwanie kodu`
+  );
 
   try {
     const session = await auth();
 
     if (!session?.user?.id) {
+      devLog(`[SETUP-CODE] ❌ Brak sesji użytkownika`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -27,6 +32,7 @@ export async function DELETE(req: NextRequest, segmentData: { params: Params }) 
     });
 
     if (!project) {
+      devLog(`[SETUP-CODE] ⛔ Odmowa dostępu do projektu`);
       await logFailure('access_denied', {
         userId: session.user.id,
         projectId: params.projectId,
@@ -44,17 +50,21 @@ export async function DELETE(req: NextRequest, segmentData: { params: Params }) 
     });
 
     if (!setupCode) {
+      devLog(`[SETUP-CODE] ❌ Nie znaleziono kodu do usunięcia`);
       return NextResponse.json({ error: 'Setup code not found' }, { status: 404 });
     }
+    console.log(`[SETUP-CODE] 🗑️ Usuwanie kodu: ${params.codeId}`);
 
     // Usuń kod
     await db.delete(projectSetupCodes).where(eq(projectSetupCodes.id, params.codeId));
 
-    await logSuccess('setup_code', {
+    await logSuccess('setup_code_delete', {
       userId: session.user.id,
       projectId: params.projectId,
-      metadata: { action: 'deleted', codeId: params.codeId },
+      metadata: { codeId: params.codeId },
     });
+
+    console.log(`[SETUP-CODE] ✅ Kod usunięty pomyślnie.\n`);
 
     return NextResponse.json({
       success: true,

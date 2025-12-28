@@ -14,7 +14,7 @@ import { auditLogs } from '@/lib/db/schema';
 
 // Typy akcji audytu
 export type AuditAction =
-  | 'login' // Logowanie przez Google
+  | 'login' // Logowanie do CLA przez Google
   | 'logout' // Wylogowanie
   | 'token_exchange' // Wymiana kodu na token (OAuth2)
   | 'session_verify' // Weryfikacja sesji przez aplikację kliencką
@@ -22,8 +22,18 @@ export type AuditAction =
   | 'access_denied' // Odmowa dostępu (izolacja danych)
   | 'rate_limited' // Przekroczony limit requestów
   | 'kill_switch' // Unieważnienie sesji przez admina
-  | 'project_access' // Próba dostępu do projektu
-  | 'setup_code'; // Operacje na setup codes (generowanie, claim, usuwanie)
+  | 'sso_login' // Autoryzacja SSO - zalogowanie do projektu zewnętrznego
+  | 'visibility_change' // Zmiana widoczności projektu (publiczny/prywatny)
+  | 'member_add' // Dodanie członka do projektu
+  | 'member_remove' // Usunięcie członka z projektu
+  | 'project_create' // Utworzenie nowego projektu
+  | 'project_delete' // Usunięcie projektu
+  | 'setup_code' // Ogólna operacja na setup codes (legacy)
+  | 'setup_code_generate' // Wygenerowanie nowego kodu setup
+  | 'setup_code_delete' // Usunięcie kodu setup
+  | 'setup_code_use' // Użycie kodu setup (claim)
+  | 'session_delete' // Usunięcie sesji użytkownika
+  | 'integration_test'; // Test integracji projektu
 
 export type AuditStatus = 'success' | 'failure';
 

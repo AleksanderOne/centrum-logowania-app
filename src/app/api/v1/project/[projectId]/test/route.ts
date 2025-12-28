@@ -3,6 +3,7 @@ import { db } from '@/lib/db/drizzle';
 import { projects, projectSessions } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+import { logSuccess } from '@/lib/security';
 
 interface TestResult {
   domain: {
@@ -170,6 +171,12 @@ export async function POST(
         message: 'Integracja skonfigurowana, ale jeszcze nikt się nie zalogował',
       };
     }
+
+    await logSuccess('integration_test', {
+      userId: session.user.id,
+      projectId: projectId,
+      metadata: { results },
+    });
 
     return NextResponse.json({ results });
   } catch (error) {

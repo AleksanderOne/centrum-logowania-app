@@ -94,7 +94,7 @@ describe('POST /api/v1/project/[projectId]/setup-code', () => {
     const mockSetupCode = {
       id: 'code-id',
       code: 'setup_1234567890abcdef1234567890abcdef',
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 60 * 1000), // 1 minuta
       createdAt: new Date(),
     };
 

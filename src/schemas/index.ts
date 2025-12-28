@@ -42,8 +42,9 @@ const sanitizeMessage = (text: string): string => {
 };
 
 // Regex dla domeny/URL (podstawowa walidacja)
+// Obsługuje: domeny (example.com), localhost, adresy IP, z opcjonalnym protokołem http(s), portem i ścieżką
 const domainRegex =
-  /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(:[0-9]+)?(\/.*)?$|^localhost(:[0-9]+)?(\/.*)?$/;
+  /^(https?:\/\/)?(([a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|localhost|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?(\/.*)?$/;
 
 export const CreateProjectSchema = z.object({
   name: z

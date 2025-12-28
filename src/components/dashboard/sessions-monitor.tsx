@@ -155,11 +155,11 @@ export const SessionsMonitor = ({ projectId, projectName }: SessionsMonitorProps
       <DialogTrigger asChild>
         <Button
           size="sm"
-          className="gap-2 bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30 hover:bg-violet-500/20 hover:border-violet-500/50 transition-all"
+          className="w-full gap-1.5 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border-fuchsia-500/30 hover:bg-fuchsia-500/20 hover:border-fuchsia-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           variant="outline"
         >
           <Users className="w-4 h-4" />
-          Aktywne sesje
+          <span className="text-xs">Sesje</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl max-h-[80vh]">
