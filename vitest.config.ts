@@ -94,7 +94,7 @@ export default defineConfig({
         // Komponenty z controlled inputs / z integracją innych komponentów
         '**/projects-container.tsx',
         '**/project-list.tsx',
-        '**/setup-code-manager.tsx',
+        '**/quick-connect-manager.tsx',
         '**/integration-tester.tsx',
 
         // Biblioteki z logiką systemową

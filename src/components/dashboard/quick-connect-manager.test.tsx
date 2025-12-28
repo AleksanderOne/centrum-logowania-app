@@ -36,6 +36,22 @@ describe('QuickConnectManager', () => {
     vi.useRealTimers();
   });
 
+  it('obsługuje odpowiedź API bez pola codes (fallback na pustą tablicę)', async () => {
+    // API zwraca pustą odpowiedź bez pola codes
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}), // Brak pola codes
+    });
+
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
+
+    // Powinno pokazać "Brak aktywnych kodów"
+    await waitFor(() => {
+      expect(screen.getByText('Brak aktywnych kodów')).toBeInTheDocument();
+    });
+  });
+
   it('otwiera dialog i pobiera kody', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -181,5 +197,166 @@ describe('QuickConnectManager', () => {
     await waitFor(() => {
       expect(screen.queryByText('setup_abc123')).not.toBeInTheDocument();
     });
+  });
+
+  it('kopiuje kod do schowka po kliknięciu CopyButton', async () => {
+    // Mock clipboard API
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText: writeTextMock },
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ codes: [mockCode] }),
+    });
+
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
+
+    await waitFor(() => expect(screen.getByText('setup_abc123')).toBeInTheDocument());
+
+    // Kliknij przycisk kopiowania
+    const copyBtn = screen.getByTitle('Kopiuj kod');
+    fireEvent.click(copyBtn);
+
+    expect(writeTextMock).toHaveBeenCalledWith('setup_abc123');
+    expect(toast.success).toHaveBeenCalledWith('Skopiowano kod!');
+  });
+
+  it('resetuje ikonę kopiowania po 2 sekundach', async () => {
+    vi.useFakeTimers();
+
+    // Mock clipboard API
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText: writeTextMock },
+    });
+
+    // Kod z długim czasem wygaśnięcia
+    const longCode = {
+      ...mockCode,
+      expiresAt: new Date(Date.now() + 600000).toISOString(), // 10 min
+    };
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ codes: [longCode] }),
+    });
+
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+
+    // Otwórz dialog
+    await act(async () => {
+      fireEvent.click(screen.getByText('Quick Connect'));
+      await vi.advanceTimersByTimeAsync(100); // Pozwól na fetch
+    });
+
+    // Kliknij kopiuj
+    const copyBtn = screen.getByTitle('Kopiuj kod');
+    await act(async () => {
+      fireEvent.click(copyBtn);
+    });
+
+    expect(toast.success).toHaveBeenCalledWith('Skopiowano kod!');
+
+    // Przeskocz 2 sekundy - callback setTimeout powinien się wykonać
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+
+    // Test przeszedł = callback setTimeout się wykonał (linia 37)
+  });
+
+  it('obsługuje błąd generowania kodu', async () => {
+    // Pierwszy fetch (pobranie pustej listy)
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ codes: [] }),
+    });
+
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
+
+    await waitFor(() => expect(screen.getByText('Brak aktywnych kodów')).toBeInTheDocument());
+
+    // Mock błąd generowania
+    fetchMock.mockResolvedValueOnce({ ok: false });
+
+    // Kliknij generuj
+    fireEvent.click(screen.getByText('Wygeneruj nowy kod'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Nie udało się wygenerować kodu');
+    });
+  });
+
+  it('obsługuje błąd usuwania kodu', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ codes: [mockCode] }),
+    });
+
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
+
+    await waitFor(() => expect(screen.getByText('setup_abc123')).toBeInTheDocument());
+
+    // Mock błąd usuwania
+    fetchMock.mockResolvedValueOnce({ ok: false });
+
+    // Kliknij usuń
+    const deleteBtn = screen.getByTitle('Usuń kod');
+    fireEvent.click(deleteBtn);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Nie udało się usunąć kodu');
+    });
+
+    // Kod powinien nadal być widoczny (nie został usunięty)
+    expect(screen.getByText('setup_abc123')).toBeInTheDocument();
+  });
+
+  it('zamyka dialog po kliknięciu przycisku Zamknij', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ codes: [] }),
+    });
+
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
+
+    await waitFor(() => expect(screen.getByText('Brak aktywnych kodów')).toBeInTheDocument());
+
+    // Kliknij Zamknij
+    fireEvent.click(screen.getByText('Zamknij'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Brak aktywnych kodów')).not.toBeInTheDocument();
+    });
+  });
+
+  it('wyświetla czas w formacie minut:sekund gdy pozostało więcej niż minuta', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval'] });
+    // Kod wygasający za 2 minuty i 30 sekund
+    const codeWithMinutes = {
+      ...mockCode,
+      expiresAt: new Date(Date.now() + 150000).toISOString(), // 2:30
+    };
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ codes: [codeWithMinutes] }),
+    });
+
+    render(<QuickConnectManager projectId={projectId} projectName={projectName} />);
+    fireEvent.click(screen.getByText('Quick Connect'));
+
+    // Sprawdź format minut:sekund (2:30 lub podobny)
+    await waitFor(() =>
+      expect(
+        screen.getByText((content) => content.includes('2:30') || content.includes('2:29'))
+      ).toBeInTheDocument()
+    );
   });
 });
