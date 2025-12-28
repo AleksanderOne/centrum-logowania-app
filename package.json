@@ -1,6 +1,6 @@
 {
   "name": "centrum-logowania-app",
-  "version": "2.5.1",
+  "version": "2.6.0",
   "private": true,
   "scripts": {
     "predev": "git pull --rebase origin main || echo 'Nie udało się pobrać zmian - kontynuuję...'",

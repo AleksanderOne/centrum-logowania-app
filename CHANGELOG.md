@@ -1,3 +1,14 @@
+# [2.6.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.5.1...v2.6.0) (2025-12-28)
+
+
+### Features
+
+* **security:** dodaj moduł CSRF protection z weryfikacją Origin/Referer ([e9ddfd9](https://github.com/AleksanderOne/centrum-logowania-app/commit/e9ddfd9be3a9cc78b7ff6ecf615765f0e0854afc))
+* **security:** dodaj walidację Redirect URI z pełną weryfikacją bezpieczeństwa ([8314784](https://github.com/AleksanderOne/centrum-logowania-app/commit/8314784f21ef3ec94d6997a5835310ff63ad161c))
+* **security:** dodaj wykrywanie ataków brute force z automatycznym blokowaniem ([e84c707](https://github.com/AleksanderOne/centrum-logowania-app/commit/e84c70764519fe28f2d5da3d863a8ae47223ea9d))
+* **security:** eksportuj nowe moduły bezpieczeństwa w index.ts ([02ee139](https://github.com/AleksanderOne/centrum-logowania-app/commit/02ee13952b56d7486865b3d1e17886e39eb45aac))
+* **security:** implementuj PKCE (Proof Key for Code Exchange) dla OAuth 2.0 ([4eb7aa0](https://github.com/AleksanderOne/centrum-logowania-app/commit/4eb7aa0f626e1d1804b9fc735264eae1a01d1929))
+
 ## [2.5.1](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.5.0...v2.5.1) (2025-12-28)
 
 
