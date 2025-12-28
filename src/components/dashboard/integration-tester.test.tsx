@@ -369,4 +369,27 @@ describe('IntegrationTester', () => {
       expect(screen.getByText('custom')).toBeInTheDocument();
     });
   });
+
+  it('obsługuje status skipped', async () => {
+    const mockSkippedResults = {
+      results: {
+        domain: { status: 'skipped', message: 'Skipped domain' },
+        sessions: { status: 'skipped', message: 'Skipped sessions', count: 0 },
+        integration: { status: 'skipped', message: 'Skipped integration' },
+      },
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockSkippedResults,
+    });
+
+    render(<IntegrationTester {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: /Testuj/i }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Pominięto').length).toBeGreaterThan(0);
+      expect(screen.getByText('Skipped domain')).toBeInTheDocument();
+    });
+  });
 });

@@ -88,6 +88,7 @@ export default defineConfig({
         // Komponenty security (integracja z DB, trudne do unit test)
         '**/security/**',
         '**/audit-logs-viewer.tsx',
+        '**/audit-dictionary.tsx',
         '**/project-members.tsx',
 
         // Komponenty z controlled inputs / z integracją innych komponentów
@@ -102,6 +103,10 @@ export default defineConfig({
 
         // Konfiguracja bazy danych
         '**/db/**',
+
+        // Pliki konfiguracyjne serwera i narzędzia debugowania
+        '**/instrumentation.ts',
+        '**/debug-click-tracker.tsx',
       ],
 
       // Nie failuj gdy plik nie ma testów (ale raportuj)
