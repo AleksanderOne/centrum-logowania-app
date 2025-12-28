@@ -53,3 +53,6 @@ tests/.server-info.json
 # Mutation testing (Stryker)
 reports/
 .stryker-tmp/
+
+# Logi debugowania (development only)
+logi.txt

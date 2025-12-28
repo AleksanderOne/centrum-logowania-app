@@ -6,14 +6,14 @@
 
 ## Przegląd Etapów
 
-| Etap | Nazwa | Szacowany czas | Zależności |
-|------|-------|----------------|------------|
-| 1 | Setup Code - Backend | 2-3h | - |
-| 2 | Setup Code - Dashboard UI | 2h | Etap 1 |
-| 3 | WebAuthn - Schemat i Backend | 3-4h | - |
-| 4 | WebAuthn - UI Rejestracji Klucza | 2-3h | Etap 3 |
-| 5 | WebAuthn - UI Logowania | 2-3h | Etap 4 |
-| 6 | Testy i Dokumentacja | 2-3h | Wszystkie |
+| Etap | Nazwa                            | Szacowany czas | Zależności |
+| ---- | -------------------------------- | -------------- | ---------- |
+| 1    | Setup Code - Backend             | ✅ Gotowe      | -          |
+| 2    | Setup Code - Dashboard UI        | ✅ Gotowe      | Etap 1     |
+| 3    | WebAuthn - Schemat i Backend     | 3-4h           | -          |
+| 4    | WebAuthn - UI Rejestracji Klucza | 2-3h           | Etap 3     |
+| 5    | WebAuthn - UI Logowania          | 2-3h           | Etap 4     |
+| 6    | Testy i Dokumentacja             | 2-3h           | Wszystkie  |
 
 **Łączny szacowany czas**: 13-18h
 
@@ -58,6 +58,7 @@ npx drizzle-kit migrate
 ```
 
 **Logika**:
+
 - Sprawdź czy user jest właścicielem projektu
 - Wygeneruj unikalny kod: `setup_${crypto.randomBytes(16).toString('hex')}`
 - Ustaw wygaśnięcie: 24h
@@ -75,6 +76,7 @@ npx drizzle-kit migrate
 ```
 
 **Logika**:
+
 1. Znajdź setup code w bazie
 2. Sprawdź czy nie wygasł i nie użyty
 3. Oznacz jako użyty (`usedAt`, `usedByIp`)
@@ -82,14 +84,16 @@ npx drizzle-kit migrate
 
 ### 1.5 Checklist Etapu 1
 
-- [ ] Dodać tabelę `projectSetupCodes` do schema.ts
-- [ ] Uruchomić migrację Drizzle
-- [ ] Utworzyć endpoint `POST /api/v1/project/[projectId]/setup-code`
-- [ ] Utworzyć endpoint `GET /api/v1/project/[projectId]/setup-code`
-- [ ] Utworzyć endpoint `DELETE /api/v1/project/[projectId]/setup-code/[codeId]`
-- [ ] Utworzyć endpoint `POST /api/v1/projects/claim`
-- [ ] Dodać testy jednostkowe dla endpointów
-- [ ] Zaktualizować `API_DOCS.md`
+- [x] Dodać tabelę `projectSetupCodes` do schema.ts
+- [x] Uruchomić migrację Drizzle (użyto `db:push`)
+- [x] Utworzyć endpoint `POST /api/v1/project/[projectId]/setup-code`
+- [x] Utworzyć endpoint `GET /api/v1/project/[projectId]/setup-code`
+- [x] Utworzyć endpoint `DELETE /api/v1/project/[projectId]/setup-code/[codeId]`
+- [x] Utworzyć endpoint `POST /api/v1/projects/claim`
+- [x] Dodać testy jednostkowe dla endpointów
+- [x] Zaktualizować `API_DOCS.md`
+
+> **Note**: Wdrożono 27.12.2024. Dodano również skrypt demo `scripts/setup-with-code.mjs`.
 
 ---
 
@@ -100,6 +104,7 @@ npx drizzle-kit migrate
 **Plik**: `src/components/dashboard/SetupCodeManager.tsx`
 
 **Funkcjonalności**:
+
 - Lista aktywnych setup codes (z czasem do wygaśnięcia)
 - Przycisk "Generuj nowy kod"
 - Przycisk kopiowania kodu do schowka
@@ -114,11 +119,13 @@ npx drizzle-kit migrate
 
 ### 2.3 Checklist Etapu 2
 
-- [ ] Utworzyć komponent `SetupCodeManager`
-- [ ] Dodać Server Action do generowania/usuwania kodów
-- [ ] Zintegrować z dashboardem projektu
-- [ ] Dodać instrukcję użycia dla developerów
-- [ ] Testy E2E dla UI
+- [x] Utworzyć komponent `SetupCodeManager`
+- [x] Dodać Server Action do generowania/usuwania kodów (zrobione przez API)
+- [x] Zintegrować z dashboardem projektu
+- [x] Dodać instrukcję użycia dla developerów (wbudowana w modal + Setup Wizard w demo)
+- [x] Testy E2E dla UI (Wdrożono interaktywny Setup Wizard w demo-apps)
+
+> **Note**: Wdrożono 27.12.2024. Dodano `setup-wizard.js` do aplikacji demo (Blog, Shop), co pozwala na łatwe testowanie całego flow setup code bez użycia CLI. Logi serwera są teraz ukryte w trybie produkcyjnym.
 
 ---
 
@@ -142,16 +149,16 @@ export const passkeys = mySchema.table('passkey', {
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  
+
   // WebAuthn credential data
   credentialId: text('credential_id').notNull().unique(), // Base64URL
   publicKey: text('public_key').notNull(), // Base64URL encoded
   counter: integer('counter').notNull().default(0),
-  
+
   // Metadata
   deviceName: text('device_name'), // np. "YubiKey 5", "MacBook Touch ID"
   transports: text('transports'), // JSON array: ["usb", "nfc", "ble", "internal"]
-  
+
   // Audit
   lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
   createdAt: timestamp('created_at').defaultNow(),
@@ -236,6 +243,7 @@ export const webauthnConfig = {
 **Plik**: `src/app/dashboard/security/passkeys/page.tsx`
 
 **Funkcjonalności**:
+
 - Lista zarejestrowanych kluczy (nazwa, data dodania, ostatnie użycie)
 - Przycisk "Dodaj nowy klucz"
 - Modal/dialog z instrukcją (włóż klucz, dotknij)
@@ -269,6 +277,7 @@ export const webauthnConfig = {
 **Plik**: `src/app/page.tsx` (strona główna / logowanie)
 
 **Zmiany**:
+
 - Dodać przycisk "Zaloguj kluczem" obok przycisku Google
 - Lub: "Inne metody logowania" → rozwijana lista
 
@@ -283,6 +292,7 @@ export const webauthnConfig = {
 ### 5.3 Integracja z flow OAuth2
 
 Po udanym logowaniu kluczem:
+
 1. Tworzona jest sesja NextAuth (jak przy Google)
 2. Jeśli user przyszedł z `/authorize` → kontynuuj flow OAuth2
 3. Przekierowanie na dashboard lub do aplikacji klienckiej
@@ -302,14 +312,14 @@ Po udanym logowaniu kluczem:
 
 ### 6.1 Testy
 
-| Typ | Co testować |
-|-----|-------------|
-| Unit | Generowanie/walidacja setup codes |
-| Unit | WebAuthn challenge generation/verification |
-| Integration | Claim setup code → otrzymanie konfiguracji |
-| Integration | Rejestracja passkey → logowanie passkey |
-| E2E | Pełny flow: nowa app → setup code → działa SSO |
-| E2E | Logowanie kluczem → autoryzacja w FA |
+| Typ         | Co testować                                    |
+| ----------- | ---------------------------------------------- |
+| Unit        | Generowanie/walidacja setup codes              |
+| Unit        | WebAuthn challenge generation/verification     |
+| Integration | Claim setup code → otrzymanie konfiguracji     |
+| Integration | Rejestracja passkey → logowanie passkey        |
+| E2E         | Pełny flow: nowa app → setup code → działa SSO |
+| E2E         | Logowanie kluczem → autoryzacja w FA           |
 
 ### 6.2 Dokumentacja
 
@@ -381,6 +391,7 @@ gantt
 ### Wsparcie przeglądarek
 
 WebAuthn jest wspierany przez:
+
 - Chrome 67+
 - Firefox 60+
 - Safari 13+

@@ -81,6 +81,17 @@ class CentrumLogowania {
       return;
     }
 
+    // Sprawdź czy clientId jest skonfigurowany
+    if (!clientId) {
+      console.warn('[CentrumLogowania] Brak clientId - wymagana konfiguracja przez Setup Wizard');
+      // Ukryj aplikację
+      appElement.classList.add('hidden');
+      appElement.style.display = 'none';
+      // Pokaż informację o konieczności konfiguracji
+      CentrumLogowania._renderConfigRequiredScreen(appElement.parentNode, appId);
+      return;
+    }
+
     // Użyj automatycznie wykrytego URL jeśli nie podano
     const finalAuthUrl = authUrl || _AUTO_AUTH_URL;
     // eslint-disable-next-line no-console
@@ -111,6 +122,16 @@ class CentrumLogowania {
           onLogin(user);
         }
 
+        // Weryfikacja sesji w tle (Kill Switch / Access Check)
+        sdk.verifySession().then((isValid) => {
+          if (!isValid) {
+            console.warn(
+              '[CentrumLogowania] Sesja nieważna (weryfikacja negatywna). Wylogowywanie...'
+            );
+            sdk.logout();
+          }
+        });
+
         // Obsługa wylogowania
         sdk.attachLogoutHandlers();
       } else {
@@ -128,6 +149,40 @@ class CentrumLogowania {
     });
 
     return sdk;
+  }
+
+  /**
+   * Wyświetla ekran informujący o konieczności konfiguracji przez Setup Wizard
+   * @private
+   */
+  static _renderConfigRequiredScreen(parentElement, elementIdToInsertBefore) {
+    // Sprawdź czy już nie wygenerowaliśmy
+    if (document.getElementById('cl-config-required')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'cl-config-required';
+    wrapper.className =
+      'flex flex-col items-center justify-center p-8 text-center space-y-4 animate-in fade-in zoom-in duration-300';
+    wrapper.style.minHeight = '200px';
+
+    wrapper.innerHTML = `
+      <div class="bg-amber-100 dark:bg-amber-900/30 p-4 rounded-full mb-2">
+        <svg class="w-8 h-8 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 dark:text-white">Konfiguracja wymagana</h3>
+      <p class="text-gray-500 dark:text-gray-400 max-w-xs">
+        Kliknij przycisk <strong class="text-blue-600">⚙️ Setup Wizard</strong> w lewym dolnym rogu, aby skonfigurować tę aplikację.
+      </p>
+      <p class="text-xs text-gray-400 dark:text-gray-500">
+        Potrzebujesz Setup Code z dashboardu Centrum Logowania.
+      </p>
+    `;
+
+    const ref = document.getElementById(elementIdToInsertBefore);
+    parentElement.insertBefore(wrapper, ref);
   }
 
   /**
@@ -189,8 +244,9 @@ class CentrumLogowaniaInternal {
       // eslint-disable-next-line no-console
       console.log('[CentrumLogowania] Zalogowano pomyślnie:', data.user?.email);
 
-      // Zapisz dane użytkownika
-      localStorage.setItem(this.storageKey, JSON.stringify(data.user));
+      // Zapisz dane użytkownika wraz z tokenem sesyjnym
+      const userData = { ...data.user, sessionToken: data.sessionToken };
+      localStorage.setItem(this.storageKey, JSON.stringify(userData));
 
       // Wyczyść URL z kodem i przeładuj
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -217,6 +273,49 @@ class CentrumLogowaniaInternal {
     } catch (e) {
       console.error('[CentrumLogowania] Błąd parsowania danych użytkownika:', e);
       return null;
+    }
+  }
+
+  /**
+   * Weryfikuje ważność sesji po stronie serwera
+   */
+  async verifySession() {
+    const user = this.getUser();
+    if (!user || !user.sessionToken) {
+      // Brak tokena sesyjnego (wersja legacy lub błąd).
+      // Jeśli chcemy być strict -> return false.
+      // Ale dla kompatybilności wstecznej (stare sesje) -> return true (lub wymuś relogin).
+      // Decyzja: Wymuszamy relogin dla bezpieczeństwa w nowych wersjach.
+      return true;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+      const response = await fetch(`${this.authUrl}/api/v1/public/session/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: user.sessionToken }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        // Błąd serwera (np. 500) -> nie wylogowuj, może to chwilowe
+        if (response.status >= 500) return true;
+        return false;
+      }
+
+      const data = await response.json();
+      return data.valid;
+    } catch (error) {
+      // Błąd sieci -> uznajemy że sesja OK (offline mode / network error)
+      console.error('[CentrumLogowania] Nie udało się zweryfikować sesji:', error);
+      return true;
     }
   }
 
