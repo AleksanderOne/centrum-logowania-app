@@ -94,6 +94,11 @@ export default defineConfig({
         // Komponenty z controlled inputs / z integracją innych komponentów
         '**/projects-container.tsx',
         '**/project-list.tsx',
+        '**/setup-code-manager.tsx',
+        '**/integration-tester.tsx',
+
+        // Biblioteki z logiką systemową
+        '**/debug-logger.ts',
 
         // Szablony/przykłady
         '**/templates/**',
