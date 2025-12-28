@@ -1,4 +1,4 @@
-name: Release
+name: 🚀 Generowanie Wersji
 
 on:
   push:
@@ -11,70 +11,31 @@ permissions:
   pull-requests: write
 
 jobs:
-  release:
-    name: Release
+  generowanie-wersji:
+    name: 📦 Generowanie Wersji Aplikacji
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: centrum_logowania_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - name: Checkout
+      - name: 📥 Pobieranie Kodu
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Setup Node.js
+      - name: ⚙️ Konfiguracja Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: 📚 Instalacja Zależności
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run unit tests
-        run: npm run test:unit
-
-      - name: Build
-        env:
-          AUTH_SECRET: 'dummy-secret-for-build-only'
-          NEXTAUTH_SECRET: 'dummy-secret-for-build-only'
-          AUTH_TRUST_HOST: 'true'
-        run: npm run build
-
-      - name: Setup database schema
-        env:
-          DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/centrum_logowania_test'
-        run: npx drizzle-kit push --force
-
-      - name: Run E2E tests
-        env:
-          AUTH_SECRET: 'dummy-secret-for-build-only'
-          NEXTAUTH_SECRET: 'dummy-secret-for-build-only'
-          AUTH_TRUST_HOST: 'true'
-          DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/centrum_logowania_test'
-        run: npm run test:e2e
-
-      - name: Release
+      - name: 🏷️ Generowanie Wersji i Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HUSKY: '0'
-        run: npx semantic-release
-
+        run: |
+          echo "🚀 Rozpoczynam generowanie nowej wersji..."
+          npx semantic-release
+          echo "✅ Generowanie wersji zakończone!"

@@ -1,11 +1,8 @@
-name: Mutation Testing (Stryker)
+name: 🧬 Testy Mutacyjne (Stryker)
 
-# Uruchamianie:
-# 1. Ręcznie przez GitHub Actions UI (workflow_dispatch)
-# 2. Automatycznie w niedzielę o 3:00 (scheduled)
-# 3. Na PR do main (opcjonalnie - wyłączone domyślnie bo wolne)
+# Uruchamianie ręczne przez GitHub Actions UI
+# Użyj tego workflow do dodatkowej weryfikacji jakości testów
 on:
-  # Ręczne uruchomienie z GitHub UI
   workflow_dispatch:
     inputs:
       concurrency:
@@ -23,66 +20,69 @@ on:
         default: false
         type: boolean
 
-  # Automatyczne uruchomienie w niedzielę o 3:00 UTC
-  schedule:
-    - cron: '0 3 * * 0'
-
-  # Opcjonalnie: na PR do main (odkomentuj jeśli chcesz)
-  # pull_request:
-  #   branches: [main]
-  #   paths:
-  #     - 'src/**/*.ts'
-  #     - 'src/**/*.tsx'
-
 permissions:
   contents: read
-  # Pozwala na komentowanie PR z wynikami
   pull-requests: write
 
 jobs:
-  mutation-test:
-    name: 🧬 Mutation Testing
+  testy-mutacyjne:
+    name: 🧬 Testy Mutacyjne
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    outputs:
+      score: ${{ steps.wyniki.outputs.score }}
+      killed: ${{ steps.wyniki.outputs.killed }}
+      survived: ${{ steps.wyniki.outputs.survived }}
+      total: ${{ steps.wyniki.outputs.total }}
+      status: ${{ steps.wyniki.outputs.status }}
 
     steps:
-      - name: 📥 Checkout
+      - name: 📥 Pobieranie Kodu
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 📦 Setup Node.js
+      - name: ⚙️ Konfiguracja Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
           cache: 'npm'
 
-      - name: 📚 Install dependencies
+      - name: 📚 Instalacja Zależności
         run: npm ci
 
-      - name: 🧬 Run Stryker Mutation Testing
+      - name: 🧬 Uruchamianie Testów Mutacyjnych
         run: |
-          echo "🧬 Uruchamiam testy mutacyjne..."
-          echo "📊 Concurrency: ${{ github.event.inputs.concurrency || '4' }}"
-          echo "ℹ️ Używam command runner (kompatybilny z Vitest 4)"
-          npm run test:mutation -- --concurrency ${{ github.event.inputs.concurrency || '4' }}
+          echo "🧬 Rozpoczynam testy mutacyjne..."
+          echo "📊 Liczba równoległych procesów: ${{ github.event.inputs.concurrency || '4' }}"
+          echo "ℹ️ Tryb incremental: ${{ github.event.inputs.incremental || 'false' }}"
+          echo "🔧 Używam command runner (kompatybilny z Vitest 4)"
+          
+          if [ "${{ github.event.inputs.incremental }}" == "true" ]; then
+            npm run test:mutation -- --incremental --concurrency ${{ github.event.inputs.concurrency || '4' }}
+          else
+            npm run test:mutation -- --concurrency ${{ github.event.inputs.concurrency || '4' }}
+          fi
         env:
           CI: true
           NODE_OPTIONS: '--max-old-space-size=4096'
 
-      - name: 📊 Upload Mutation Report
+      - name: 📊 Przesyłanie Raportu Mutacji
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: mutation-report-${{ github.run_id }}
+          name: raport-mutacji-${{ github.run_id }}
           path: reports/mutation/
           retention-days: 30
 
-      - name: 📝 Generate Summary
+      - name: 📝 Generowanie Podsumowania i Wyświetlanie Wyników
+        id: wyniki
         if: always()
         run: |
-          echo "## 🧬 Mutation Testing Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🧬 WYNIKI TESTÓW MUTACYJNYCH"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
           
           if [ -f "reports/mutation/mutation-report.json" ]; then
             # Parsowanie wyników z JSON
@@ -98,78 +98,96 @@ jobs:
               SCORE=0
             fi
             
-            echo "| Metryka | Wartość |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
-            echo "| 💀 Zabite mutanty | $KILLED |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🧟 Przeżyłe mutanty | $SURVIVED |" >> $GITHUB_STEP_SUMMARY
-            echo "| ⏱️ Timeout | $TIMEOUT |" >> $GITHUB_STEP_SUMMARY
-            echo "| 🚫 Bez pokrycia | $NO_COVERAGE |" >> $GITHUB_STEP_SUMMARY
-            echo "| **📊 Mutation Score** | **${SCORE}%** |" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+            # Wyświetlanie w konsoli
+            echo "📊 Statystyki:"
+            echo "   💀 Zabite mutanty:     $KILLED"
+            echo "   🧟 Przeżyłe mutanty:   $SURVIVED"
+            echo "   ⏱️  Timeout:            $TIMEOUT"
+            echo "   🚫 Bez pokrycia:        $NO_COVERAGE"
+            echo "   📈 Łącznie mutantów:    $TOTAL"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "📊 Mutation Score: ${SCORE}%"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
             
             if (( $(echo "$SCORE >= 80" | bc -l) )); then
-              echo "✅ **Świetny wynik!** Testy są wysokiej jakości." >> $GITHUB_STEP_SUMMARY
+              echo "✅ Świetny wynik! Testy są wysokiej jakości."
+              STATUS_EMOJI="✅"
+              STATUS_TEXT="Świetny wynik! Testy są wysokiej jakości."
             elif (( $(echo "$SCORE >= 60" | bc -l) )); then
-              echo "⚠️ **Dobry wynik.** Jest miejsce na poprawę." >> $GITHUB_STEP_SUMMARY
+              echo "⚠️  Dobry wynik. Jest miejsce na poprawę."
+              STATUS_EMOJI="⚠️"
+              STATUS_TEXT="Dobry wynik. Jest miejsce na poprawę."
             else
-              echo "❌ **Niski wynik.** Rozważ dodanie lepszych asercji do testów." >> $GITHUB_STEP_SUMMARY
+              echo "❌ Niski wynik. Rozważ dodanie lepszych asercji do testów."
+              STATUS_EMOJI="❌"
+              STATUS_TEXT="Niski wynik. Rozważ dodanie lepszych asercji do testów."
             fi
+            
+            echo ""
+            echo "📥 Pełny raport HTML dostępny w sekcji Artifacts powyżej."
+            echo ""
+            
+            # Generowanie podsumowania dla GitHub Actions Summary
+            echo "## 🧬 Wyniki Testów Mutacyjnych" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📊 Statystyki" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metryka | Wartość |" >> $GITHUB_STEP_SUMMARY
+            echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
+            echo "| 💀 Zabite mutanty | **$KILLED** |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🧟 Przeżyłe mutanty | **$SURVIVED** |" >> $GITHUB_STEP_SUMMARY
+            echo "| ⏱️ Timeout | $TIMEOUT |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🚫 Bez pokrycia | $NO_COVERAGE |" >> $GITHUB_STEP_SUMMARY
+            echo "| 📈 Łącznie mutantów | **$TOTAL** |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📊 Mutation Score" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**${SCORE}%**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "$STATUS_EMOJI **$STATUS_TEXT**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📥 **Pełny raport HTML** dostępny w sekcji [Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 Link do tego uruchomienia: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+            
+            # Zapisanie wyników jako outputs (widoczne w GitHub Actions UI)
+            echo "score=$SCORE" >> $GITHUB_OUTPUT
+            echo "killed=$KILLED" >> $GITHUB_OUTPUT
+            echo "survived=$SURVIVED" >> $GITHUB_OUTPUT
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "status=$STATUS_TEXT" >> $GITHUB_OUTPUT
+            
+            # Zapisanie wyników do pliku dla następnego kroku
+            echo "KILLED=$KILLED" >> $GITHUB_ENV
+            echo "SURVIVED=$SURVIVED" >> $GITHUB_ENV
+            echo "TIMEOUT=$TIMEOUT" >> $GITHUB_ENV
+            echo "NO_COVERAGE=$NO_COVERAGE" >> $GITHUB_ENV
+            echo "TOTAL=$TOTAL" >> $GITHUB_ENV
+            echo "SCORE=$SCORE" >> $GITHUB_ENV
+            echo "STATUS_EMOJI=$STATUS_EMOJI" >> $GITHUB_ENV
+            echo "STATUS_TEXT=$STATUS_TEXT" >> $GITHUB_ENV
           else
+            echo "⚠️ Nie znaleziono raportu mutacji."
             echo "⚠️ Nie znaleziono raportu mutacji." >> $GITHUB_STEP_SUMMARY
           fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📥 Pełny raport HTML dostępny w Artifacts." >> $GITHUB_STEP_SUMMARY
 
-      # Opcjonalnie: komentarz na PR z wynikami
-      - name: 💬 Comment on PR
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            
-            let comment = '## 🧬 Mutation Testing Results\n\n';
-            
-            try {
-              const report = JSON.parse(fs.readFileSync('reports/mutation/mutation-report.json', 'utf8'));
-              const files = Object.entries(report.files || {});
-              
-              let killed = 0, survived = 0, timeout = 0, noCoverage = 0;
-              
-              files.forEach(([, file]) => {
-                (file.mutants || []).forEach(m => {
-                  if (m.status === 'Killed') killed++;
-                  else if (m.status === 'Survived') survived++;
-                  else if (m.status === 'Timeout') timeout++;
-                  else if (m.status === 'NoCoverage') noCoverage++;
-                });
-              });
-              
-              const total = killed + survived + timeout + noCoverage;
-              const score = total > 0 ? ((killed / total) * 100).toFixed(2) : 0;
-              
-              comment += `| Metryka | Wartość |\n`;
-              comment += `|---------|:-------:|\n`;
-              comment += `| 💀 Zabite | ${killed} |\n`;
-              comment += `| 🧟 Przeżyłe | ${survived} |\n`;
-              comment += `| **📊 Score** | **${score}%** |\n\n`;
-              
-              if (score >= 80) {
-                comment += '✅ Świetna jakość testów!';
-              } else if (score >= 60) {
-                comment += '⚠️ Dobra jakość, ale jest miejsce na poprawę.';
-              } else {
-                comment += '❌ Rozważ dodanie lepszych asercji.';
-              }
-            } catch (e) {
-              comment += '⚠️ Nie udało się sparsować raportu.';
-            }
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
+      - name: 📋 Podsumowanie Wyników w Konsoli
+        if: always()
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ WYNIKI ZOSTAŁY WYGENEROWANE"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "📊 Wyniki są widoczne w:"
+          echo "   1. GitHub Actions Summary (na górze tej strony)"
+          echo "   2. Artifacts (pełny raport HTML)"
+          echo "   3. Outputs tego joba (poniżej)"
+          echo ""
+          echo "🔗 Link do tego uruchomienia:"
+          echo "   https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo ""
