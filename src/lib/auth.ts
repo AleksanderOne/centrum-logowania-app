@@ -43,17 +43,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         where: eq(users.email, user.email),
       });
 
-      // Jeśli nie istnieje -> zablokuj logowanie (brak rejestracji)
+      /**
+       * TODO: [BEZPIECZEŃSTWO] [REJESTRACJA]
+       * Tymczasowo wyłączono blokadę "user_not_registered", aby umożliwić automatyczną
+       * rejestrację nowych użytkowników przez Google.
+       * W produkcyjnej wersji warto rozważyć whitelisting domen lub system zaproszeń.
+       */
+      /*
       if (!dbUser) {
         await logFailure('login', {
           metadata: { reason: 'user_not_registered', email: user.email },
         });
         return false;
       }
+      */
 
       // Logowanie sukcesu
       await logSuccess('login', {
-        userId: dbUser.id,
+        userId: dbUser?.id || user.id,
         metadata: { email: user.email, provider: 'google' },
       });
 
