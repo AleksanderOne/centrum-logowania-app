@@ -36,6 +36,32 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HUSKY: '0'
         run: |
+          # Pobierz obecną wersję przed uruchomieniem release
+          OLD_VERSION=$(npm pkg get version | tr -d '"')
+          echo "📅 Poprzednia wersja: $OLD_VERSION"
+
           echo "🚀 Rozpoczynam generowanie nowej wersji..."
           npx semantic-release
-          echo "✅ Generowanie wersji zakończone!"
+          
+          # Pobierz nową wersję po zakończeniu
+          NEW_VERSION=$(npm pkg get version | tr -d '"')
+          echo "✅ Proces semantic-release zakończony!"
+
+          # Wyświetl wyraźną informację o zmianie wersji
+          if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+            echo "========================================================"
+            echo "             🚀 WERSJA PODBITA POMYŚLNIE 🚀             "
+            echo "========================================================"
+            echo "   📉 STARA WERSJA: $OLD_VERSION"
+            echo "   📈 NOWA WERSJA:  $NEW_VERSION"
+            echo "========================================================"
+            echo "::notice title=Aktualizacja Wersji::Aplikacja zaktualizowana z wersji $OLD_VERSION na $NEW_VERSION"
+            
+            # Podsumowanie widoczne na głównej stronie uruchomienia (bez wchodzenia w logi)
+            echo "# 🚀 Wersja Podbita Pomyślnie" >> $GITHUB_STEP_SUMMARY
+            echo "## 📉 $OLD_VERSION ➡️ 📈 **$NEW_VERSION**" >> $GITHUB_STEP_SUMMARY
+            echo "**Data:** $(date)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ Brak zmian kwalifikujących się do nowej wersji."
+            echo "### ℹ️ Brak zmian w wersji ($OLD_VERSION)" >> $GITHUB_STEP_SUMMARY
+          fi
