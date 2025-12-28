@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Heart } from 'lucide-react';
 import { LoginForm } from '@/components/auth/login-form';
 import { Toaster } from '@/components/ui/sonner';
 import { SystemStatus } from '@/components/system-status';
@@ -16,12 +16,12 @@ export default function Home() {
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-4">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-blue-500/20 to-purple-500/30 rounded-full blur-xl animate-pulse" />
-            <div className="relative bg-gradient-to-br from-primary to-blue-600 p-4 rounded-2xl shadow-2xl shadow-primary/25">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/30 via-green-500/20 to-teal-500/30 rounded-full blur-xl animate-pulse" />
+            <div className="relative bg-gradient-to-br from-emerald-500 to-green-600 p-4 rounded-2xl shadow-2xl shadow-emerald-500/25">
               <ShieldCheck className="w-12 h-12 text-white" suppressHydrationWarning />
             </div>
           </div>
-          <h2 className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight">
+          <h2 className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent tracking-tight">
             Centrum Logowania
           </h2>
         </div>
@@ -47,15 +47,19 @@ export default function Home() {
         <div className="text-center text-sm text-muted-foreground space-y-2">
           <SystemStatus refreshInterval={30000} />
           <p className="text-xs">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0'} • Wykonane z pasją przez{' '}
+            v{process.env.NEXT_PUBLIC_APP_VERSION || '0.0.0'} • Zakodowane z pasji przez{' '}
             <a
-              href="https://github.com/AleksanderOne"
+              href="https://www.linkedin.com/in/aleksanderjedynak/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline font-medium transition-colors"
             >
               AleksanderOne
-            </a>
+            </a>{' '}
+            <Heart
+              className="inline h-3 w-3 text-red-500 fill-red-500 animate-pulse"
+              suppressHydrationWarning
+            />
           </p>
         </div>
       </main>

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'; // Corrected import based 
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
+import { DebugClickTracker } from '@/components/debug-click-tracker';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,6 +34,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <DebugClickTracker />
           {children}
           <Toaster />
         </ThemeProvider>

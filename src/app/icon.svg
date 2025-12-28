@@ -1,59 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <defs>
-    <!-- Neonowa poświata -->
-    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <!-- Gradient tła -->
+    <!-- Background Gradient -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0a0a0a"/>
-      <stop offset="100%" style="stop-color:#0d1117"/>
+      <stop offset="0%" style="stop-color:#022c22"/>
+      <stop offset="100%" style="stop-color:#064e3b"/>
     </linearGradient>
-    <!-- Gradient neonowy zielony -->
-    <linearGradient id="neonGreen" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#00ff88"/>
-      <stop offset="100%" style="stop-color:#00cc55"/>
-    </linearGradient>
-    <!-- Ciemniejszy zielony dla wypełnienia -->
-    <linearGradient id="darkGreen" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#003322"/>
-      <stop offset="100%" style="stop-color:#001a11"/>
+    <!-- Emerald Gradient for Shield -->
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#34d399"/>
+      <stop offset="100%" style="stop-color:#059669"/>
     </linearGradient>
   </defs>
   
-  <!-- Tło z zaokrąglonymi rogami -->
-  <rect x="0" y="0" width="32" height="32" rx="7" ry="7" fill="url(#bgGrad)"/>
+  <!-- Background with rounded corners -->
+  <rect x="0" y="0" width="32" height="32" rx="8" ry="8" fill="url(#bgGrad)"/>
   
-  <!-- Tarcza z neonowym efektem -->
-  <g filter="url(#neonGlow)">
-    <!-- Tarcza - obrys -->
-    <path 
-      d="M16 4 
-         L6 8 
-         L6 15 
-         C6 21 10 26 16 28 
-         C22 26 26 21 26 15 
-         L26 8 
-         Z"
-      fill="url(#darkGreen)"
-      stroke="url(#neonGreen)"
-      stroke-width="1.5"
-    />
-    
-    <!-- Checkmark wewnątrz tarczy -->
-    <path
-      d="M11 16 L14.5 19.5 L21 12"
-      fill="none"
-      stroke="#00ff88"
-      stroke-width="2.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
+  <!-- Shield with Emerald Glow -->
+  <g transform="translate(4, 4) scale(1)">
+    <!-- Path matches ClaLogo / Lucide ShieldCheck mostly but fitted to 24px viewbox usually, here centered in 32px -->
+    <!-- Assuming viewBox 0 0 24 24 for the path logic, scaled to fit in 24x24 box inside 32x32 -->
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="url(#emeraldGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="m9 12 2 2 4-4" />
+    </svg>
   </g>
 </svg>
-

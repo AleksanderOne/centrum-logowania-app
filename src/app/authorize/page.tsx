@@ -7,6 +7,12 @@ import { Loader2, ShieldX } from 'lucide-react';
 import crypto from 'crypto';
 import { checkProjectAccess, logSuccess, logFailure } from '@/lib/security';
 import { headers } from 'next/headers';
+import { devLog } from '@/lib/utils';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { serverLog } from '@/lib/debug-logger';
+import { ErrorCard } from './_components/error-card';
 
 /**
  * OAuth2 Authorization Endpoint
@@ -30,47 +36,72 @@ export default async function AuthorizePage({
 
   // 1. Sprawdź parametry wejściowe
   const params = await searchParams;
-  const clientId = params.client_id as string; // slug projektu
-  const redirectUri = params.redirect_uri as string;
+  const client_id = params.client_id as string; // slug projektu
+  const redirect_uri = params.redirect_uri as string;
 
   if (!session?.user?.id) {
+    devLog(`[AUTH] 🛑 Brak sesji podczas autoryzacji. Przekierowanie do logowania.`);
     // Jeśli niezalogowany -> Middleware i tak by tu nie wpuścił (wymusił login),
     // ale dla pewności przekieruj na login z powrotem tutaj.
     const callbackUrl = encodeURIComponent(
-      `/authorize?client_id=${clientId}&redirect_uri=${redirectUri}`
+      `/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}`
     );
     redirect(`/?callbackUrl=${callbackUrl}`);
   }
 
-  if (!clientId || !redirectUri) {
+  devLog(`[AUTHORIZE] 📥 Request: client_id=${client_id}, redirect_uri=${redirect_uri}`);
+  serverLog('[AUTHORIZE] Request', { client_id, redirect_uri });
+
+  // 1. Walidacja parametrów
+  if (!client_id || !redirect_uri) {
+    serverLog('[AUTHORIZE] Missing parameters');
+    // Dla localhost pozwalamy wrócić do redirect_uri (jeśli podano)
+    const isLocalhostRedirect = redirect_uri?.includes('localhost');
     return (
-      <div className="flex h-screen items-center justify-center text-red-500">
-        Błąd: Brak parametrów client_id lub redirect_uri.
-      </div>
+      <ErrorCard
+        title="Błąd żądania"
+        message="Brakuje wymaganych parametrów autoryzacji (client_id lub redirect_uri)."
+        code={`client_id=${client_id || 'BRAK'}, redirect_uri=${redirect_uri || 'BRAK'}`}
+        backUrl={isLocalhostRedirect && redirect_uri ? redirect_uri : undefined}
+      />
     );
   }
 
   // 2. Znajdź projekt i zweryfikuj domenę
   const project = await db.query.projects.findFirst({
-    where: eq(projects.slug, clientId),
+    where: eq(projects.slug, client_id),
   });
 
+  const isLocalhost = redirect_uri.includes('localhost');
+
   if (!project) {
+    devLog(`[AUTH] ❌ Nieznany projekt: ${client_id}`);
+    serverLog('[AUTHORIZE] Unknown project', { client_id });
     return (
-      <div className="flex h-screen items-center justify-center text-red-500">
-        Błąd: Nieznany projekt (client_id).
-      </div>
+      <ErrorCard
+        title="Projekt nieznany"
+        message={`Nie znaleziono projektu o identyfikatorze "${client_id}". Sprawdź konfigurację aplikacji.`}
+        code="INVALID_CLIENT_ID"
+        backUrl={isLocalhost ? redirect_uri : undefined} // Dla localhost pozwalamy wrócić
+      />
     );
   }
 
   // Weryfikacja bezpieczeństwa: Czy redirectUri pasuje do domeny projektu?
   // Dla localhost pozwalamy na wszystko (dev mode), na produkcji sprawdzamy.
-  const isLocalhost = redirectUri.includes('localhost');
-  if (!isLocalhost && project.domain && !redirectUri.startsWith(project.domain)) {
+  if (!isLocalhost && project.domain && !redirect_uri.startsWith(project.domain)) {
+    devLog(`[AUTH] ❌ Błąd bezpieczeństwa redirect_uri: ${redirect_uri} vs ${project.domain}`);
+    serverLog('[AUTHORIZE] Redirect URI mismatch', {
+      client_id,
+      redirect_uri,
+      projectDomain: project.domain,
+    });
     return (
-      <div className="flex h-screen items-center justify-center text-red-500">
-        Błąd bezpieczeństwa: URL powrotu nie pasuje do domeny projektu.
-      </div>
+      <ErrorCard
+        title="Błąd bezpieczeństwa"
+        message="Adres powrotu (Redirect URI) nie pasuje do domeny skonfigurowanej w projekcie."
+        code={`Oczekiwano domeny: ${project.domain}`}
+      />
     );
   }
 
@@ -83,29 +114,32 @@ export default async function AuthorizePage({
   const accessResult = await checkProjectAccess(session.user.id, project.id);
 
   if (!accessResult.allowed) {
+    devLog(`[AUTHORIZE] ⛔ Brak dostępu dla użytkownika: ${session.user.email}`);
+    serverLog('[AUTHORIZE] Access Denied for user', {
+      userId: session.user.id,
+      reason: accessResult.reason,
+      projectId: project.id,
+    });
+
     await logFailure('access_denied', {
       userId: session.user.id,
       projectId: project.id,
       ipAddress,
       userAgent,
-      metadata: { reason: accessResult.reason, redirectUri },
+      metadata: { reason: accessResult.reason, redirectUri: redirect_uri },
     });
 
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 px-4">
-        <div className="flex items-center gap-3 text-red-500">
-          <ShieldX className="h-8 w-8" />
-          <h1 className="text-xl font-semibold">Brak dostępu</h1>
-        </div>
-        <p className="text-center text-muted-foreground max-w-md">
-          Nie masz uprawnień do logowania się w aplikacji <strong>{project.name}</strong>.
-          {accessResult.reason === 'user_not_member' && (
-            <span className="block mt-2">
-              Ten projekt jest prywatny i wymaga zaproszenia. Skontaktuj się z administratorem.
-            </span>
-          )}
-        </p>
-      </div>
+      <ErrorCard
+        title="Brak dostępu"
+        message={`Nie masz uprawnień do logowania się w aplikacji ${project.name}. ${
+          accessResult.reason === 'user_not_member'
+            ? 'Ten projekt jest prywatny. Skontaktuj się z administratorem w celu uzyskania zaproszenia.'
+            : ''
+        }`}
+        code="ACCESS_DENIED"
+        backUrl={redirect_uri}
+      />
     );
   }
 
@@ -121,25 +155,29 @@ export default async function AuthorizePage({
     code: authCode,
     userId: session.user.id,
     projectId: project.id,
-    redirectUri: redirectUri,
+    redirectUri: redirect_uri,
     expiresAt: expiresAt,
   });
 
-  // Logowanie sukcesu autoryzacji
-  await logSuccess('project_access', {
+  // Logowanie sukcesu autoryzacji SSO
+  await logSuccess('sso_login', {
     userId: session.user.id,
     projectId: project.id,
     ipAddress,
     userAgent,
     metadata: {
-      redirectUri,
+      redirectUri: redirect_uri,
       projectName: project.name,
       userEmail: session.user.email,
     },
   });
 
   // 4. Przekierowujemy z kodem autoryzacyjnym
-  const finalRedirectUrl = `${redirectUri}?code=${authCode}`;
+  const finalRedirectUrl = `${redirect_uri}?code=${authCode}`;
+
+  devLog(
+    `[AUTH] ✅ Autoryzacja pomyślna. Przekierowanie do: ${finalRedirectUrl.substring(0, 50)}...`
+  );
 
   // Automatyczny redirect
   redirect(finalRedirectUrl);
