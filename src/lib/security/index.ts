@@ -33,3 +33,36 @@ export {
   getProjectMembers,
   type ProjectAccessResult,
 } from './project-access';
+
+// CSRF Protection
+export {
+  generateCSRFToken,
+  verifyCSRFToken,
+  verifyOrigin,
+  getAllowedOrigins,
+  requireValidOrigin,
+} from './csrf';
+
+// Redirect URI Validation
+export {
+  validateRedirectUri,
+  isRedirectUriAllowed,
+} from './redirect-uri';
+
+// PKCE
+export {
+  generatePKCEPair,
+  verifyPKCE,
+  isValidCodeChallenge,
+  isValidCodeVerifier,
+  type PKCEPair,
+} from './pkce';
+
+// Brute Force Detection
+export {
+  checkBruteForce,
+  checkBruteForceByIp,
+  checkBruteForceByEmail,
+  cleanupOldAuditLogs,
+  type BruteForceCheck,
+} from './brute-force-detector';
