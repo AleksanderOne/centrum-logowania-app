@@ -1,3 +1,10 @@
+## [2.5.1](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.5.0...v2.5.1) (2025-12-28)
+
+
+### Bug Fixes
+
+* poprawa audit logów - obsługa usunięcia projektu ([409f303](https://github.com/AleksanderOne/centrum-logowania-app/commit/409f303848d0d178a19c064e917cdc5b82d96d29))
+
 # [2.5.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.4.0...v2.5.0) (2025-12-28)
 
 
