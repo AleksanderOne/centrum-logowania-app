@@ -57,7 +57,7 @@ jobs:
           echo "📊 Liczba równoległych procesów: ${{ github.event.inputs.concurrency || '4' }}"
           echo "ℹ️ Tryb incremental: ${{ github.event.inputs.incremental || 'false' }}"
           echo "🔧 Używam command runner (kompatybilny z Vitest 4)"
-          
+
           if [ "${{ github.event.inputs.incremental }}" == "true" ]; then
             npm run test:mutation -- --incremental --concurrency ${{ github.event.inputs.concurrency || '4' }}
           else
@@ -83,7 +83,7 @@ jobs:
           echo "🧬 WYNIKI TESTÓW MUTACYJNYCH"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
-          
+
           if [ -f "reports/mutation/mutation-report.json" ]; then
             # Parsowanie wyników z JSON
             KILLED=$(cat reports/mutation/mutation-report.json | jq '.files | to_entries | map(.value.mutants | map(select(.status == "Killed")) | length) | add // 0')
