@@ -65,6 +65,16 @@ interface AuditLog {
   createdAt: string;
 }
 
+interface IntegrationLogResults {
+  integration?: {
+    message?: string;
+  };
+  domain?: {
+    status?: string;
+    message?: string;
+  };
+}
+
 interface AuditLogsViewerProps {
   projectId?: string;
   limit?: number;
@@ -729,21 +739,28 @@ export function AuditLogsViewer({ projectId, limit = 100 }: AuditLogsViewerProps
                                   <span className="text-muted-foreground font-semibold min-w-[50px]">
                                     Wynik:
                                   </span>
-                                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                  {}
                                   <span className="font-semibold text-foreground">
-                                    {(metadata.results as any).integration?.message}
+                                    {
+                                      (metadata.results as unknown as IntegrationLogResults)
+                                        .integration?.message
+                                    }
                                   </span>
                                 </div>
-                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                {(metadata.results as any).domain?.status !== 'skipped' &&
-                                  (metadata.results as any).domain?.message && (
+                                {(metadata.results as unknown as IntegrationLogResults).domain
+                                  ?.status !== 'skipped' &&
+                                  (metadata.results as unknown as IntegrationLogResults).domain
+                                    ?.message && (
                                     <div className="flex items-center gap-2">
                                       <span className="text-muted-foreground font-semibold min-w-[50px]">
                                         Domena:
                                       </span>
-                                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                      {}
                                       <span className="text-foreground">
-                                        {(metadata.results as any).domain?.message}
+                                        {
+                                          (metadata.results as unknown as IntegrationLogResults)
+                                            .domain?.message
+                                        }
                                       </span>
                                     </div>
                                   )}

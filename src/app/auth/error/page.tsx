@@ -203,6 +203,7 @@ function ContactForm({ errorCode }: { errorCode: string }) {
     // Symulacja wysyłki - tutaj można dodać prawdziwą logikę
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
+    // eslint-disable-next-line no-console
     console.log('Formularz kontaktowy (sanityzowany):', { ...sanitizedData, errorCode });
     setIsSubmitting(false);
     setIsSubmitted(true);

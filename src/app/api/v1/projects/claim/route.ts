@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
 import { projects, projectSetupCodes } from '@/lib/db/schema';
-import { eq, and, isNull, gt } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { logSuccess, logFailure, getClientIp } from '@/lib/security';
 import { devLog } from '@/lib/utils';
 import { serverLog } from '@/lib/debug-logger';

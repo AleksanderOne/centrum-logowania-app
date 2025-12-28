@@ -42,6 +42,9 @@ const eslintConfig = defineConfig([
     'coverage/**',
     'playwright-report/**',
     'test-results/**',
+    '**/.*/**', // Ignoruj ukryte katalogi
+    '!**/.github/**', // Ale pozwalaj na lintowanie .github
+    '!**/.husky/**', // Oraz .husky (jeśli są tam pliki JS/TS)
   ]),
 ]);
 

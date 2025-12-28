@@ -7,16 +7,29 @@ out
 build
 dist
 coverage
+test-results
+playwright-report
 
 # Generowane pliki
 *.min.js
 *.min.css
 package-lock.json
+tsconfig.tsbuildinfo
 
 # Drizzle migracje
 drizzle/**/*.sql
 
+# Ignoruj wszystkie foldery zaczynające się od kropki (ukryte/tymczasowe)
+.*/
+
+# --- BIAŁA LISTA (Wyjątki dla ważnych folderów konfiguracyjnych) ---
+# Te foldery CHCEMY formatować, mimo że zaczynają się od kropki
+!/.github/
+!/.husky/
+!/.vscode/
+
 # Inne
 .git
-.husky
+.stryker-tmp
 .env*
+.DS_Store

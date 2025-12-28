@@ -1,9 +1,16 @@
 #!/bin/sh
-# Pre-push hook: uruchamia testy z coverage, e2e i build przed wypchnięciem na remote
+# Pre-push hook: uruchamia lint, testy z coverage, e2e i build przed wypchnięciem na remote
+
+echo "🔍 Sprawdzam kod linterem (ESLint)..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ Błędy lintera! Push zablokowany."
+  echo "💡 Uruchom 'npm run lint:fix' aby naprawić automatyczne błędy."
+  exit 1
+fi
 
 echo "📊 Sprawdzam pokrycie kodu testami (wymagane 100%)..."
 npm run test:coverage
-
 if [ $? -ne 0 ]; then
   echo "❌ Coverage poniżej 100%! Push zablokowany."
   echo "📋 Wymagane: 100% statements, branches, functions, lines"
@@ -13,8 +20,16 @@ fi
 
 echo "🔨 Sprawdzam czy projekt się buduje..."
 npm run build
+if [ $? -ne 0 ]; then
+  echo "❌ Błąd budowania aplikacji! Push zablokowany."
+  exit 1
+fi
 
 echo "🎭 Uruchamiam testy e2e..."
 npm run test:e2e
+if [ $? -ne 0 ]; then
+  echo "❌ Testy E2E nie powiodły się! Push zablokowany."
+  exit 1
+fi
 
 echo "✅ Pre-push checks zakończone pomyślnie! Wypychanie dozwolone."

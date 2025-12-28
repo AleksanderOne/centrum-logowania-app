@@ -23,7 +23,7 @@ export function appendToLogFile(category: LogCategory, message: string, data?: u
         const truncatedJson =
           json.length > 5000 ? json.substring(0, 5000) + '... (truncated)' : json;
         content += `\nDATA: ${truncatedJson}`;
-      } catch (_e) {
+      } catch {
         content += `\nDATA: [Circular/Invalid JSON]`;
       }
     }
@@ -32,9 +32,9 @@ export function appendToLogFile(category: LogCategory, message: string, data?: u
 
     // Append file (synchronicznie dla bezpieczeństwa zapisu przy crashu, w dev to ok)
     fs.appendFileSync(logPath, content);
-  } catch (error) {
+  } catch {
     // Fail silently in logger to avoid loops
-    console.error('Failed to write to log file:', error);
+    console.error('Failed to write to log file');
   }
 }
 

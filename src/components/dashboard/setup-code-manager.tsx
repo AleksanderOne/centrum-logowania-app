@@ -274,16 +274,6 @@ export const SetupCodeManager = ({ projectId, projectName }: SetupCodeManagerPro
               ))}
             </div>
           )}
-
-          {/* Przykład użycia */}
-          {codes.length > 0 && (
-            <div className="bg-zinc-900 dark:bg-zinc-950 p-3 rounded-lg text-xs">
-              <p className="text-zinc-400 mb-2">Użycie w nowej aplikacji:</p>
-              <code className="text-green-400 block">
-                node scripts/setup-with-code.mjs {codes[0]?.code.substring(0, 20)}...
-              </code>
-            </div>
-          )}
         </div>
 
         <div className="flex justify-end">

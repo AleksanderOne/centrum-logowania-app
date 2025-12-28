@@ -3,14 +3,12 @@ import { db } from '@/lib/db/drizzle';
 import { projects, authorizationCodes } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { Loader2, ShieldX } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import crypto from 'crypto';
 import { checkProjectAccess, logSuccess, logFailure } from '@/lib/security';
 import { headers } from 'next/headers';
 import { devLog } from '@/lib/utils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+
 import { serverLog } from '@/lib/debug-logger';
 import { ErrorCard } from './_components/error-card';
 

@@ -3,7 +3,7 @@ import { db } from '@/lib/db/drizzle';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { checkProjectAccess } from '@/lib/security';
-import { devLog } from '@/lib/utils';
+
 import { serverLog } from '@/lib/debug-logger';
 import { verifySessionToken } from '@/lib/jwt';
 

@@ -53,7 +53,7 @@ export async function DELETE(req: NextRequest, segmentData: { params: Params }) 
       devLog(`[SETUP-CODE] ❌ Nie znaleziono kodu do usunięcia`);
       return NextResponse.json({ error: 'Setup code not found' }, { status: 404 });
     }
-    console.log(`[SETUP-CODE] 🗑️ Usuwanie kodu: ${params.codeId}`);
+    devLog(`[SETUP-CODE] 🗑️ Usuwanie kodu: ${params.codeId}`);
 
     // Usuń kod
     await db.delete(projectSetupCodes).where(eq(projectSetupCodes.id, params.codeId));
@@ -64,7 +64,7 @@ export async function DELETE(req: NextRequest, segmentData: { params: Params }) 
       metadata: { codeId: params.codeId },
     });
 
-    console.log(`[SETUP-CODE] ✅ Kod usunięty pomyślnie.\n`);
+    devLog(`[SETUP-CODE] ✅ Kod usunięty pomyślnie.\n`);
 
     return NextResponse.json({
       success: true,

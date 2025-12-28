@@ -1,5 +1,4 @@
 import { cn } from '@/lib/utils';
-import { ShieldCheck } from 'lucide-react';
 
 interface ClaLogoProps {
   className?: string;
