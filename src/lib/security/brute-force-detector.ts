@@ -1,6 +1,6 @@
 /**
  * Brute Force Detection - Wykrywanie ataków brute force
- * 
+ *
  * Monitoruje nieudane próby logowania/autoryzacji i wykrywa podejrzane wzorce
  */
 
@@ -23,7 +23,7 @@ const BRUTE_FORCE_WINDOW_MS = 15 * 60 * 1000; // 15 minut
 
 /**
  * Sprawdza czy dla danego identyfikatora (IP lub email) wykryto brute force
- * 
+ *
  * @param identifier - IP address lub email
  * @param action - Typ akcji do sprawdzenia (np. 'login', 'token_exchange')
  * @returns Informacja o wykryciu brute force
@@ -49,7 +49,7 @@ export async function checkBruteForce(
       )
     );
 
-  const attemptCount = failures[0] ? (failures[0].count || 0) : 0;
+  const attemptCount = failures[0] ? failures[0].count || 0 : 0;
   const isBruteForce = attemptCount >= BRUTE_FORCE_THRESHOLD;
 
   // Oblicz kiedy można ponowić próbę
@@ -106,7 +106,7 @@ export async function checkBruteForceByEmail(
 
 /**
  * Czyści stare logi audytu (można uruchomić przez cron)
- * 
+ *
  * @param olderThanDays - Usuń logi starsze niż X dni
  */
 export async function cleanupOldAuditLogs(olderThanDays: number = 90): Promise<number> {
@@ -114,10 +114,7 @@ export async function cleanupOldAuditLogs(olderThanDays: number = 90): Promise<n
   cutoff.setDate(cutoff.getDate() - olderThanDays);
 
   // Użyj raw SQL dla DELETE z WHERE (Drizzle może mieć ograniczenia)
-  const result = await db
-    .delete(auditLogs)
-    .where(sql`${auditLogs.createdAt} < ${cutoff}`);
+  const result = await db.delete(auditLogs).where(sql`${auditLogs.createdAt} < ${cutoff}`);
 
   return (result as { rowCount?: number }).rowCount || 0;
 }
-

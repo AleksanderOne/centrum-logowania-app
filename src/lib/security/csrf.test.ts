@@ -176,15 +176,13 @@ describe('CSRF Protection', () => {
   });
 
   describe('getAllowedOrigins', () => {
-    const originalEnv = process.env;
-
     beforeEach(() => {
       vi.resetModules();
-      process.env = { ...originalEnv };
+      vi.unstubAllEnvs();
     });
 
     it('zwraca originy z ALLOWED_ORIGINS env', () => {
-      process.env.ALLOWED_ORIGINS = 'https://site1.com,https://site2.com';
+      vi.stubEnv('ALLOWED_ORIGINS', 'https://site1.com,https://site2.com');
 
       const origins = getAllowedOrigins();
 
@@ -192,7 +190,7 @@ describe('CSRF Protection', () => {
     });
 
     it('trimuje białe znaki z originów', () => {
-      process.env.ALLOWED_ORIGINS = 'https://site1.com , https://site2.com ';
+      vi.stubEnv('ALLOWED_ORIGINS', 'https://site1.com , https://site2.com ');
 
       const origins = getAllowedOrigins();
 
@@ -200,8 +198,10 @@ describe('CSRF Protection', () => {
     });
 
     it('zwraca pustą tablicę gdy brak ALLOWED_ORIGINS i NEXTAUTH_URL', () => {
-      delete process.env.ALLOWED_ORIGINS;
-      delete process.env.NEXTAUTH_URL;
+      // Domyślnie mockowane środowisko jest czyste po unstubAllEnvs jeśli nic nie ustawimy
+      // Ale jeśli process.env ma już wartości z systemu, trzeba je nadpisać undefined
+      vi.stubEnv('ALLOWED_ORIGINS', undefined);
+      vi.stubEnv('NEXTAUTH_URL', undefined);
 
       const origins = getAllowedOrigins();
 
@@ -209,8 +209,8 @@ describe('CSRF Protection', () => {
     });
 
     it('zwraca NEXTAUTH_URL gdy brak ALLOWED_ORIGINS', () => {
-      delete process.env.ALLOWED_ORIGINS;
-      process.env.NEXTAUTH_URL = 'https://auth.example.com';
+      vi.stubEnv('ALLOWED_ORIGINS', undefined);
+      vi.stubEnv('NEXTAUTH_URL', 'https://auth.example.com');
 
       const origins = getAllowedOrigins();
 
@@ -219,16 +219,14 @@ describe('CSRF Protection', () => {
   });
 
   describe('requireValidOrigin', () => {
-    const originalEnv = process.env;
-
     beforeEach(() => {
       vi.resetModules();
-      process.env = { ...originalEnv };
+      vi.unstubAllEnvs();
     });
 
     it('akceptuje request z dozwolonego origin', () => {
-      process.env.ALLOWED_ORIGINS = 'https://example.com';
-      process.env.NODE_ENV = 'production';
+      vi.stubEnv('ALLOWED_ORIGINS', 'https://example.com');
+      vi.stubEnv('NODE_ENV', 'production');
 
       const request = new Request('https://api.example.com/test', {
         method: 'POST',
@@ -241,8 +239,8 @@ describe('CSRF Protection', () => {
     });
 
     it('dodaje localhost w development', () => {
-      process.env.ALLOWED_ORIGINS = 'https://example.com';
-      process.env.NODE_ENV = 'development';
+      vi.stubEnv('ALLOWED_ORIGINS', 'https://example.com');
+      vi.stubEnv('NODE_ENV', 'development');
 
       const request = new Request('https://api.example.com/test', {
         method: 'POST',
@@ -255,8 +253,8 @@ describe('CSRF Protection', () => {
     });
 
     it('akceptuje 127.0.0.1 w development', () => {
-      process.env.ALLOWED_ORIGINS = 'https://example.com';
-      process.env.NODE_ENV = 'development';
+      vi.stubEnv('ALLOWED_ORIGINS', 'https://example.com');
+      vi.stubEnv('NODE_ENV', 'development');
 
       const request = new Request('https://api.example.com/test', {
         method: 'POST',
@@ -269,8 +267,8 @@ describe('CSRF Protection', () => {
     });
 
     it('odrzuca localhost w production', () => {
-      process.env.ALLOWED_ORIGINS = 'https://example.com';
-      process.env.NODE_ENV = 'production';
+      vi.stubEnv('ALLOWED_ORIGINS', 'https://example.com');
+      vi.stubEnv('NODE_ENV', 'production');
 
       const request = new Request('https://api.example.com/test', {
         method: 'POST',
@@ -283,4 +281,3 @@ describe('CSRF Protection', () => {
     });
   });
 });
-

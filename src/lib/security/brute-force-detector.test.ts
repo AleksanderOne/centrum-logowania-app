@@ -5,25 +5,38 @@ import {
   cleanupOldAuditLogs,
 } from './brute-force-detector';
 
-// Mock DB - prosta wersja
-const mockFindMany = vi.fn();
-const mockFindFirst = vi.fn();
+// -- MOCK SETUP --
+// Używamy vi.hoisted, aby mocki były dostępne zarówno w factory vi.mock, jak i w testach.
+const mocks = vi.hoisted(() => {
+  const mockChain = {
+    from: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    then: vi.fn((resolve) => resolve([])), // Domyślnie zwraca pustą tablicę
+  };
 
+  const mockSelect = vi.fn(() => mockChain);
+  const mockDelete = vi.fn(() => ({
+    where: vi.fn(),
+  }));
+
+  return {
+    mockChain,
+    mockSelect,
+    mockDelete,
+  };
+});
+
+// Mockowanie modułu DB
 vi.mock('@/lib/db/drizzle', () => ({
   db: {
-    query: {
-      auditLogs: {
-        findMany: () => mockFindMany(),
-        findFirst: () => mockFindFirst(),
-      },
-    },
-    delete: vi.fn(() => ({
-      where: vi.fn(() => Promise.resolve({ rowCount: 0 })),
-    })),
+    select: mocks.mockSelect,
+    delete: mocks.mockDelete,
   },
 }));
 
-// Mock drizzle-orm
+// Mockowanie drizzle-orm (helperów SQL)
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn(),
   and: vi.fn(),
@@ -35,59 +48,78 @@ vi.mock('drizzle-orm', () => ({
 describe('Brute Force Detection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset implementations using the hoisted mocks object
+    mocks.mockChain.from.mockReturnThis();
+    mocks.mockChain.where.mockReturnThis();
+    mocks.mockChain.orderBy.mockReturnThis();
+    mocks.mockChain.limit.mockReturnThis();
+    mocks.mockChain.then.mockImplementation((resolve) => resolve([]));
   });
 
   describe('checkBruteForceByIp', () => {
     it('wywołuje checkBruteForce z IP address', async () => {
-      mockFindMany.mockResolvedValue([]);
+      // Setup mocka: pierwsze zapytanie (count) zwraca 0
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mocks.mockChain.then.mockImplementationOnce((resolve: any) => resolve([{ count: 0 }]));
 
       const result = await checkBruteForceByIp('192.168.1.1', 'login');
 
       expect(result.isBruteForce).toBe(false);
       expect(result.attempts).toBe(0);
+      expect(mocks.mockSelect).toHaveBeenCalled();
+      expect(mocks.mockChain.from).toHaveBeenCalled();
+      expect(mocks.mockChain.where).toHaveBeenCalled();
     });
 
     it('wykrywa brute force gdy próby przekraczają próg', async () => {
-      mockFindMany.mockResolvedValue([
-        { count: 6 }, // Powyżej progu (5)
-      ]);
+      // Setup mocka:
+      // 1. Zapytanie o licznik (count) -> zwraca 6
+      // 2. Zapytanie o najstarszy log (oldestFailure) -> zwraca datę
+      const now = new Date();
+      const mockOldDate = new Date(now.getTime() - 10000); // 10 sek temu
+
+      mocks.mockChain.then
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockImplementationOnce((resolve: any) => resolve([{ count: 6 }])) // count query
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockImplementationOnce((resolve: any) => resolve([{ createdAt: mockOldDate }])); // oldestFailure query
 
       const result = await checkBruteForceByIp('192.168.1.1', 'login');
 
       expect(result.isBruteForce).toBe(true);
       expect(result.attempts).toBe(6);
+      expect(result.retryAfter).toBeGreaterThan(0);
     });
   });
 
   describe('checkBruteForceByEmail', () => {
     it('wywołuje checkBruteForce z email', async () => {
-      mockFindMany.mockResolvedValue([]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mocks.mockChain.then.mockImplementationOnce((resolve: any) => resolve([{ count: 0 }]));
 
       const result = await checkBruteForceByEmail('test@example.com', 'login');
 
       expect(result.isBruteForce).toBe(false);
+      expect(mocks.mockSelect).toHaveBeenCalled();
     });
   });
 
   describe('cleanupOldAuditLogs', () => {
     it('zwraca liczbę usuniętych logów', async () => {
-      const { db } = await import('@/lib/db/drizzle');
-      const mockWhere = vi.fn().mockResolvedValue({ rowCount: 42 });
-      vi.mocked(db.delete as any).mockReturnValue({
-        where: mockWhere,
-      });
+      // Mock db.delete().where()
+      const mockWhere = vi.fn().mockReturnValue(Promise.resolve({ rowCount: 42 }));
+      mocks.mockDelete.mockReturnValue({ where: mockWhere });
 
       const deletedCount = await cleanupOldAuditLogs(90);
 
+      expect(mocks.mockDelete).toHaveBeenCalled();
+      expect(mockWhere).toHaveBeenCalled();
       expect(deletedCount).toBe(42);
     });
 
     it('zwraca 0 gdy brak rowCount', async () => {
-      const { db } = await import('@/lib/db/drizzle');
-      const mockWhere = vi.fn().mockResolvedValue({});
-      vi.mocked(db.delete as any).mockReturnValue({
-        where: mockWhere,
-      });
+      const mockWhere = vi.fn().mockReturnValue(Promise.resolve({})); // Brak rowCount
+      mocks.mockDelete.mockReturnValue({ where: mockWhere });
 
       const deletedCount = await cleanupOldAuditLogs(90);
 
@@ -95,9 +127,12 @@ describe('Brute Force Detection', () => {
     });
 
     it('używa domyślnej wartości 90 dni gdy nie podano', async () => {
-      const deletedCount = await cleanupOldAuditLogs();
+      const mockWhere = vi.fn().mockReturnValue(Promise.resolve({ rowCount: 1 }));
+      mocks.mockDelete.mockReturnValue({ where: mockWhere });
 
-      expect(deletedCount).toBeDefined();
+      await cleanupOldAuditLogs();
+
+      expect(mocks.mockDelete).toHaveBeenCalled();
     });
   });
 });

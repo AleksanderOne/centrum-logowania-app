@@ -1,12 +1,12 @@
 /**
  * Redirect URI Validation - Weryfikacja bezpieczeństwa redirect URI
- * 
+ *
  * Zapewnia, że redirect_uri jest bezpieczny i pasuje do skonfigurowanej domeny projektu
  */
 
 /**
  * Waliduje redirect URI zgodnie z najlepszymi praktykami OAuth 2.0
- * 
+ *
  * @param redirectUri - URI do przekierowania
  * @param allowedDomain - Dozwolona domena z konfiguracji projektu (opcjonalnie)
  * @returns true jeśli URI jest bezpieczny i dozwolony
@@ -79,7 +79,7 @@ export function validateRedirectUri(
         // if (!pathMatches) {
         //   return { valid: false, reason: 'Redirect URI path not allowed' };
         // }
-      } catch (domainError) {
+      } catch {
         // allowedDomain może być domeną bez protokołu - spróbuj dodać https://
         try {
           const allowedUrl = new URL(`https://${allowedDomain}`);
@@ -137,7 +137,7 @@ export function validateRedirectUri(
     }
 
     return { valid: true };
-  } catch (urlError) {
+  } catch {
     // Nieprawidłowy format URL
     return {
       valid: false,
@@ -148,16 +148,12 @@ export function validateRedirectUri(
 
 /**
  * Helper do sprawdzenia czy redirect URI jest dozwolony dla projektu
- * 
+ *
  * @param redirectUri - URI do przekierowania
  * @param projectDomain - Domena skonfigurowana w projekcie
  * @returns true jeśli dozwolony
  */
-export function isRedirectUriAllowed(
-  redirectUri: string,
-  projectDomain: string | null
-): boolean {
+export function isRedirectUriAllowed(redirectUri: string, projectDomain: string | null): boolean {
   const result = validateRedirectUri(redirectUri, projectDomain);
   return result.valid;
 }
-

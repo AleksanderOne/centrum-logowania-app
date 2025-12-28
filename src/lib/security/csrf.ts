@@ -1,6 +1,6 @@
 /**
  * CSRF Protection - Ochrona przed Cross-Site Request Forgery
- * 
+ *
  * Implementuje weryfikację Origin/Referer headers oraz tokeny CSRF
  */
 
@@ -19,11 +19,7 @@ export function generateCSRFToken(secret: string, sessionId: string): string {
 /**
  * Weryfikuje CSRF token
  */
-export function verifyCSRFToken(
-  token: string,
-  secret: string,
-  sessionId: string
-): boolean {
+export function verifyCSRFToken(token: string, secret: string, sessionId: string): boolean {
   const [tokenPart, signature] = token.split(':');
   if (!tokenPart || !signature) {
     return false;
@@ -38,15 +34,12 @@ export function verifyCSRFToken(
 
 /**
  * Weryfikuje Origin/Referer headers dla ochrony CSRF
- * 
+ *
  * @param request - Next.js Request object
  * @param allowedOrigins - Lista dozwolonych originów
  * @returns true jeśli origin jest dozwolony
  */
-export function verifyOrigin(
-  request: Request,
-  allowedOrigins: string[]
-): boolean {
+export function verifyOrigin(request: Request, allowedOrigins: string[]): boolean {
   // Pobierz origin lub referer
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
@@ -98,9 +91,9 @@ export function getAllowedOrigins(): string[] {
 
 /**
  * Middleware helper do weryfikacji CSRF
- * 
+ *
  * Użyj w każdym wrażliwym API endpoint:
- * 
+ *
  * @example
  * ```typescript
  * export async function POST(request: NextRequest) {
@@ -117,17 +110,16 @@ export function getAllowedOrigins(): string[] {
  */
 export function requireValidOrigin(request: Request): boolean {
   const allowedOrigins = getAllowedOrigins();
-  
+
   // W development, pozwól na localhost
   if (process.env.NODE_ENV === 'development') {
     allowedOrigins.push(
       'http://localhost:3000',
       'http://127.0.0.1:3000',
       'http://localhost:3001',
-      'http://127.0.0.1:3001',
+      'http://127.0.0.1:3001'
     );
   }
 
   return verifyOrigin(request, allowedOrigins);
 }
-

@@ -1,9 +1,9 @@
 /**
  * PKCE (Proof Key for Code Exchange) - OAuth 2.0 Extension
- * 
+ *
  * Zwiększa bezpieczeństwo OAuth 2.0 flow dla publicznych klientów.
  * Zapobiega atakom code interception.
- * 
+ *
  * RFC 7636: https://tools.ietf.org/html/rfc7636
  */
 
@@ -20,10 +20,10 @@ export interface PKCEPair {
 
 /**
  * Generuje parę PKCE (code_verifier + code_challenge)
- * 
+ *
  * code_verifier: losowy string 43-128 znaków (RFC 7636)
  * code_challenge: SHA256 hash code_verifier, zakodowany base64url
- * 
+ *
  * @returns Para PKCE do użycia w OAuth flow
  */
 export function generatePKCEPair(): PKCEPair {
@@ -32,9 +32,7 @@ export function generatePKCEPair(): PKCEPair {
   const codeVerifier = base64URLEncode(randomBytes(48)); // 48 bytes = 64 base64url chars
 
   // Oblicz code_challenge: SHA256(code_verifier) zakodowany base64url
-  const codeChallenge = base64URLEncode(
-    createHash('sha256').update(codeVerifier).digest()
-  );
+  const codeChallenge = base64URLEncode(createHash('sha256').update(codeVerifier).digest());
 
   return {
     codeVerifier,
@@ -45,15 +43,12 @@ export function generatePKCEPair(): PKCEPair {
 
 /**
  * Weryfikuje code_verifier względem code_challenge
- * 
+ *
  * @param codeVerifier - code_verifier otrzymany w token exchange
  * @param codeChallenge - code_challenge zapisany przy generacji kodu
  * @returns true jeśli weryfikacja się powiodła
  */
-export function verifyPKCE(
-  codeVerifier: string,
-  codeChallenge: string
-): boolean {
+export function verifyPKCE(codeVerifier: string, codeChallenge: string): boolean {
   // Walidacja formatu code_verifier
   if (!codeVerifier || codeVerifier.length < 43 || codeVerifier.length > 128) {
     return false;
@@ -65,9 +60,7 @@ export function verifyPKCE(
   }
 
   // Oblicz oczekiwany challenge
-  const expectedChallenge = base64URLEncode(
-    createHash('sha256').update(codeVerifier).digest()
-  );
+  const expectedChallenge = base64URLEncode(createHash('sha256').update(codeVerifier).digest());
 
   // Porównaj (użyj constant-time comparison dla bezpieczeństwa)
   return constantTimeEqual(expectedChallenge, codeChallenge);
@@ -75,18 +68,14 @@ export function verifyPKCE(
 
 /**
  * Koduje buffer do base64url (RFC 4648)
- * 
+ *
  * base64url różni się od base64:
  * - + staje się -
  * - / staje się _
  * - = (padding) jest usuwany
  */
 function base64URLEncode(buffer: Buffer): string {
-  return buffer
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, ''); // Usuń padding
+  return buffer.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''); // Usuń padding
 }
 
 /**
@@ -128,4 +117,3 @@ export function isValidCodeVerifier(codeVerifier: string): boolean {
 
   return /^[A-Za-z0-9\-._~]+$/.test(codeVerifier);
 }
-

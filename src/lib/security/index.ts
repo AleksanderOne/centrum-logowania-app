@@ -44,10 +44,7 @@ export {
 } from './csrf';
 
 // Redirect URI Validation
-export {
-  validateRedirectUri,
-  isRedirectUriAllowed,
-} from './redirect-uri';
+export { validateRedirectUri, isRedirectUriAllowed } from './redirect-uri';
 
 // PKCE
 export {

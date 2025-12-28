@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  generatePKCEPair,
-  verifyPKCE,
-  isValidCodeChallenge,
-  isValidCodeVerifier,
-} from './pkce';
+import { generatePKCEPair, verifyPKCE, isValidCodeChallenge, isValidCodeVerifier } from './pkce';
 
 describe('PKCE (Proof Key for Code Exchange)', () => {
   describe('generatePKCEPair', () => {
@@ -212,4 +207,3 @@ describe('PKCE (Proof Key for Code Exchange)', () => {
     });
   });
 });
-
