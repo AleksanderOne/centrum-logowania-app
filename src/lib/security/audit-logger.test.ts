@@ -114,19 +114,18 @@ describe('Audit Logger', () => {
 
     it('powinien obsłużyć błąd FK violation dla userId (kod 23503)', async () => {
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+      vi.stubEnv('NODE_ENV', 'development');
 
       // Pierwszy insert rzuca FK violation
       const fkError = { code: '23503', constraint: 'audit_log_user_id_fkey' };
       vi.mocked(db.insert).mockReturnValueOnce({
         values: vi.fn().mockRejectedValueOnce(fkError),
-      } as ReturnType<typeof db.insert>);
+      } as any);
 
       // Drugi insert (retry) się udaje
       vi.mocked(db.insert).mockReturnValueOnce({
         values: vi.fn().mockResolvedValueOnce(undefined),
-      } as ReturnType<typeof db.insert>);
+      } as any);
 
       const entry: AuditLogEntry = {
         userId: 'nonexistent-user',
@@ -144,23 +143,22 @@ describe('Audit Logger', () => {
       // Powinien spróbować ponownie bez userId
       expect(db.insert).toHaveBeenCalledTimes(2);
 
-      process.env.NODE_ENV = originalEnv;
+      vi.unstubAllEnvs();
       consoleWarnSpy.mockRestore();
     });
 
     it('powinien obsłużyć błąd FK violation dla projectId', async () => {
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
+      vi.stubEnv('NODE_ENV', 'development');
 
       const fkError = { code: '23503', constraint: 'audit_log_project_id_fkey' };
       vi.mocked(db.insert).mockReturnValueOnce({
         values: vi.fn().mockRejectedValueOnce(fkError),
-      } as ReturnType<typeof db.insert>);
+      } as any);
 
       vi.mocked(db.insert).mockReturnValueOnce({
         values: vi.fn().mockResolvedValueOnce(undefined),
-      } as ReturnType<typeof db.insert>);
+      } as any);
 
       const entry: AuditLogEntry = {
         projectId: 'deleted-project',
@@ -174,7 +172,7 @@ describe('Audit Logger', () => {
         expect.stringContaining('Project deleted-project not found')
       );
 
-      process.env.NODE_ENV = originalEnv;
+      vi.unstubAllEnvs();
       consoleWarnSpy.mockRestore();
     });
 
@@ -184,7 +182,7 @@ describe('Audit Logger', () => {
       const genericError = new Error('Database connection failed');
       vi.mocked(db.insert).mockReturnValueOnce({
         values: vi.fn().mockRejectedValueOnce(genericError),
-      } as ReturnType<typeof db.insert>);
+      } as any);
 
       const entry: AuditLogEntry = {
         action: 'logout',
