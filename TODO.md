@@ -1422,3 +1422,11 @@ export async function POST(req: NextRequest) {
 - [✅] **IP Whitelisting**: Moduł gotowy (`lib/security/ip-whitelist.ts`)
 - [✅] **Audit Logs Retention**: Automatyczne czyszczenie (90 dni)
 - [✅] **Security Monitoring**: Wykrywanie anomalii i raporty
+
+---
+
+## 🎨 UI & UX Improvements (Do rozważenia)
+
+- [ ] **Potwierdzenie wylogowania**: Dodać `dialog` z potwierdzeniem przed wykonaniem globalnego wylogowania ze wszystkich urządzeń.
+- [ ] **Skeleton Loaders**: Rozszerzyć użycie skeletonów na wszystkie dynamiczne sekcje dashboardu użytkownika (obecnie tylko wThemeCard).
+- [ ] **Powiadomienia Toast**: Dodać powiadomienia po zmianie motywu lub pomyślnym wylogowaniu.
