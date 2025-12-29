@@ -3,6 +3,7 @@ import getPort from 'get-port';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Client } from 'pg';
+import 'dotenv/config';
 
 const SERVER_INFO_FILE = path.join(__dirname, '.server-info.json');
 const SERVER_TIMEOUT = 120000;
@@ -48,6 +49,8 @@ async function setupTestDatabase(): Promise<string | undefined> {
     `);
     await client.query(`DROP DATABASE IF EXISTS "${TEST_DB_NAME}"`);
     await client.query(`CREATE DATABASE "${TEST_DB_NAME}"`);
+    // Czekaj chwilę na propagację utworzenia bazy
+    await new Promise((r) => setTimeout(r, 1000));
   } catch (e: any) {
     if (e.code === 'ECONNREFUSED') {
       console.error('\n🛑 KRYTYCZNY BŁĄD: Nie można połączyć się z PostgreSQL!');
@@ -63,6 +66,8 @@ async function setupTestDatabase(): Promise<string | undefined> {
     throw e;
   } finally {
     await client.end();
+    // Dodatkowe opóźnienie po zamknięciu
+    await new Promise((r) => setTimeout(r, 500));
   }
 
   // Wykonaj pełny schemat SQL zamiast migracji (szybsze i bardziej niezawodne dla E2E)
