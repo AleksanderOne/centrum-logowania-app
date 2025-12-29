@@ -33,6 +33,14 @@ const eslintConfig = defineConfig([
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
+  // Konfiguracja dla plików testowych
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx', 'tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-console': 'off',
+    },
+  },
   // Ignorowane pliki i katalogi
   globalIgnores([
     '.next/**',

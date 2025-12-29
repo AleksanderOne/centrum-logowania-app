@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
+import 'dotenv/config';
 
 // Zmienne środowiskowe dla testów E2E
 process.env.AUTH_SECRET = process.env.AUTH_SECRET || 'test-secret-for-e2e-tests-only';

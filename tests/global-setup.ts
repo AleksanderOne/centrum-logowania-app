@@ -23,11 +23,10 @@ async function waitForServer(port: number, timeout: number): Promise<boolean> {
 }
 
 export default async function globalSetup() {
-  // eslint-disable-next-line no-console
   console.log('\n🚀 Uruchamianie serwera testowego...');
 
   const port = await getPort({ port: [3000, 3001, 3002, 3003, 3004] });
-  // eslint-disable-next-line no-console
+
   console.log(`📡 Znaleziono wolny port: ${port}`);
 
   // Używamy npx next dev bezpośrednio żeby ominąć predev hook (git pull)
@@ -36,11 +35,15 @@ export default async function globalSetup() {
     stdio: ['ignore', 'pipe', 'pipe'],
     env: {
       ...process.env,
+
       NODE_ENV: 'development',
       AUTH_SECRET: process.env.AUTH_SECRET || 'test-secret-for-e2e-tests-only',
       NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'test-secret-for-e2e-tests-only',
       AUTH_TRUST_HOST: 'true',
+
       DATABASE_URL: process.env.DATABASE_URL,
+      E2E_TEST_MODE: 'true',
+      NEXT_PUBLIC_E2E_TEST_MODE: 'true',
     },
   });
 
@@ -54,6 +57,5 @@ export default async function globalSetup() {
   const isReady = await waitForServer(port, SERVER_TIMEOUT);
   if (!isReady) throw new Error(`Serwer nie uruchomił się na porcie ${port}`);
 
-  // eslint-disable-next-line no-console
   console.log(`✅ Serwer testowy gotowy: http://localhost:${port}\n`);
 }
