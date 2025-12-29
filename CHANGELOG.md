@@ -1,3 +1,10 @@
+## [2.7.1](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.7.0...v2.7.1) (2025-12-29)
+
+
+### Bug Fixes
+
+* **e2e:** napraw testy E2E - dodaj helper insertAuthCode ([0385258](https://github.com/AleksanderOne/centrum-logowania-app/commit/0385258e025b71b06a2e408c87899796adc93183))
+
 # [2.7.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.6.0...v2.7.0) (2025-12-29)
 
 
