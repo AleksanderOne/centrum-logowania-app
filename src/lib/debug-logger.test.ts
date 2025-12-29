@@ -2,20 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { appendToLogFile, serverLog, httpLog } from './debug-logger';
 import fs from 'fs';
 
-// Mock fs and path
 vi.mock('fs', () => ({
   default: {
     appendFileSync: vi.fn(),
   },
 }));
 
-// Mock console.error
 const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 describe('debug-logger', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('NODE_ENV', 'development'); // Default to dev for tests
+    vi.stubEnv('NODE_ENV', 'development');
   });
 
   afterEach(() => {
@@ -47,7 +45,6 @@ describe('debug-logger', () => {
     });
 
     it('przycina zbyt długie dane JSON', () => {
-      // Create huge json
       const hugeString = 'a'.repeat(6000);
       const data = { heavy: hugeString };
 
@@ -59,7 +56,6 @@ describe('debug-logger', () => {
     });
 
     it('obsługuje błędy serializacji JSON (circular reference)', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const circular: any = {};
       circular.myself = circular;
 

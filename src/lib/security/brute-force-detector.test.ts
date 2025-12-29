@@ -58,8 +58,6 @@ describe('Brute Force Detection', () => {
 
   describe('checkBruteForceByIp', () => {
     it('wywołuje checkBruteForce z IP address', async () => {
-      // Setup mocka: pierwsze zapytanie (count) zwraca 0
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mocks.mockChain.then.mockImplementationOnce((resolve: any) => resolve([{ count: 0 }]));
 
       const result = await checkBruteForceByIp('192.168.1.1', 'login');
@@ -79,9 +77,7 @@ describe('Brute Force Detection', () => {
       const mockOldDate = new Date(now.getTime() - 10000); // 10 sek temu
 
       mocks.mockChain.then
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .mockImplementationOnce((resolve: any) => resolve([{ count: 6 }])) // count query
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .mockImplementationOnce((resolve: any) => resolve([{ createdAt: mockOldDate }])); // oldestFailure query
 
       const result = await checkBruteForceByIp('192.168.1.1', 'login');
@@ -94,7 +90,6 @@ describe('Brute Force Detection', () => {
 
   describe('checkBruteForceByEmail', () => {
     it('wywołuje checkBruteForce z email', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       mocks.mockChain.then.mockImplementationOnce((resolve: any) => resolve([{ count: 0 }]));
 
       const result = await checkBruteForceByEmail('test@example.com', 'login');

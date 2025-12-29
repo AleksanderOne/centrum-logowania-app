@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createProject, deleteProject, getUserProjects } from './project';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db/drizzle';
-import { projects } from '@/lib/db/schema';
+
 import { revalidatePath } from 'next/cache';
 import { logSuccess } from '@/lib/security';
 
@@ -14,10 +14,10 @@ vi.mock('@/lib/auth', () => ({
 // Mockowanie bazy danych - definiujemy mocki poza, aby móc je modyfikować w testach
 const mockReturning = vi.fn();
 const mockWhere = vi.fn(() => ({ returning: mockReturning }));
-const mockDelete = vi.fn(() => ({ where: mockWhere }));
+const mockDelete = vi.fn((_args: any) => ({ where: mockWhere }));
 const mockInsertReturning = vi.fn();
-const mockValues = vi.fn(() => ({ returning: mockInsertReturning }));
-const mockInsert = vi.fn(() => ({ values: mockValues }));
+const mockValues = vi.fn((_args: any) => ({ returning: mockInsertReturning }));
+const mockInsert = vi.fn((_args: any) => ({ values: mockValues }));
 
 vi.mock('@/lib/db/drizzle', () => ({
   db: {

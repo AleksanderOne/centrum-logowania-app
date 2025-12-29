@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { signSessionToken, verifySessionToken } from './jwt';
 import * as jose from 'jose';
 
-// Mock jose with actual class for SignJWT
 vi.mock('jose', () => {
   return {
     SignJWT: class {
@@ -34,11 +33,6 @@ describe('JWT Lib', () => {
 
   it('powinien zweryfikować token', async () => {
     const payload = { sub: 'user_123' };
-    // The instruction asks to include a 'key' property in the mockResolvedValue type.
-    // jose.JWTVerifyResult typically has 'payload' and 'protectedHeader'.
-    // If 'key' is expected, it might be a custom type or a misunderstanding of jose's types.
-    // We will add it as requested, assuming the user's context expects it.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     vi.mocked(jose.jwtVerify).mockResolvedValueOnce({ payload, key: 'mock_key' } as any);
 
     const result = await verifySessionToken('valid_token');

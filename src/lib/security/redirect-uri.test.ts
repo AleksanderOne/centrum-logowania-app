@@ -17,7 +17,6 @@ describe('Redirect URI Validation', () => {
       });
 
       it('odrzuca URI który nie jest stringiem', () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = validateRedirectUri(null as any, 'https://example.com');
 
         expect(result.valid).toBe(false);

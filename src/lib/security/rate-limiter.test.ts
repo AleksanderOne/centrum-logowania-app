@@ -165,7 +165,7 @@ describe('Rate Limiter', () => {
     it('powinien usunąć wygasłe wpisy i zwrócić liczbę usuniętych', async () => {
       vi.mocked(db.delete).mockReturnValue({
         where: vi.fn().mockResolvedValue({ rowCount: 5 }),
-      } as ReturnType<typeof db.delete>);
+      } as unknown as ReturnType<typeof db.delete>);
 
       const result = await cleanupExpiredRateLimits();
 
@@ -176,7 +176,7 @@ describe('Rate Limiter', () => {
     it('powinien zwrócić -1 gdy rowCount jest undefined', async () => {
       vi.mocked(db.delete).mockReturnValue({
         where: vi.fn().mockResolvedValue({}),
-      } as ReturnType<typeof db.delete>);
+      } as unknown as ReturnType<typeof db.delete>);
 
       const result = await cleanupExpiredRateLimits();
 
