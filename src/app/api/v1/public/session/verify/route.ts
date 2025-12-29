@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/drizzle';
-import { users } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { users, projectSessions } from '@/lib/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { checkProjectAccess } from '@/lib/security';
 
 import { serverLog } from '@/lib/debug-logger';
@@ -48,7 +48,6 @@ export async function POST(req: NextRequest) {
     );
     if (!accessResult.allowed) {
       serverLog(`[VERIFY] Access denied: User ${payload.userId} to Project ${payload.projectId}`);
-      // devLog(`[VERIFY] Access denied for user ${payload.userId} to project ${payload.projectId}`);
       return NextResponse.json({ valid: false, reason: 'access_denied' });
     }
 
@@ -63,7 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     const currentVersion = user.tokenVersion || 0;
-    const tokenVersion = payload.tokenVersion || 0;
+    const tokenVersion = (payload.tokenVersion as number) || 0;
 
     if (currentVersion !== tokenVersion) {
       serverLog('[VERIFY] Token version mismatch (Kill Switch)', {
@@ -71,6 +70,37 @@ export async function POST(req: NextRequest) {
         token: tokenVersion,
       });
       return NextResponse.json({ valid: false, reason: 'token_version_mismatch' });
+    }
+
+    // 4. Idle Session Timeout check (np. 30 minut)
+    const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+    const now = new Date();
+
+    const session = await db.query.projectSessions.findFirst({
+      where: and(
+        eq(projectSessions.userId, payload.userId as string),
+        eq(projectSessions.projectId, payload.projectId as string)
+      ),
+    });
+
+    if (session?.lastSeenAt) {
+      const isIdle = now.getTime() - session.lastSeenAt.getTime() > IDLE_TIMEOUT_MS;
+      if (isIdle) {
+        serverLog('[VERIFY] Session expired due to idle timeout', {
+          lastSeen: session.lastSeenAt,
+          now,
+        });
+        return NextResponse.json({ valid: false, reason: 'idle_timeout' });
+      }
+
+      // Aktualizujemy czas ostatniej aktywności
+      // Optymalizacja: aktualizujemy tylko jeśli minęło np. 1 minuta od ostatniej aktualizacji
+      if (now.getTime() - session.lastSeenAt.getTime() > 60 * 1000) {
+        await db
+          .update(projectSessions)
+          .set({ lastSeenAt: now })
+          .where(eq(projectSessions.id, session.id));
+      }
     }
 
     return NextResponse.json({ valid: true });

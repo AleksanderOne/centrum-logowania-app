@@ -10,6 +10,7 @@ import {
   logFailure,
   extractRequestInfo,
   checkProjectAccess,
+  verifyPKCE,
 } from '@/lib/security';
 import { devLog } from '@/lib/utils';
 import { signSessionToken } from '@/lib/jwt';
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Pobranie kodu i redirect_uri z body
     const body = await req.json();
-    const { code, redirect_uri } = body;
+    const { code, redirect_uri, code_verifier } = body;
 
     devLog(`\n[TOKEN] 📥 POST /api/v1/public/token - Wymiana kodu autoryzacyjnego`);
     devLog(`[TOKEN] 🔍 Code: ${code?.substring(0, 6)}... Redirect: ${redirect_uri}`);
@@ -119,6 +120,34 @@ export async function POST(req: NextRequest) {
         metadata: { reason: 'redirect_uri_mismatch', endpoint: 'public' },
       });
       return NextResponse.json({ error: 'Redirect URI mismatch' }, { status: 400 });
+    }
+
+    // 3.5. Weryfikacja PKCE (jeśli zapisano w kodzie)
+    if (authCode.codeChallenge) {
+      if (!code_verifier) {
+        await logFailure('token_exchange', {
+          ipAddress,
+          userAgent,
+          metadata: { reason: 'missing_code_verifier', endpoint: 'public' },
+        });
+        return NextResponse.json(
+          { error: 'invalid_grant', error_description: 'code_verifier is required' },
+          { status: 400 }
+        );
+      }
+
+      const isPkceValid = verifyPKCE(code_verifier, authCode.codeChallenge);
+      if (!isPkceValid) {
+        await logFailure('token_exchange', {
+          ipAddress,
+          userAgent,
+          metadata: { reason: 'pkce_verification_failed', endpoint: 'public' },
+        });
+        return NextResponse.json(
+          { error: 'invalid_grant', error_description: 'Invalid code_verifier' },
+          { status: 400 }
+        );
+      }
     }
 
     // 4. Sprawdzenie czy kod nie wygasł

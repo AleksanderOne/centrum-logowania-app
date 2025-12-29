@@ -144,9 +144,13 @@ export default async function AuthorizePage({
   // 3. Generujemy jednorazowy kod autoryzacyjny (OAuth2 Authorization Code)
   const authCode = crypto.randomBytes(32).toString('hex'); // 64 znaki hex
   // Obliczamy datę wygaśnięcia - w Server Component Date.now() jest bezpieczne
-  const codeExpirationMs = 5 * 60 * 1000; // 5 minut
+  const codeExpirationMs = 2 * 60 * 1000; // 2 minuty (bezpieczniejsze niż 5)
   // eslint-disable-next-line react-hooks/purity -- Server Component: Date.now() jest bezpieczne
-  const expiresAt = new Date(Date.now() + codeExpirationMs); // Kod ważny 5 minut
+  const expiresAt = new Date(Date.now() + codeExpirationMs); // Kod ważny 2 minuty
+
+  // Parametry PKCE z searchParams
+  const code_challenge = params.code_challenge as string;
+  const code_challenge_method = params.code_challenge_method as string;
 
   // Zapisujemy kod w bazie
   await db.insert(authorizationCodes).values({
@@ -155,6 +159,8 @@ export default async function AuthorizePage({
     projectId: project.id,
     redirectUri: redirect_uri,
     expiresAt: expiresAt,
+    codeChallenge: code_challenge || null,
+    codeChallengeMethod: code_challenge_method || null,
   });
 
   // Logowanie sukcesu autoryzacji SSO

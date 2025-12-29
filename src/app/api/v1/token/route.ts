@@ -11,6 +11,7 @@ import {
   logFailure,
   extractRequestInfo,
   checkProjectAccess,
+  verifyPKCE,
 } from '@/lib/security';
 
 /**
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Pobranie kodu i redirect_uri z body
     const body = await req.json();
-    const { code, redirect_uri } = body;
+    const { code, redirect_uri, code_verifier } = body;
 
     if (!code) {
       return NextResponse.json({ error: 'Missing authorization code' }, { status: 400 });
@@ -115,6 +116,23 @@ export async function POST(req: NextRequest) {
     // 5. Weryfikacja redirect_uri (opcjonalna ale zalecana)
     if (redirect_uri && authCode.redirectUri !== redirect_uri) {
       return NextResponse.json({ error: 'Redirect URI mismatch' }, { status: 400 });
+    }
+
+    // 5.5. Weryfikacja PKCE
+    if (authCode.codeChallenge) {
+      if (!code_verifier) {
+        return NextResponse.json(
+          { error: 'invalid_grant', error_description: 'code_verifier is required' },
+          { status: 400 }
+        );
+      }
+
+      if (!verifyPKCE(code_verifier, authCode.codeChallenge)) {
+        return NextResponse.json(
+          { error: 'invalid_grant', error_description: 'Invalid code_verifier' },
+          { status: 400 }
+        );
+      }
     }
 
     // 6. Oznaczenie kodu jako użytego (jednorazowy!)

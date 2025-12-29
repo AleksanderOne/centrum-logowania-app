@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 
 // Ikona Google SVG
@@ -43,6 +43,15 @@ export const LoginForm = () => {
       // Jeśli nie udało się sparsować, zostawiamy jak jest (lub fallback)
     }
   }
+  // E2E Test Bypass
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).e2eLogin = (email: string) => {
+        signIn('e2e-bypass', { email, callbackUrl });
+      };
+    }
+  }, [callbackUrl]);
 
   // Logowanie przez Google
   const handleGoogleLogin = () => {

@@ -16,7 +16,7 @@ const sanitizeText = (text: string): string => {
       // Usuwanie tagów HTML/XML
       .replace(/<[^>]*>/g, '')
       // Usuwanie znaków specjalnych używanych w atakach XSS
-      .replace(/[<>'"`;(){}[\]\\]/g, '')
+      .replace(/[<>'"`;(){}[\]\\/]/g, '')
       // Usuwanie sekwencji javascript:, data:, vbscript:
       .replace(/javascript:|data:|vbscript:/gi, '')
       // Usuwanie znaków kontrolnych
@@ -48,51 +48,63 @@ const domainRegex =
 
 export const CreateProjectSchema = z.object({
   name: z
-    .string()
-    .min(2, { message: 'Nazwa musi mieć co najmniej 2 znaki' })
-    .max(100, { message: 'Nazwa może mieć maksymalnie 100 znaków' })
-    .regex(safeNameRegex, {
-      message: 'Nazwa może zawierać tylko litery, cyfry, spacje, myślniki i podkreślniki',
-    })
-    .transform((val) => val.trim()), // Usuń białe znaki z początku i końca
+    .transform((val: string) => val.trim())
+    .pipe(
+      z
+        .string()
+        .min(2, { message: 'Nazwa musi mieć co najmniej 2 znaki' })
+        .max(100, { message: 'Nazwa może mieć maksymalnie 100 znaków' })
+        .regex(safeNameRegex, {
+          message: 'Nazwa może zawierać tylko litery, cyfry, spacje, myślniki i podkreślniki',
+        })
+    ),
 
   domain: z
-    .string()
-    .min(1, { message: 'Domena jest wymagana' })
-    .max(255, { message: 'Domena może mieć maksymalnie 255 znaków' })
-    .refine(
-      (val) => {
-        // Pozwól na puste pole lub poprawny format
-        if (!val) return true;
-        return domainRegex.test(val);
-      },
-      {
-        message:
-          'Nieprawidłowy format domeny (np. moja-aplikacja.pl lub https://moja-aplikacja.pl)',
-      }
-    )
-    .transform((val) => val.trim().toLowerCase()), // Normalizuj domenę
+    .transform((val: string) => val.trim().toLowerCase())
+    .pipe(
+      z
+        .string()
+        .min(1, { message: 'Domena jest wymagana' })
+        .max(255, { message: 'Domena może mieć maksymalnie 255 znaków' })
+        .refine(
+          (val) => {
+            // Pozwól na puste pole lub poprawny format
+            if (!val) return true;
+            return domainRegex.test(val);
+          },
+          {
+            message:
+              'Nieprawidłowy format domeny (np. moja-aplikacja.pl lub https://moja-aplikacja.pl)',
+          }
+        )
+    ),
 });
 
 // Schemat walidacji formularza kontaktowego
 export const ContactFormSchema = z.object({
   firstName: z
-    .string()
-    .min(2, { message: 'Imię musi mieć co najmniej 2 znaki' })
-    .max(50, { message: 'Imię może mieć maksymalnie 50 znaków' })
-    .regex(safePersonNameRegex, {
-      message: 'Imię może zawierać tylko litery, spacje i myślniki',
-    })
-    .transform(sanitizeText),
+    .transform((val: string) => sanitizeText(val))
+    .pipe(
+      z
+        .string()
+        .min(2, { message: 'Imię musi mieć co najmniej 2 znaki' })
+        .max(50, { message: 'Imię może mieć maksymalnie 50 znaków' })
+        .regex(safePersonNameRegex, {
+          message: 'Imię może zawierać tylko litery, spacje i myślniki',
+        })
+    ),
 
   lastName: z
-    .string()
-    .min(2, { message: 'Nazwisko musi mieć co najmniej 2 znaki' })
-    .max(50, { message: 'Nazwisko może mieć maksymalnie 50 znaków' })
-    .regex(safePersonNameRegex, {
-      message: 'Nazwisko może zawierać tylko litery, spacje i myślniki',
-    })
-    .transform(sanitizeText),
+    .transform((val: string) => sanitizeText(val))
+    .pipe(
+      z
+        .string()
+        .min(2, { message: 'Nazwisko musi mieć co najmniej 2 znaki' })
+        .max(50, { message: 'Nazwisko może mieć maksymalnie 50 znaków' })
+        .regex(safePersonNameRegex, {
+          message: 'Nazwisko może zawierać tylko litery, spacje i myślniki',
+        })
+    ),
 
   email: z
     .string()
