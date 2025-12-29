@@ -1,3 +1,18 @@
+# [2.7.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.6.0...v2.7.0) (2025-12-29)
+
+
+### Bug Fixes
+
+* **testy:** poprawa mockowania zmiennych środowiskowych w audytach ([4c628b9](https://github.com/AleksanderOne/centrum-logowania-app/commit/4c628b9bce03fe7770b56b076631724edd2c573b))
+
+
+### Features
+
+* **api:** endpointy administracyjne i rotacja kluczy API ([6c0e6b8](https://github.com/AleksanderOne/centrum-logowania-app/commit/6c0e6b85b62d8a794da644a7170a590616352eab))
+* **auth:** aktualizacja logiki autentykacji i walidacji ([c97d531](https://github.com/AleksanderOne/centrum-logowania-app/commit/c97d5310b2cfe503bc008e070cced6a1c48d99f3))
+* **db:** dodanie obsługi PKCE oraz czasu ostatniej aktywności sesji ([98cd05e](https://github.com/AleksanderOne/centrum-logowania-app/commit/98cd05e603b842665eb94471a5cc5936afc3b8c6))
+* **security:** wdrożenie kluczowych modułów bezpieczeństwa ([b6e162d](https://github.com/AleksanderOne/centrum-logowania-app/commit/b6e162d2bbfb4e5eec99e8a8026af62224d691d7))
+
 # [2.6.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.5.1...v2.6.0) (2025-12-28)
 
 
