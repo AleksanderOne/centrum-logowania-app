@@ -41,7 +41,8 @@ export const LoginForm = () => {
     }
   }
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true') {
+    // E2E bypass - dostępny tylko w development mode dla bezpieczeństwa
+    if (process.env.NODE_ENV === 'development') {
       window.e2eLogin = (email: string) => {
         signIn('e2e-bypass', { email, callbackUrl });
       };
