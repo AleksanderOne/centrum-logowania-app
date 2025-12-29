@@ -1,3 +1,12 @@
+## [2.7.2](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.7.1...v2.7.2) (2025-12-29)
+
+
+### Bug Fixes
+
+* **e2e:** naprawiono testy E2E - nowy schemat bazy i poprawione asercje ([a227f39](https://github.com/AleksanderOne/centrum-logowania-app/commit/a227f390531632f1e5d0856ff70111e26e4261b7))
+* obsługa pustego body w debug-log endpoint ([c27cbf4](https://github.com/AleksanderOne/centrum-logowania-app/commit/c27cbf473a6d582abe47fde39d8783c7d1845b37))
+* **visual:** naprawiono lokalne testy wizualne (Playwright) ([f70a13b](https://github.com/AleksanderOne/centrum-logowania-app/commit/f70a13b1c43a577bcd694fb698c2ee2e205f928e))
+
 ## [2.7.1](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.7.0...v2.7.1) (2025-12-29)
 
 
