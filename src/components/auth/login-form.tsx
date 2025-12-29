@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 
-// Ikona Google SVG
 const GoogleIcon = () => (
   <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
     <path
@@ -33,8 +32,6 @@ export const LoginForm = () => {
   const searchParams = useSearchParams();
   let callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
 
-  // Security FIX: NextAuth odrzuca absolutne URL jeśli nie pasują idealnie do baseUrl
-  // Konwertujemy na relatywny, jeśli to możliwe, aby upewnić się, że redirect zadziała
   if (callbackUrl.startsWith('http')) {
     try {
       const url = new URL(callbackUrl);
@@ -43,17 +40,14 @@ export const LoginForm = () => {
       // Jeśli nie udało się sparsować, zostawiamy jak jest (lub fallback)
     }
   }
-  // E2E Test Bypass
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_E2E_TEST_MODE === 'true') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).e2eLogin = (email: string) => {
+      window.e2eLogin = (email: string) => {
         signIn('e2e-bypass', { email, callbackUrl });
       };
     }
   }, [callbackUrl]);
 
-  // Logowanie przez Google
   const handleGoogleLogin = () => {
     setIsGoogleLoading(true);
     signIn('google', { callbackUrl });
@@ -61,7 +55,6 @@ export const LoginForm = () => {
 
   return (
     <div className="space-y-4">
-      {/* Przycisk logowania przez Google */}
       <Button
         type="button"
         variant="outline"
