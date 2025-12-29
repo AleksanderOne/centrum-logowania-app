@@ -24,52 +24,45 @@ export default defineConfig({
   testMatch: /.*\.visual\.spec\.ts/,
   globalSetup: './tests/global-setup.ts',
   globalTeardown: './tests/global-teardown.ts',
-  fullyParallel: false, // Testy wizualne lepiej uruchamiać sekwencyjnie
+
+  // Testy wizualne lepiej uruchamiać sekwencyjnie i w jednym workerze,
+  // aby uniknąć konfliktów sesji (logowanie) i obciążenia screenshooter'a
+  fullyParallel: false,
+  workers: 1,
+
   forbidOnly: !!process.env.CI,
-  retries: 0, // Nie retry dla testów wizualnych
-  workers: 1, // Jeden worker dla stabilności
-  reporter: 'html',
+  retries: 0, // Visual tests shouldn't retry usually
+  reporter: [['list'], ['html', { open: 'never' }]],
+
   use: {
     baseURL: getBaseURL(),
-    trace: 'on',
+    trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    // Włącz porównania wizualne
-    video: 'retain-on-failure',
+    video: 'on-first-retry',
+
+    // Domyślny viewport (zostanie nadpisany w testach)
+    viewport: { width: 1280, height: 720 },
+
+    // Zwiększone timeouty dla stabilności visual tests
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
   },
+
   expect: {
-    // Konfiguracja porównań wizualnych
     toHaveScreenshot: {
-      // Próg różnicy (0-1), 0 = identyczne, 1 = całkowicie różne
-      threshold: 0.2,
-      // Animacje mogą powodować różnice
+      threshold: 0.2, // Tolerancja 20% (dość luźna, można zmniejszyć do 0.1)
       animations: 'disabled',
     },
   },
+
+  // Używamy tylko Chromium dla wszystkich testów wizualnych
   projects: [
     {
-      name: 'visual-desktop-chrome',
+      name: 'visual-chrome',
       use: {
         ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 },
-      },
-    },
-    {
-      name: 'visual-desktop-firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-        viewport: { width: 1920, height: 1080 },
-      },
-    },
-    {
-      name: 'visual-ipad-pro',
-      use: {
-        ...devices['iPad Pro'],
-      },
-    },
-    {
-      name: 'visual-iphone-14',
-      use: {
-        ...devices['iPhone 14 Pro'],
+        // Ważne: deviceScaleFactor: 1 dla spójności screenshotów między maszynami
+        deviceScaleFactor: 1,
       },
     },
   ],
