@@ -1,3 +1,10 @@
+# [2.8.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.7.2...v2.8.0) (2025-12-29)
+
+
+### Features
+
+* **audit:** odświeżenie interfejsu logów audytowych i rozszerzenie sekcji metadanych ([f64df22](https://github.com/AleksanderOne/centrum-logowania-app/commit/f64df2247c83074b4b1eea24d0beac0222f368b3))
+
 ## [2.7.2](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.7.1...v2.7.2) (2025-12-29)
 
 
