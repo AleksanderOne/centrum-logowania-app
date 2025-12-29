@@ -42,7 +42,7 @@ jobs:
 
           echo "🚀 Rozpoczynam generowanie nowej wersji..."
           npx semantic-release
-          
+
           # Pobierz nową wersję po zakończeniu
           NEW_VERSION=$(npm pkg get version | tr -d '"')
           echo "✅ Proces semantic-release zakończony!"
