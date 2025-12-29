@@ -62,3 +62,20 @@ export async function createTestProject(db: any, ownerId: string, isPublic = tru
     .returning();
   return project;
 }
+
+export async function insertAuthCode(
+  client: Client,
+  code: string,
+  userId: string,
+  projectId: string,
+  redirectUri: string,
+  expiresAt: Date
+) {
+  // Używamy bezpośredniego klienta PostgreSQL aby uniknąć problemów z kolumnami PKCE
+  await client.query(
+    `INSERT INTO "centrum_logowania"."authorization_code" 
+     (code, user_id, project_id, redirect_uri, expires_at)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [code, userId, projectId, redirectUri, expiresAt]
+  );
+}

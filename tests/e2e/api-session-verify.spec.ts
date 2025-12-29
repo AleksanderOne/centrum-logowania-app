@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getTestDb, createTestUser, createTestProject } from './helpers/db';
+import { getTestDb, createTestUser, createTestProject, insertAuthCode } from './helpers/db';
 
 test.describe('E2E: API Session Verify', () => {
   let db: any;
@@ -51,15 +51,15 @@ test.describe('E2E: API Session Verify', () => {
     const authCode = `verify-test-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const redirectUri = 'http://localhost:3000/callback';
 
-    const { authorizationCodes } = await import('@/lib/db/schema');
-
-    await db.insert(authorizationCodes).values({
-      code: authCode,
-      userId: user.id,
-      projectId: project.id,
-      redirectUri: redirectUri,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    });
+    // Wstawiamy tylko wymagane pola (bez PKCE)
+    await insertAuthCode(
+      client,
+      authCode,
+      user.id,
+      project.id,
+      redirectUri,
+      new Date(Date.now() + 5 * 60 * 1000)
+    );
 
     // Wymieniamy kod na token
     const tokenResponse = await request.post('/api/v1/public/token', {
