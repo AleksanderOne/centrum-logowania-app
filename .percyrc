@@ -1,0 +1,20 @@
+version: 2
+static:
+  cleanUrls: true
+discovery:
+  allowed-hostnames:
+    - localhost
+  network-idle-timeout: 750
+snapshot:
+  widths:
+    - 375
+    - 1280
+    - 1920
+  min-height: 1024
+  percy-css: |
+    /* Ukryj elementy, które mogą się zmieniać */
+    [data-testid="timestamp"],
+    [data-testid="random-id"],
+    [data-testid="api-key"] {
+      visibility: hidden !important;
+    }
