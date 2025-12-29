@@ -44,6 +44,7 @@ export const sessions = mySchema.table('session', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   expires: timestamp('expires', { mode: 'date' }).notNull(),
+  lastActivity: timestamp('last_activity', { mode: 'date' }).defaultNow(),
 });
 
 export const verificationTokens = mySchema.table(
@@ -88,6 +89,8 @@ export const authorizationCodes = mySchema.table('authorization_code', {
   redirectUri: text('redirect_uri').notNull(), // URL do którego przekierować (dla weryfikacji)
   expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(), // Kod ważny tylko przez krótki czas (np. 5 min)
   usedAt: timestamp('used_at', { mode: 'date' }), // Null = nieużyty, data = wykorzystany
+  codeChallenge: text('code_challenge'), // PKCE Challenge
+  codeChallengeMethod: text('code_challenge_method'), // PKCE Method (S256)
   createdAt: timestamp('created_at').defaultNow(),
 });
 
