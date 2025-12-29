@@ -1,3 +1,10 @@
+# [2.9.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.8.0...v2.9.0) (2025-12-29)
+
+
+### Features
+
+* **dashboard:** odświeżenie interfejsu profilu i optymalizacja responsywności ([a6a53c2](https://github.com/AleksanderOne/centrum-logowania-app/commit/a6a53c25869e7034ee1c15e41438d5af0afea7a9))
+
 # [2.8.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.7.2...v2.8.0) (2025-12-29)
 
 
