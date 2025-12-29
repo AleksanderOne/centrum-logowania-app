@@ -29,11 +29,13 @@ describe('QuickConnectManager', () => {
     fetchMock.mockReset();
     vi.mocked(toast.success).mockReset();
     vi.mocked(toast.error).mockReset();
-    // Don't use fake timers globally to avoid waitFor timeouts in async fetch tests
+    // Suppress console.error for expected error tests
+    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.mocked(console.error).mockRestore();
   });
 
   it('obsługuje odpowiedź API bez pola codes (fallback na pustą tablicę)', async () => {
