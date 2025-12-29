@@ -25,6 +25,7 @@ const eslintConfig = defineConfig([
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
         },
       ],
       // Wymaga jawnego typu zwracanego w eksportowanych funkcjach
@@ -35,7 +36,7 @@ const eslintConfig = defineConfig([
   },
   // Konfiguracja dla plików testowych
   {
-    files: ['**/*.test.ts', '**/*.test.tsx', 'tests/**/*.ts'],
+    files: ['**/*.test.ts', '**/*.test.tsx', 'tests/**/*.ts', 'examples/**/*.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       'no-console': 'off',
