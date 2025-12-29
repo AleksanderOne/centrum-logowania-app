@@ -22,45 +22,47 @@ export function ThemeCard() {
   if (!hasMounted) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Wygląd aplikacji</CardTitle>
-          <CardDescription>Ładowanie ustawień...</CardDescription>
+        <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+          <CardTitle className="text-base sm:text-lg">Wygląd aplikacji</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Ładowanie ustawień...</CardDescription>
         </CardHeader>
-        <CardContent className="h-24" />
+        <CardContent className="h-20 sm:h-24 p-4 sm:p-6 pt-0 sm:pt-0" />
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Wygląd aplikacji</CardTitle>
-        <CardDescription>Wybierz preferowany motyw interfejsu.</CardDescription>
+      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-3">
+        <CardTitle className="text-base sm:text-lg">Wygląd aplikacji</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          Wybierz preferowany motyw interfejsu.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-3 gap-2">
+      <CardContent className="grid grid-cols-3 gap-1.5 sm:gap-2 p-4 sm:p-6 pt-0 sm:pt-0">
         <Button
           variant={theme === 'light' ? 'default' : 'outline'}
-          className="flex flex-col gap-2 h-auto py-4"
+          className="flex flex-col gap-1 sm:gap-2 h-auto py-2.5 sm:py-4 px-2 sm:px-4"
           onClick={() => setTheme('light')}
         >
-          <Sun className="h-6 w-6" suppressHydrationWarning />
-          <span className="font-medium">Jasny</span>
+          <Sun className="h-5 w-5 sm:h-6 sm:w-6" suppressHydrationWarning />
+          <span className="font-medium text-xs sm:text-sm">Jasny</span>
         </Button>
         <Button
           variant={theme === 'dark' ? 'default' : 'outline'}
-          className="flex flex-col gap-2 h-auto py-4"
+          className="flex flex-col gap-1 sm:gap-2 h-auto py-2.5 sm:py-4 px-2 sm:px-4"
           onClick={() => setTheme('dark')}
         >
-          <Moon className="h-6 w-6" suppressHydrationWarning />
-          <span className="font-medium">Ciemny</span>
+          <Moon className="h-5 w-5 sm:h-6 sm:w-6" suppressHydrationWarning />
+          <span className="font-medium text-xs sm:text-sm">Ciemny</span>
         </Button>
         <Button
           variant={theme === 'system' ? 'default' : 'outline'}
-          className="flex flex-col gap-2 h-auto py-4"
+          className="flex flex-col gap-1 sm:gap-2 h-auto py-2.5 sm:py-4 px-2 sm:px-4"
           onClick={() => setTheme('system')}
         >
-          <Monitor className="h-6 w-6" suppressHydrationWarning />
-          <span className="font-medium">System</span>
+          <Monitor className="h-5 w-5 sm:h-6 sm:w-6" suppressHydrationWarning />
+          <span className="font-medium text-xs sm:text-sm">System</span>
         </Button>
       </CardContent>
     </Card>

@@ -16,9 +16,9 @@ export function UserIdSection({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="flex items-center justify-between font-mono text-xs bg-purple-50 dark:bg-purple-950/30 p-2 rounded border border-purple-200 dark:border-purple-800">
-      <div className="flex items-center gap-2 truncate text-purple-700 dark:text-purple-300">
-        <User className="h-3 w-3" />
+    <div className="flex items-center justify-between font-mono text-xs bg-purple-50 dark:bg-purple-950/30 p-2 rounded border border-purple-200 dark:border-purple-800 overflow-hidden">
+      <div className="flex items-center gap-2 min-w-0 flex-1 text-purple-700 dark:text-purple-300">
+        <User className="h-3 w-3 shrink-0" />
         <span className="truncate">{userId}</span>
       </div>
       <Button
