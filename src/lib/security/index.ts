@@ -63,3 +63,32 @@ export {
   cleanupOldAuditLogs,
   type BruteForceCheck,
 } from './brute-force-detector';
+
+// Email Domain Whitelist
+export {
+  isEmailDomainAllowed,
+  getAllowedEmailDomains,
+  isEmailWhitelistEnabled,
+} from './email-whitelist';
+
+// Audit Logs Retention
+export {
+  cleanupAuditLogs,
+  performRetentionCleanup,
+  getAuditLogsStats,
+  RETENTION_DEFAULTS,
+  type RetentionCleanupResult,
+} from './audit-retention';
+
+// API Key Manager
+export { generateApiKey, rotateApiKey, validateApiKey, regenerateApiKey } from './api-key-manager';
+
+// Security Monitoring
+export {
+  getSecurityMetrics,
+  detectSecurityThreats,
+  generateSecurityReport,
+  type SecurityAlert,
+  type SecurityAlertLevel,
+  type SecurityMetrics,
+} from './security-monitoring';
