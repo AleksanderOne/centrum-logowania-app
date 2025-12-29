@@ -23,7 +23,7 @@ function getBaseURL(): string {
 }
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: './tests/e2e',
   globalSetup: './tests/global-setup.ts',
   globalTeardown: './tests/global-teardown.ts',
   fullyParallel: true,
