@@ -3,156 +3,80 @@ import { loginAsTestUser } from '../helpers/auth';
 
 /**
  * Testy wizualne dla Dashboard
- * Używają toHaveScreenshot() dla lokalnych porównań (bez Percy)
- *
- * Rozdzielczości:
+ * Pokrycie 3 kluczowych widoków na 3 urządzeniach (łącznie 9 snapshotów).
+ * 
+ * Widoki:
+ * 1. Projekty (/dashboard)
+ * 2. Logi (/dashboard/audit)
+ * 3. Użytkownik (/dashboard/user)
+ * 
+ * Urządzenia:
  * - Desktop: 1920x1080
  * - Tablet: 1024x768
  * - Mobile: 390x844
  */
-test.describe('Dashboard - Testy Wizualne', () => {
+
+const VIEWPORTS = [
+  { name: 'desktop', width: 1920, height: 1080 },
+  { name: 'tablet', width: 1024, height: 768 },
+  { name: 'mobile', width: 390, height: 844 },
+];
+
+test.describe('Dashboard - Testy Wizualne (Pełna Macierz)', () => {
   test.beforeEach(async ({ page }) => {
     await loginAsTestUser(page);
   });
 
-  // ========================================
-  // DESKTOP (1920x1080)
-  // ========================================
-  test.describe('Desktop (1920x1080)', () => {
-    test.beforeEach(async ({ page }) => {
-      await page.setViewportSize({ width: 1920, height: 1080 });
-    });
+  for (const viewport of VIEWPORTS) {
+    test.describe(`Urządzenie: ${viewport.name} (${viewport.width}x${viewport.height})`, () => {
+      test.beforeEach(async ({ page }) => {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      });
 
-    test('Dashboard - widok główny', async ({ page }) => {
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
+      // 1. Projekty (Główny Dashboard)
+      test(`Projekty - ${viewport.name}`, async ({ page }) => {
+        await page.goto('/dashboard');
+        await page.waitForLoadState('networkidle');
 
-      // Czekaj na główne elementy
-      await expect(page.locator('body')).toBeVisible();
-      await page.waitForTimeout(500); // Animacje
+        // Czekamy na załadowanie treści (nagłówek "Twoje Projekty")
+        const projectsHeader = page.getByRole('heading', { name: 'Twoje Projekty' });
+        await expect(projectsHeader).toBeVisible();
+        await projectsHeader.scrollIntoViewIfNeeded();
 
-      await expect(page).toHaveScreenshot('dashboard-main-desktop.png', {
-        fullPage: true,
-        animations: 'disabled',
+        // Upewniamy się, że formularz dodawania projektu jest widoczny
+        await expect(page.getByText('Nowy Projekt')).toBeVisible();
+
+        await page.waitForTimeout(500); // Stabilizacja animacji
+
+        await expect(page).toHaveScreenshot(`02_panel_projekty-${viewport.name}.png`, {
+          fullPage: true,
+          animations: 'disabled',
+        });
+      });
+
+      // 2. Logi (Audit)
+      test(`Logi - ${viewport.name}`, async ({ page }) => {
+        await page.goto('/dashboard/audit');
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(500); // Stabilizacja animacji
+
+        await expect(page).toHaveScreenshot(`03_panel_logi-${viewport.name}.png`, {
+          fullPage: true,
+          animations: 'disabled',
+        });
+      });
+
+      // 3. Użytkownik (Profil)
+      test(`Użytkownik - ${viewport.name}`, async ({ page }) => {
+        await page.goto('/dashboard/user');
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(500); // Stabilizacja animacji
+
+        await expect(page).toHaveScreenshot(`04_panel_profil-${viewport.name}.png`, {
+          fullPage: true,
+          animations: 'disabled',
+        });
       });
     });
-
-    test('Dashboard - lista projektów', async ({ page }) => {
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Scroll do sekcji projektów
-      const projectsSection = page.locator('text=Twoje Projekty').first();
-      if (await projectsSection.isVisible()) {
-        await projectsSection.scrollIntoViewIfNeeded();
-      }
-
-      await expect(page).toHaveScreenshot('dashboard-projects-desktop.png', {
-        fullPage: true,
-        animations: 'disabled',
-      });
-    });
-
-    test('Dashboard - strona audytu', async ({ page }) => {
-      await page.goto('/dashboard/audit');
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(500);
-
-      await expect(page).toHaveScreenshot('dashboard-audit-desktop.png', {
-        fullPage: true,
-        animations: 'disabled',
-      });
-    });
-
-    test('Dashboard - profil użytkownika', async ({ page }) => {
-      await page.goto('/dashboard/user');
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(500);
-
-      await expect(page).toHaveScreenshot('dashboard-user-desktop.png', {
-        fullPage: true,
-        animations: 'disabled',
-      });
-    });
-  });
-
-  // ========================================
-  // TABLET (1024x768)
-  // ========================================
-  test.describe('Tablet (1024x768)', () => {
-    test.beforeEach(async ({ page }) => {
-      await page.setViewportSize({ width: 1024, height: 768 });
-    });
-
-    test('Dashboard - widok główny', async ({ page }) => {
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(500);
-
-      await expect(page).toHaveScreenshot('dashboard-main-tablet.png', {
-        fullPage: true,
-        animations: 'disabled',
-      });
-    });
-
-    test('Dashboard - lista projektów', async ({ page }) => {
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      await expect(page).toHaveScreenshot('dashboard-projects-tablet.png', {
-        fullPage: true,
-        animations: 'disabled',
-      });
-    });
-  });
-
-  // ========================================
-  // MOBILE (390x844 - iPhone 14)
-  // ========================================
-  test.describe('Mobile (390x844)', () => {
-    test.beforeEach(async ({ page }) => {
-      await page.setViewportSize({ width: 390, height: 844 });
-    });
-
-    test('Dashboard - widok główny', async ({ page }) => {
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(500);
-
-      await expect(page).toHaveScreenshot('dashboard-main-mobile.png', {
-        fullPage: true,
-        animations: 'disabled',
-      });
-    });
-
-    test('Dashboard - menu nawigacji', async ({ page }) => {
-      await page.goto('/dashboard');
-      await page.waitForLoadState('networkidle');
-
-      // Jeśli jest menu hamburger - otwórz je
-      const menuButton = page
-        .locator('[data-testid="mobile-menu"], button:has-text("Menu")')
-        .first();
-      if (await menuButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await menuButton.click();
-        await page.waitForTimeout(300);
-      }
-
-      await expect(page).toHaveScreenshot('dashboard-menu-mobile.png', {
-        fullPage: true,
-        animations: 'disabled',
-      });
-    });
-
-    test('Dashboard - strona audytu', async ({ page }) => {
-      await page.goto('/dashboard/audit');
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(500);
-
-      await expect(page).toHaveScreenshot('dashboard-audit-mobile.png', {
-        fullPage: true,
-        animations: 'disabled',
-      });
-    });
-  });
+  }
 });

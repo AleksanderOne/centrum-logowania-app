@@ -1,122 +1,116 @@
-# Testy Wizualne (Visual Regression Testing)
+# 👁️ Testy Wizualne (Visual Regression Testing)
 
-Ten folder zawiera testy wizualne aplikacji, które sprawdzają wygląd interfejsu na różnych urządzeniach i rozdzielczościach.
+Lokalny system wykrywania regresji wizualnej oparty na Playwright.
 
-## 🚀 Szybki Start
+---
 
-### 1. Instalacja Percy.io (Rekomendowane)
+## 🚀 Szybki Start - 3 Komendy
 
-```bash
-npm install --save-dev @percy/playwright
-```
+| Komenda | Opis | Kiedy używać |
+|---------|------|--------------|
+| `npm run test:visual:local` | **Sprawdź regresje** | Po każdej zmianie w UI |
+| `npm run test:visual:generate` | **Zaktualizuj snapshoty** | Gdy zmiana jest ZAMIERZONA |
+| `npm run test:visual:report` | **Otwórz raport różnic** | Gdy test FAILED |
 
-### 2. Konfiguracja Percy.io
+---
 
-1. Utwórz konto na [percy.io](https://percy.io) (darmowe dla open-source)
-2. Utwórz nowy projekt
-3. Skopiuj `PERCY_TOKEN` z dashboardu
-4. Dodaj token do zmiennych środowiskowych:
-
-```bash
-# Lokalnie (dodaj do ~/.zshrc lub ~/.bashrc)
-export PERCY_TOKEN="your-percy-token-here"
-
-# Lub w pliku .env.local
-echo "PERCY_TOKEN=your-percy-token-here" >> .env.local
-```
-
-### 3. Uruchamianie Testów
+## 📋 Workflow Krok po Kroku
 
 ```bash
-# Testy wizualne z Percy (wymaga PERCY_TOKEN)
-npm run test:visual
-
-# Testy wizualne lokalne (Playwright Visual Comparisons)
+# 1️⃣ Po zmianach w UI - sprawdź czy są regresje
 npm run test:visual:local
+
+# 2️⃣ Jeśli test FAILED - otwórz raport i zobacz różnice
+npm run test:visual:report
+
+# 3️⃣a Regresja NIEZAMIERZONA → napraw kod i wróć do kroku 1
+# 3️⃣b Zmiana ZAMIERZONA → zaktualizuj baseline:
+npm run test:visual:generate
+
+# 4️⃣ Commit nowe snapshoty razem z kodem
+git add tests/visual/**/*.png
+git commit -m "aktualizacja snapshotów wizualnych"
 ```
 
-## 📋 Dostępne Testy
+---
+
+## 📊 Struktura Folderów
+
+```
+tests/visual/
+├── *.visual.spec.ts          # Pliki testowe
+├── *-snapshots/              # Bazowe snapshoty (TRZYMAJ W GIT!)
+│   ├── *-expected.png        # Oczekiwany wygląd
+│   └── *-actual.png          # Aktualny (generowany przy teście)
+└── README.md                 # Ten plik
+```
+
+---
+
+## 🔍 Co Widzisz Przy Regresji?
+
+Playwright generuje 3 pliki przy różnicy:
+
+| Plik | Opis |
+|------|------|
+| `xxx-expected.png` | Bazowy snapshot (jak POWINNO wyglądać) |
+| `xxx-actual.png` | Aktualny screenshot (jak WYGLĄDA teraz) |
+| `xxx-diff.png` | **Różnice podświetlone czerwonym** |
+
+Raport HTML (`npm run test:visual:report`) pokazuje wszystkie różnice wizualnie.
+
+---
+
+## 📋 Pokrycie Testami
 
 ### `homepage.visual.spec.ts`
-
 - Strona główna (desktop, mobile, tablet)
 - Formularz logowania
 
 ### `dashboard.visual.spec.ts`
-
-- Dashboard główny
-- Lista projektów
-- Dialog tworzenia projektu
-- Sidebar navigation
+- Panel Projekty (główny dashboard)
+- Panel Logi (audit)
+- Panel Użytkownik (profil)
+- **3 viewporty:** Desktop (1920x1080), Tablet (1024x768), Mobile (390x844)
 
 ### `project-details.visual.spec.ts`
-
 - Szczegóły projektu
-- Sekcja kluczy API
+- Modale (Integration Tester, Sessions, Quick Connect, Members)
 
-## 🎯 Jak Działa Percy.io
+---
 
-1. **Pierwsze uruchomienie**: Tworzy baseline (pierwsze snapshoty)
-2. **Kolejne uruchomienia**: Porównuje nowe snapshoty z baseline
-3. **Raport**: Pokazuje różnice wizualne
-4. **Akceptacja**: Możesz zatwierdzić lub odrzucić zmiany
+## ⚙️ Konfiguracja
 
-## 🔧 Konfiguracja
-
-### Ignorowanie Elementów
-
-Możesz oznaczyć elementy, które mają być ignorowane podczas porównań:
+Plik: `playwright.visual.config.ts`
 
 ```typescript
-await percySnapshot(page, 'Dashboard', {
-  ignore: ['[data-testid="timestamp"]', '.random-id', '.animations'],
-});
+expect: {
+  toHaveScreenshot: {
+    threshold: 0.2,        // Tolerancja 20% (można zmniejszyć do 0.1)
+    animations: 'disabled', // Wyłączone animacje dla stabilności
+  },
+},
 ```
 
-### Różne Szerokości Ekranu
+### Dostosowanie Tolerancji
 
-```typescript
-await percySnapshot(page, 'Strona główna', {
-  widths: [1920, 1280, 768, 390], // Desktop, Laptop, Tablet, Mobile
-});
-```
+- **0.1 (10%)** - Rygorystyczne, wykrywa małe zmiany
+- **0.2 (20%)** - Zbalansowane (obecne ustawienie)
+- **0.3 (30%)** - Luźne, toleruje większe różnice
 
-## 📊 Raporty
-
-### Percy.io
-
-- Automatyczny link do raportu po uruchomieniu testów
-- Raport dostępny w dashboardzie Percy
-- Integracja z GitHub (komentarze w PR)
-
-### Playwright Visual (Lokalne)
-
-- Raporty HTML w folderze `playwright-report/`
-- Screenshoty różnic w `test-results/`
-- Porównanie side-by-side
+---
 
 ## 🐛 Rozwiązywanie Problemów
 
-### Percy nie działa
+| Problem | Rozwiązanie |
+|---------|-------------|
+| Testy niestabilne | Zwiększ `await page.waitForTimeout(500)` |
+| Różnice w fontach | Upewnij się, że fonty są załadowane przed screenshot |
+| Losowe dane w UI | Mockuj dane lub ignoruj elementy z `testId` |
 
-- Sprawdź czy `PERCY_TOKEN` jest ustawiony
-- Sprawdź połączenie z internetem
-- Sprawdź czy projekt istnieje w dashboardzie Percy
-
-### Testy są niestabilne
-
-- Zwiększ timeouty: `await page.waitForTimeout(1000)`
-- Użyj `waitForLoadState('networkidle')`
-- Ignoruj animacje: `animations: 'disabled'`
-
-### Różnice wizualne, które nie powinny być
-
-- Dodaj elementy do `ignore` w `percySnapshot`
-- Sprawdź czy nie ma losowych danych
-- Upewnij się, że testy są deterministyczne
+---
 
 ## 📚 Więcej Informacji
 
-- [Dokumentacja Percy.io](https://docs.percy.io)
 - [Playwright Visual Comparisons](https://playwright.dev/docs/test-screenshots)
-- [Plan Testowania Wizualnego](../VISUAL_TESTING_PLAN.md)
+- [toHaveScreenshot API](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
