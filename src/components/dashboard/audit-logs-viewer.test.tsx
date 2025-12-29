@@ -85,9 +85,9 @@ describe('AuditLogsViewer', () => {
     render(<AuditLogsViewer />);
 
     await waitFor(() => {
-      expect(screen.getByText('Zalogowano do systemu CLA')).toBeInTheDocument();
-      expect(screen.getByText('Wymieniono kod na token SSO')).toBeInTheDocument();
-      expect(screen.getByText('Odmowa dostępu!')).toBeInTheDocument();
+      expect(screen.getAllByText(/Zalogowano do systemu CLA/)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/Wymieniono kod na token SSO/)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/Odmowa dostępu!/)[0]).toBeInTheDocument();
     });
   });
 
@@ -108,17 +108,17 @@ describe('AuditLogsViewer', () => {
     render(<AuditLogsViewer />);
 
     await waitFor(() => {
-      expect(screen.getByText('Zalogowano do systemu CLA')).toBeInTheDocument();
+      expect(screen.getAllByText(/Zalogowano do systemu CLA/)[0]).toBeInTheDocument();
     });
 
     // Wpisz w wyszukiwarkę
-    const searchInput = screen.getByPlaceholderText('Szukaj w logach...');
+    const searchInput = screen.getByPlaceholderText('Szukaj...');
     fireEvent.change(searchInput, { target: { value: 'test@example.com' } });
 
     // Tylko log z tym emailem powinien być widoczny
     await waitFor(() => {
-      expect(screen.getByText('Zalogowano do systemu CLA')).toBeInTheDocument();
-      expect(screen.queryByText('Wymieniono kod na token SSO')).not.toBeInTheDocument();
+      expect(screen.getAllByText(/Zalogowano do systemu CLA/)[0]).toBeInTheDocument();
+      expect(screen.queryByText(/Wymieniono kod na token SSO/)).not.toBeInTheDocument();
     });
   });
 
@@ -126,7 +126,7 @@ describe('AuditLogsViewer', () => {
     render(<AuditLogsViewer />);
 
     await waitFor(() => {
-      expect(screen.getByText('Zalogowano do systemu CLA')).toBeInTheDocument();
+      expect(screen.getAllByText(/Zalogowano do systemu CLA/)[0]).toBeInTheDocument();
     });
 
     // Pierwsze wywołanie (przy renderze)
@@ -176,9 +176,9 @@ describe('AuditLogsViewer', () => {
 
     await waitFor(() => {
       // Sprawdź czy logi są wyświetlane z odpowiednimi labelami
-      expect(screen.getByText('Zalogowano do systemu CLA')).toBeInTheDocument();
-      expect(screen.getByText('Wymieniono kod na token SSO')).toBeInTheDocument();
-      expect(screen.getByText('Odmowa dostępu!')).toBeInTheDocument();
+      expect(screen.getAllByText(/Zalogowano do systemu CLA/)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/Wymieniono kod na token SSO/)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/Odmowa dostępu!/)[0]).toBeInTheDocument();
     });
   });
 
@@ -186,8 +186,8 @@ describe('AuditLogsViewer', () => {
     render(<AuditLogsViewer />);
 
     await waitFor(() => {
-      expect(screen.getByText('192.168.1.1')).toBeInTheDocument();
-      expect(screen.getByText('10.0.0.1')).toBeInTheDocument();
+      expect(screen.getAllByText(/192.168.1.1/)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/10.0.0.1/)[0]).toBeInTheDocument();
     });
   });
 
@@ -211,7 +211,7 @@ describe('AuditLogsViewer', () => {
     render(<AuditLogsViewer projectId="test-project" />);
 
     await waitFor(() => {
-      expect(screen.getByText(/dla projektu/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Projekt/)[0]).toBeInTheDocument();
     });
   });
 
@@ -219,7 +219,7 @@ describe('AuditLogsViewer', () => {
     render(<AuditLogsViewer />);
 
     await waitFor(() => {
-      expect(screen.getByText(/wszystkie projekty/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Wszystkie projekty/)[0]).toBeInTheDocument();
     });
   });
 });

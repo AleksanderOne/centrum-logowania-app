@@ -50,7 +50,15 @@ import {
   Eye,
   EyeOff,
   Chrome,
+  Settings,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ClaLogo } from '@/components/cla-logo';
 
 interface AuditLog {
@@ -554,111 +562,264 @@ export function AuditLogsViewer({ projectId, limit = 100 }: AuditLogsViewerProps
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <History className="h-5 w-5" />
-              Logi Audytu
+        {/* Header - kompaktowy layout na mobile */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Tytuł */}
+          <div className="min-w-0 flex-1">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <History className="h-5 w-5 shrink-0" />
+              <span className="truncate">Logi Audytu</span>
             </CardTitle>
-            <CardDescription>
-              Historia zdarzeń uwierzytelniania{' '}
-              {projectId ? 'dla projektu' : '(wszystkie projekty)'}
+            <CardDescription className="text-xs sm:text-sm truncate">
+              {projectId ? 'Projekt' : 'Wszystkie projekty'}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={fetchLogs}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Odśwież
-            </Button>
-            {logs.length > 0 && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={exportLogsToTxt}
-                  className="bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-500/30 hover:bg-slate-500/20"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Eksport
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" disabled={deleting}>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {deleting ? 'Usuwanie...' : 'Wyczyść'}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Usunąć wszystkie logi?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Ta operacja jest nieodwracalna. Wszystkie logi audytu{' '}
-                        {projectId ? 'dla tego projektu' : 'ze wszystkich projektów'} zostaną trwale
-                        usunięte.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Anuluj</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={deleteLogs}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Usuń wszystkie
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </>
-            )}
+
+          {/* Akcje - dropdown na mobile, przyciski na desktop */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Desktop: pełne przyciski */}
+            <div className="hidden sm:flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={fetchLogs}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Odśwież
+              </Button>
+              {logs.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={exportLogsToTxt}
+                    className="bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-500/30 hover:bg-slate-500/20"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Eksport
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" disabled={deleting}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {deleting ? 'Usuwanie...' : 'Wyczyść'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Usunąć wszystkie logi?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Ta operacja jest nieodwracalna. Wszystkie logi audytu{' '}
+                          {projectId ? 'dla tego projektu' : 'ze wszystkich projektów'} zostaną
+                          trwale usunięte.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={deleteLogs}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Usuń wszystkie
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+            </div>
+
+            {/* Mobile: dropdown menu */}
+            <div className="sm:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={fetchLogs}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Odśwież
+                  </DropdownMenuItem>
+                  {logs.length > 0 && (
+                    <>
+                      <DropdownMenuItem onClick={exportLogsToTxt}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Eksport do TXT
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {deleting ? 'Usuwanie...' : 'Wyczyść logi'}
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Usunąć wszystkie logi?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Ta operacja jest nieodwracalna. Wszystkie logi audytu{' '}
+                              {projectId ? 'dla tego projektu' : 'ze wszystkich projektów'} zostaną
+                              trwale usunięte.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={deleteLogs}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Usuń wszystkie
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
 
-        {/* Wyszukiwarka i filtry */}
-        <div className="flex flex-wrap gap-2 mt-4">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Szukaj w logach..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+        {/* Wyszukiwarka i filtry - kompaktowy layout */}
+        <div className="flex flex-col gap-2 mt-3">
+          {/* Search + przycisk filtrów na mobile */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Szukaj..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+
+            {/* Mobile: przycisk filtrów z dropdown */}
+            <div className="sm:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={`h-9 w-9 ${filterCategory !== 'all' || filterStatus !== 'all' || filterAction !== 'all' ? 'border-primary text-primary' : ''}`}
+                  >
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 p-3">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                        Kategoria
+                      </label>
+                      <Select value={filterCategory} onValueChange={handleCategoryChange}>
+                        <SelectTrigger className="w-full h-8 text-xs">
+                          <SelectValue placeholder="Kategoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filterCategories.map((cat) => (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              {cat.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                        Status
+                      </label>
+                      <Select value={filterStatus} onValueChange={setFilterStatus}>
+                        <SelectTrigger className="w-full h-8 text-xs">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Wszystkie</SelectItem>
+                          <SelectItem value="success">Sukces</SelectItem>
+                          <SelectItem value="failure">Błąd</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                        Akcja
+                      </label>
+                      <Select value={filterAction} onValueChange={setFilterAction}>
+                        <SelectTrigger className="w-full h-8 text-xs">
+                          <SelectValue placeholder="Akcja" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filterActions.map((action) => (
+                            <SelectItem key={action.value} value={action.value}>
+                              {action.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {(filterCategory !== 'all' ||
+                      filterStatus !== 'all' ||
+                      filterAction !== 'all') && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full h-8 text-xs"
+                        onClick={() => {
+                          setFilterCategory('all');
+                          setFilterStatus('all');
+                          setFilterAction('all');
+                        }}
+                      >
+                        Wyczyść filtry
+                      </Button>
+                    )}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          <Select value={filterCategory} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-[150px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Kategoria" />
-            </SelectTrigger>
-            <SelectContent>
-              {filterCategories.map((cat) => (
-                <SelectItem key={cat.value} value={cat.value}>
-                  {cat.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Wszystkie</SelectItem>
-              <SelectItem value="success">Sukces</SelectItem>
-              <SelectItem value="failure">Błąd</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterAction} onValueChange={setFilterAction}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Akcja" />
-            </SelectTrigger>
-            <SelectContent>
-              {filterActions.map((action) => (
-                <SelectItem key={action.value} value={action.value}>
-                  {action.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+          {/* Desktop: filtry w rzędzie */}
+          <div className="hidden sm:grid sm:grid-cols-3 gap-2">
+            <Select value={filterCategory} onValueChange={handleCategoryChange}>
+              <SelectTrigger className="w-full">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Kategoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterCategories.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Wszystkie</SelectItem>
+                <SelectItem value="success">Sukces</SelectItem>
+                <SelectItem value="failure">Błąd</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterAction} onValueChange={setFilterAction}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Akcja" />
+              </SelectTrigger>
+              <SelectContent>
+                {filterActions.map((action) => (
+                  <SelectItem key={action.value} value={action.value}>
+                    {action.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Licznik wyników */}
@@ -696,105 +857,216 @@ export function AuditLogsViewer({ projectId, limit = 100 }: AuditLogsViewerProps
                 return (
                   <div
                     key={log.id}
-                    className={`flex items-stretch gap-4 p-4 rounded-xl border-2 border-l-[6px] ${config.bgColor} shadow-sm hover:shadow-md transition-all duration-200`}
+                    className={`p-2 sm:p-4 rounded-lg sm:rounded-xl border-2 border-l-4 sm:border-l-[6px] ${config.bgColor} shadow-sm hover:shadow-md transition-all duration-200`}
                   >
-                    {/* LEWA KOLUMNA: Ikona, Nazwa, Metadata */}
-                    <div className="flex flex-col justify-center items-center shrink-0 px-1">
-                      <Icon className={`h-8 w-8 ${config.color}`} />
-                    </div>
-
-                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
-                      <div className="flex items-center gap-3">
+                    {/* ============ MOBILE LAYOUT (< sm) ============ */}
+                    <div className="sm:hidden">
+                      {/* Nagłówek kompaktowy */}
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <Icon className={`h-4 w-4 shrink-0 ${config.color}`} />
                         <span
-                          className={`text-lg md:text-xl font-extrabold tracking-tight ${config.color} drop-shadow-sm`}
+                          className={`text-xs font-bold tracking-tight ${config.color} truncate flex-1`}
                         >
                           {config.label}
                         </span>
                         {isInternal && (
-                          <div className="shrink-0" title="Akcja wewnętrzna Centrum Logowania">
-                            <ClaLogo size={20} className="opacity-100" />
+                          <div title="CLA">
+                            <ClaLogo size={12} className="opacity-80 shrink-0" />
                           </div>
                         )}
                       </div>
 
-                      {/* Metadata - większy kontrast i czcionka */}
-                      <div className="text-sm font-medium text-foreground/90 space-y-1.5 bg-background/40 p-2 rounded-md -ml-2">
+                      {/* Dane w grid 2 kolumny */}
+                      <div className="text-[10px] font-medium text-foreground/90 bg-background/40 p-1.5 rounded">
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                          {log.ipAddress && (
+                            <div>
+                              <span className="text-muted-foreground uppercase text-[8px]">IP</span>
+                              <div className="font-mono font-bold truncate">{log.ipAddress}</div>
+                            </div>
+                          )}
+                          {metadata?.projectName && (
+                            <div>
+                              <span className="text-muted-foreground uppercase text-[8px]">
+                                Projekt
+                              </span>
+                              <div className="font-bold uppercase truncate">
+                                {metadata.projectName}
+                              </div>
+                            </div>
+                          )}
+                          {metadata?.redirectUri && (
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground uppercase text-[8px]">
+                                Witryna
+                              </span>
+                              <div className="font-mono font-bold truncate">
+                                {extractDomain(metadata.redirectUri)}
+                              </div>
+                            </div>
+                          )}
+                          {metadata?.userEmail && (
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground uppercase text-[8px]">
+                                User
+                              </span>
+                              <div className="font-semibold truncate">{metadata.userEmail}</div>
+                            </div>
+                          )}
+                          {(metadata?.isPublic !== undefined ||
+                            metadata?.IsPublic !== undefined) && (
+                            <div>
+                              <span className="text-muted-foreground uppercase text-[8px]">
+                                Status
+                              </span>
+                              {metadata.isPublic === true ||
+                              metadata.IsPublic === true ||
+                              metadata.isPublic === 'true' ||
+                              metadata.IsPublic === 'true' ? (
+                                <div className="flex items-center gap-0.5 font-bold text-green-600 dark:text-green-400">
+                                  <Eye className="h-2.5 w-2.5" /> Publiczny
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-0.5 font-bold text-slate-600 dark:text-slate-400">
+                                  <EyeOff className="h-2.5 w-2.5" /> Prywatny
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {log.action === 'integration_test' && metadata?.results && (
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground uppercase text-[8px]">
+                                Wynik
+                              </span>
+                              <div className="font-semibold truncate">
+                                {
+                                  (metadata.results as unknown as IntegrationLogResults).integration
+                                    ?.message
+                                }
+                              </div>
+                            </div>
+                          )}
+                          {metadata?.reason && (
+                            <div className="col-span-2 text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/20 px-1 py-0.5 rounded">
+                              <span className="uppercase text-[8px] opacity-80">Powód</span>
+                              <div className="font-bold truncate">{metadata.reason}</div>
+                            </div>
+                          )}
+                          {metadata &&
+                            Object.entries(metadata).map(([key, value]) => {
+                              if (
+                                [
+                                  'redirectUri',
+                                  'projectName',
+                                  'userEmail',
+                                  'reason',
+                                  'results',
+                                  'isPublic',
+                                  'IsPublic',
+                                ].includes(key)
+                              )
+                                return null;
+                              if (typeof value === 'object') return null;
+                              return (
+                                <div key={key}>
+                                  <span className="text-muted-foreground uppercase text-[8px] capitalize">
+                                    {key}
+                                  </span>
+                                  <div className="truncate">{String(value)}</div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                        {/* Stopka mobile */}
+                        <div className="flex items-center justify-between gap-1 pt-1.5 mt-1.5 border-t border-border/20 text-[9px]">
+                          <Badge
+                            variant="outline"
+                            className="font-mono text-[8px] text-foreground/60 px-1 py-0 h-4"
+                          >
+                            {log.action}
+                          </Badge>
+                          {log.status === 'success' ? (
+                            <span className="text-green-600 font-bold flex items-center gap-0.5">
+                              <CheckCircle className="h-2.5 w-2.5" />
+                              OK
+                            </span>
+                          ) : (
+                            <span className="text-red-600 font-bold flex items-center gap-0.5">
+                              <XCircle className="h-2.5 w-2.5" />
+                              ERR
+                            </span>
+                          )}
+                          <span className="text-muted-foreground">
+                            {formatDate(log.createdAt).split(' ')[0]}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {formatDate(log.createdAt).split(' ')[1]}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ============ TABLET LAYOUT (sm - lg) ============ */}
+                    <div className="hidden sm:block lg:hidden">
+                      {/* Nagłówek: Ikona + Tytuł */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <Icon className={`h-6 w-6 shrink-0 ${config.color}`} />
+                        <span
+                          className={`text-base font-bold tracking-tight ${config.color} truncate flex-1`}
+                        >
+                          {config.label}
+                        </span>
+                        {isInternal && (
+                          <div title="Akcja wewnętrzna CLA">
+                            <ClaLogo size={16} className="opacity-80 shrink-0" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Blok z informacjami */}
+                      <div className="text-sm font-medium text-foreground/90 space-y-1.5 bg-background/40 p-2 rounded-md mb-2">
                         {log.ipAddress && (
                           <div className="flex items-center gap-2">
-                            <span className="text-muted-foreground font-semibold min-w-[50px]">
-                              IP:
-                            </span>
+                            <span className="text-muted-foreground font-semibold">IP:</span>
                             <span className="font-mono text-foreground font-bold">
                               {log.ipAddress}
                             </span>
                           </div>
                         )}
-
                         {metadata && Object.keys(metadata).length > 0 && (
-                          <div className="space-y-1.5">
-                            {/* Specjalna obsługa dla wyników testu integracji */}
+                          <>
                             {log.action === 'integration_test' && metadata.results && (
-                              <>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-muted-foreground font-semibold min-w-[50px]">
-                                    Wynik:
-                                  </span>
-                                  {}
-                                  <span className="font-semibold text-foreground">
-                                    {
-                                      (metadata.results as unknown as IntegrationLogResults)
-                                        .integration?.message
-                                    }
-                                  </span>
-                                </div>
-                                {(metadata.results as unknown as IntegrationLogResults).domain
-                                  ?.status !== 'skipped' &&
-                                  (metadata.results as unknown as IntegrationLogResults).domain
-                                    ?.message && (
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-muted-foreground font-semibold min-w-[50px]">
-                                        Domena:
-                                      </span>
-                                      {}
-                                      <span className="text-foreground">
-                                        {
-                                          (metadata.results as unknown as IntegrationLogResults)
-                                            .domain?.message
-                                        }
-                                      </span>
-                                    </div>
-                                  )}
-                              </>
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground font-semibold">Wynik:</span>
+                                <span className="font-semibold">
+                                  {
+                                    (metadata.results as unknown as IntegrationLogResults)
+                                      .integration?.message
+                                  }
+                                </span>
+                              </div>
                             )}
-
-                            {/* Obsługa zmiany widoczności */}
                             {(metadata.isPublic !== undefined ||
                               metadata.IsPublic !== undefined) && (
                               <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground font-semibold min-w-[50px]">
-                                  Status:
-                                </span>
+                                <span className="text-muted-foreground font-semibold">Status:</span>
                                 {metadata.isPublic === true ||
                                 metadata.IsPublic === true ||
                                 metadata.isPublic === 'true' ||
                                 metadata.IsPublic === 'true' ? (
-                                  <span className="flex items-center gap-1.5 font-bold text-green-600 dark:text-green-400">
-                                    <Eye className="h-4 w-4" />
-                                    Publiczny (widoczny dla wszystkich)
+                                  <span className="flex items-center gap-1 font-bold text-green-600 dark:text-green-400">
+                                    <Eye className="h-3.5 w-3.5" /> Publiczny
                                   </span>
                                 ) : (
-                                  <span className="flex items-center gap-1.5 font-bold text-slate-600 dark:text-slate-400">
-                                    <EyeOff className="h-4 w-4" />
-                                    Prywatny (ukryty)
+                                  <span className="flex items-center gap-1 font-bold text-slate-600 dark:text-slate-400">
+                                    <EyeOff className="h-3.5 w-3.5" /> Prywatny
                                   </span>
                                 )}
                               </div>
                             )}
-
-                            {/* Strona/witryna docelowa */}
                             {metadata.redirectUri && (
                               <div className="flex items-start gap-2">
-                                <span className="text-muted-foreground font-semibold min-w-[50px] shrink-0">
+                                <span className="text-muted-foreground font-semibold shrink-0">
                                   Witryna:
                                 </span>
                                 <span className="font-mono text-foreground font-bold break-all">
@@ -802,10 +1074,9 @@ export function AuditLogsViewer({ projectId, limit = 100 }: AuditLogsViewerProps
                                 </span>
                               </div>
                             )}
-                            {/* Projekt */}
                             {metadata.projectName && (
                               <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground font-semibold min-w-[50px]">
+                                <span className="text-muted-foreground font-semibold">
                                   Projekt:
                                 </span>
                                 <span className="text-foreground font-bold uppercase tracking-wide bg-background/60 px-1.5 py-0.5 rounded border border-border/20 text-xs">
@@ -813,25 +1084,20 @@ export function AuditLogsViewer({ projectId, limit = 100 }: AuditLogsViewerProps
                                 </span>
                               </div>
                             )}
-                            {/* Email użytkownika */}
                             {metadata.userEmail && (
                               <div className="flex items-center gap-2">
-                                <span className="text-muted-foreground font-semibold min-w-[50px]">
-                                  User:
-                                </span>
-                                <span className="font-semibold text-foreground">
+                                <span className="text-muted-foreground font-semibold">User:</span>
+                                <span className="font-semibold text-foreground break-all">
                                   {metadata.userEmail}
                                 </span>
                               </div>
                             )}
-                            {/* Powód błędu */}
                             {metadata.reason && (
-                              <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold bg-red-100 dark:bg-red-900/20 px-2 py-1 rounded w-fit">
+                              <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold bg-red-100 dark:bg-red-900/20 px-2 py-1 rounded">
                                 <span>Powód:</span>
-                                <span>{metadata.reason}</span>
+                                <span className="break-all">{metadata.reason}</span>
                               </div>
                             )}
-                            {/* Inne metadane (fallback) */}
                             {Object.entries(metadata).map(([key, value]) => {
                               if (
                                 [
@@ -845,10 +1111,10 @@ export function AuditLogsViewer({ projectId, limit = 100 }: AuditLogsViewerProps
                                 ].includes(key)
                               )
                                 return null;
-                              if (typeof value === 'object') return null; // Ignoruj zagnieżdżone obiekty w prostym widoku
+                              if (typeof value === 'object') return null;
                               return (
                                 <div key={key} className="flex items-center gap-2">
-                                  <span className="text-muted-foreground font-semibold capitalize min-w-[50px]">
+                                  <span className="text-muted-foreground font-semibold capitalize">
                                     {key}:
                                   </span>
                                   <span className="text-foreground font-medium truncate max-w-[300px]">
@@ -857,39 +1123,201 @@ export function AuditLogsViewer({ projectId, limit = 100 }: AuditLogsViewerProps
                                 </div>
                               );
                             })}
-                          </div>
+                          </>
                         )}
                       </div>
-                    </div>
 
-                    {/* PRAWA KOLUMNA: Status, Badge, Data - maksymalnie do prawej */}
-                    <div className="flex flex-col items-end justify-between shrink-0 pl-4 ml-auto border-l border-border/10 min-w-[140px]">
-                      <div className="flex flex-col items-end gap-2 w-full">
+                      {/* Status | Akcja - rozpychane */}
+                      <div className="flex items-center justify-between gap-2 mb-1">
                         {log.status === 'success' ? (
-                          <Badge className="bg-green-600 hover:bg-green-700 text-white text-[10px] px-2 py-0.5 w-full justify-center font-bold shadow-sm uppercase tracking-wider">
+                          <Badge className="bg-green-600 hover:bg-green-700 text-white text-[10px] px-2 py-0.5 font-bold shadow-sm uppercase tracking-wider">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             SUKCES
                           </Badge>
                         ) : (
-                          <Badge className="bg-red-600 hover:bg-red-700 text-white text-[10px] px-2 py-0.5 w-full justify-center font-bold shadow-sm uppercase tracking-wider">
+                          <Badge className="bg-red-600 hover:bg-red-700 text-white text-[10px] px-2 py-0.5 font-bold shadow-sm uppercase tracking-wider">
                             <XCircle className="h-3 w-3 mr-1" />
                             BŁĄD
                           </Badge>
                         )}
                         <Badge
                           variant="outline"
-                          className="font-mono text-xs w-full justify-center text-foreground/90 font-bold bg-background/60 py-1"
+                          className="font-mono text-xs text-foreground/90 font-bold bg-background/60 py-1"
                         >
                           {log.action}
                         </Badge>
                       </div>
 
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-foreground">
+                      {/* Data | Godzina - rozpychane */}
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span className="font-bold text-foreground">
                           {formatDate(log.createdAt).split(' ')[0]}
-                        </div>
-                        <div className="text-xs font-semibold text-muted-foreground">
+                        </span>
+                        <span className="font-semibold">
                           {formatDate(log.createdAt).split(' ')[1]}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* ============ DESKTOP LAYOUT (>= lg) ============ */}
+                    <div className="hidden lg:flex lg:flex-row lg:items-stretch lg:gap-4">
+                      {/* Ikona */}
+                      <div className="flex flex-col justify-center items-center shrink-0">
+                        <Icon className={`h-8 w-8 ${config.color}`} />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <span
+                            className={`text-lg md:text-xl font-extrabold tracking-tight ${config.color} drop-shadow-sm`}
+                          >
+                            {config.label}
+                          </span>
+                          {isInternal && (
+                            <div title="Akcja wewnętrzna Centrum Logowania">
+                              <ClaLogo size={18} className="opacity-100" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Metadata */}
+                        <div className="text-sm font-medium text-foreground/90 space-y-1.5 bg-background/40 p-2 rounded-md">
+                          {log.ipAddress && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-muted-foreground font-semibold">IP:</span>
+                              <span className="font-mono text-foreground font-bold">
+                                {log.ipAddress}
+                              </span>
+                            </div>
+                          )}
+                          {metadata && Object.keys(metadata).length > 0 && (
+                            <>
+                              {log.action === 'integration_test' && metadata.results && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground font-semibold">
+                                    Wynik:
+                                  </span>
+                                  <span className="font-semibold">
+                                    {
+                                      (metadata.results as unknown as IntegrationLogResults)
+                                        .integration?.message
+                                    }
+                                  </span>
+                                </div>
+                              )}
+                              {(metadata.isPublic !== undefined ||
+                                metadata.IsPublic !== undefined) && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground font-semibold">
+                                    Status:
+                                  </span>
+                                  {metadata.isPublic === true ||
+                                  metadata.IsPublic === true ||
+                                  metadata.isPublic === 'true' ||
+                                  metadata.IsPublic === 'true' ? (
+                                    <span className="flex items-center gap-1 font-bold text-green-600 dark:text-green-400">
+                                      <Eye className="h-4 w-4" /> Publiczny
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-1 font-bold text-slate-600 dark:text-slate-400">
+                                      <EyeOff className="h-4 w-4" /> Prywatny
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {metadata.redirectUri && (
+                                <div className="flex items-start gap-2">
+                                  <span className="text-muted-foreground font-semibold shrink-0">
+                                    Witryna:
+                                  </span>
+                                  <span className="font-mono text-foreground font-bold break-all">
+                                    {extractDomain(metadata.redirectUri)}
+                                  </span>
+                                </div>
+                              )}
+                              {metadata.projectName && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground font-semibold">
+                                    Projekt:
+                                  </span>
+                                  <span className="text-foreground font-bold uppercase tracking-wide bg-background/60 px-1.5 py-0.5 rounded border border-border/20 text-xs">
+                                    {metadata.projectName}
+                                  </span>
+                                </div>
+                              )}
+                              {metadata.userEmail && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-muted-foreground font-semibold">User:</span>
+                                  <span className="font-semibold text-foreground break-all">
+                                    {metadata.userEmail}
+                                  </span>
+                                </div>
+                              )}
+                              {metadata.reason && (
+                                <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold bg-red-100 dark:bg-red-900/20 px-2 py-1 rounded">
+                                  <span>Powód:</span>
+                                  <span className="break-all">{metadata.reason}</span>
+                                </div>
+                              )}
+                              {Object.entries(metadata).map(([key, value]) => {
+                                if (
+                                  [
+                                    'redirectUri',
+                                    'projectName',
+                                    'userEmail',
+                                    'reason',
+                                    'results',
+                                    'isPublic',
+                                    'IsPublic',
+                                  ].includes(key)
+                                )
+                                  return null;
+                                if (typeof value === 'object') return null;
+                                return (
+                                  <div key={key} className="flex items-center gap-2">
+                                    <span className="text-muted-foreground font-semibold capitalize">
+                                      {key}:
+                                    </span>
+                                    <span className="text-foreground font-medium truncate max-w-[300px]">
+                                      {String(value)}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* STATUS + DATA - po prawej */}
+                      <div className="flex flex-col items-end justify-between pl-4 ml-auto min-w-[140px] shrink-0 border-l border-border/10">
+                        <div className="flex flex-col items-end gap-2 w-full">
+                          {log.status === 'success' ? (
+                            <Badge className="bg-green-600 hover:bg-green-700 text-white text-[10px] px-2 py-0.5 justify-center font-bold shadow-sm uppercase tracking-wider">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              SUKCES
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-red-600 hover:bg-red-700 text-white text-[10px] px-2 py-0.5 justify-center font-bold shadow-sm uppercase tracking-wider">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              BŁĄD
+                            </Badge>
+                          )}
+                          <Badge
+                            variant="outline"
+                            className="font-mono text-xs justify-center text-foreground/90 font-bold bg-background/60 py-1 w-full"
+                          >
+                            {log.action}
+                          </Badge>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-bold text-foreground">
+                            {formatDate(log.createdAt).split(' ')[0]}
+                          </div>
+                          <div className="text-xs font-semibold text-muted-foreground">
+                            {formatDate(log.createdAt).split(' ')[1]}
+                          </div>
                         </div>
                       </div>
                     </div>
