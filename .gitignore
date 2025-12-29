@@ -64,3 +64,4 @@ logi.txt
 
 # Demo App Local Config
 examples/server-integration/demo-config.json
+/.idea/

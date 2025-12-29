@@ -11,7 +11,7 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, './src'),
     },
-    exclude: [...configDefaults.exclude, 'tests/e2e/**'],
+    exclude: [...configDefaults.exclude, 'tests/e2e/**', 'tests/visual/**'],
 
     // Konfiguracja coverage z progami 75%
     coverage: {

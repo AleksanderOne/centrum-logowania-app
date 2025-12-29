@@ -1,0 +1,88 @@
+import { test, expect } from '@playwright/test';
+import { getTestDb, createTestUser, createTestProject } from './helpers/db';
+
+test.describe('E2E: API Session Verify', () => {
+  let db: any;
+  let client: any;
+  let user: any;
+  let project: any;
+
+  test.beforeAll(async () => {
+    const dbData = await getTestDb();
+    db = dbData.db;
+    client = dbData.client;
+    user = await createTestUser(db);
+    project = await createTestProject(db, user.id);
+  });
+
+  test.afterAll(async () => {
+    await client.end();
+  });
+
+  test('powinien odrzucić weryfikację z nieprawidłowym tokenem', async ({ request }) => {
+    const response = await request.post('/api/v1/public/session/verify', {
+      data: {
+        token: 'invalid-session-token-12345',
+      },
+    });
+
+    // API może zwrócić 200 z valid: false lub 401
+    const data = await response.json();
+    if (response.status() === 200) {
+      expect(data.valid).toBe(false);
+    } else {
+      expect(response.status()).toBe(401);
+    }
+  });
+
+  test.skip('powinien odrzucić weryfikację bez tokena', async ({ request }) => {
+    const response = await request.post('/api/v1/public/session/verify', {
+      data: {},
+    });
+
+    // API może zwrócić 400 (Bad Request) lub 401
+    expect([400, 401]).toContain(response.status());
+    const data = await response.json();
+    expect(data.error || data.message).toBeDefined();
+  });
+
+  test.skip('powinien zweryfikować poprawny token sesji projektu', async ({ request }) => {
+    // Najpierw tworzymy sesję projektu i kod autoryzacyjny
+    const authCode = `verify-test-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const redirectUri = 'http://localhost:3000/callback';
+
+    const { authorizationCodes } = await import('@/lib/db/schema');
+
+    await db.insert(authorizationCodes).values({
+      code: authCode,
+      userId: user.id,
+      projectId: project.id,
+      redirectUri: redirectUri,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+    });
+
+    // Wymieniamy kod na token
+    const tokenResponse = await request.post('/api/v1/public/token', {
+      data: {
+        code: authCode,
+        redirect_uri: redirectUri,
+      },
+    });
+    expect(tokenResponse.status()).toBe(200);
+    const tokenData = await tokenResponse.json();
+    const sessionToken = tokenData.sessionToken;
+
+    // Teraz weryfikujemy token
+    const verifyResponse = await request.post('/api/v1/public/session/verify', {
+      data: {
+        token: sessionToken,
+      },
+    });
+
+    expect(verifyResponse.status()).toBe(200);
+    const verifyData = await verifyResponse.json();
+    expect(verifyData.valid).toBe(true);
+    expect(verifyData.user).toBeDefined();
+    expect(verifyData.user.email).toBe(user.email);
+  });
+});
