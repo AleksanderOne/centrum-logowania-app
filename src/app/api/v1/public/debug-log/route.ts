@@ -14,7 +14,21 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
+    // Sprawdź czy body nie jest puste
+    const text = await req.text();
+    if (!text || text.trim() === '') {
+      // Pusty request - ignoruj cicho (może być preflight lub keepalive)
+      return NextResponse.json({ success: true, skipped: true });
+    }
+
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      // Nieprawidłowy JSON - ignoruj
+      return NextResponse.json({ success: true, skipped: true });
+    }
+
     const { message, data, source } = body;
 
     // Mapowanie źródła na kategorię
@@ -25,7 +39,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Debug Log Error:', error);
+    // Cichy błąd - nie zaśmiecaj logów serwera
+    if (process.env.DEBUG_LOGS === 'true') {
+      console.error('Debug Log Error:', error);
+    }
     return NextResponse.json({ error: 'Failed to write log' }, { status: 500 });
   }
 }
