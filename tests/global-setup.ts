@@ -3,8 +3,6 @@ import getPort from 'get-port';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Client } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
 const SERVER_INFO_FILE = path.join(__dirname, '.server-info.json');
 const SERVER_TIMEOUT = 120000;
@@ -67,20 +65,23 @@ async function setupTestDatabase(): Promise<string | undefined> {
     await client.end();
   }
 
-  // Uruchom migracje na nowej bazie
-  const migrationClient = new Client({ connectionString: testDbUrl });
+  // Wykonaj pełny schemat SQL zamiast migracji (szybsze i bardziej niezawodne dla E2E)
+  const schemaClient = new Client({ connectionString: testDbUrl });
   try {
-    await migrationClient.connect();
-    const db = drizzle(migrationClient);
+    await schemaClient.connect();
 
-    // console.log('📦 Uruchamianie migracji...');
-    await migrate(db, { migrationsFolder: path.join(__dirname, '../drizzle') });
-    // console.log('✅ Migracje zakończone sukcesem.');
+    // Wczytaj pełny schemat z pliku SQL
+    const schemaPath = path.join(__dirname, '../drizzle/e2e-full-schema.sql');
+    const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
+
+    console.log('📦 Wykonuję schemat bazy danych...');
+    await schemaClient.query(schemaSql);
+    console.log('✅ Schemat bazy danych utworzony.');
   } catch (e) {
-    console.error('❌ Błąd podczas migracji:', e);
+    console.error('❌ Błąd podczas tworzenia schematu:', e);
     throw e;
   } finally {
-    await migrationClient.end();
+    await schemaClient.end();
   }
 
   return testDbUrl;
@@ -113,6 +114,21 @@ export default async function globalSetup() {
       NEXT_PUBLIC_E2E_TEST_MODE: 'true',
     },
   });
+
+  // Loguj output serwera dla debugowania
+  if (serverProcess.stdout) {
+    serverProcess.stdout.on('data', (data) => {
+      const msg = data.toString();
+      if (msg.includes('Ready') || msg.includes('started') || msg.includes('error')) {
+        console.log('[Next.js]', msg.trim());
+      }
+    });
+  }
+  if (serverProcess.stderr) {
+    serverProcess.stderr.on('data', (data) => {
+      console.error('[Next.js ERROR]', data.toString().trim());
+    });
+  }
 
   fs.writeFileSync(
     SERVER_INFO_FILE,

@@ -26,9 +26,8 @@ test.describe('E2E: API Token Exchange', () => {
         redirect_uri: 'http://localhost:3000/callback',
       },
     });
-
-    // API może zwrócić 401 (Unauthorized) lub 500 (jeśli baza nie ma tabeli)
-    expect([401, 500]).toContain(response.status());
+    // API zwraca 400 z 'invalid_grant' dla nieprawidłowego lub brakującego kodu
+    expect(response.status()).toBe(400);
     const data = await response.json();
     expect(data.error).toBeDefined();
   });
@@ -45,7 +44,7 @@ test.describe('E2E: API Token Exchange', () => {
     expect(data.error).toContain('Missing');
   });
 
-  test.skip('powinien wymienić poprawny kod na token sesji', async ({ request }) => {
+  test('powinien wymienić poprawny kod na token sesji', async ({ request }) => {
     // Wstrzykujemy kod autoryzacyjny bezpośrednio do bazy
     const authCode = `test-code-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const redirectUri = 'http://localhost:3000/callback';
@@ -75,7 +74,7 @@ test.describe('E2E: API Token Exchange', () => {
     expect(data.user.email).toBe(user.email);
   });
 
-  test.skip('powinien odrzucić ponowne użycie kodu', async ({ request }) => {
+  test('powinien odrzucić ponowne użycie kodu', async ({ request }) => {
     // Tworzymy nowy kod
     const authCode = `reuse-test-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const redirectUri = 'http://localhost:3000/callback';
@@ -99,13 +98,15 @@ test.describe('E2E: API Token Exchange', () => {
     });
     expect(firstResponse.status()).toBe(200);
 
-    // Drugie użycie - powinno być odrzucone
+    // Drugie użycie - kod już został zużyty, API zwraca 400 'invalid_grant'
     const secondResponse = await request.post('/api/v1/public/token', {
       data: {
         code: authCode,
         redirect_uri: redirectUri,
       },
     });
-    expect(secondResponse.status()).toBe(401);
+    expect(secondResponse.status()).toBe(400);
+    const secondData = await secondResponse.json();
+    expect(secondData.error).toBe('invalid_grant');
   });
 });

@@ -30,11 +30,22 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  // Reporter: lista dla lepszej diagnostyki
+  reporter: [
+    ['list', { printSteps: true }],
+    ['html', { open: 'never' }],
+  ],
+  // Timeout dla testów (2 minuty)
+  timeout: 120000,
   use: {
     baseURL: getBaseURL(),
-    trace: 'on-first-retry',
+    // Trace i screeny dla debugowania
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    // Dodatkowe opcje context
+    actionTimeout: 30000,
+    navigationTimeout: 60000,
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });

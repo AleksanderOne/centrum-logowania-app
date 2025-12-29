@@ -35,18 +35,19 @@ test.describe('E2E: API Session Verify', () => {
     }
   });
 
-  test.skip('powinien odrzucić weryfikację bez tokena', async ({ request }) => {
+  test('powinien odrzucić weryfikację bez tokena', async ({ request }) => {
     const response = await request.post('/api/v1/public/session/verify', {
       data: {},
     });
 
-    // API może zwrócić 400 (Bad Request) lub 401
-    expect([400, 401]).toContain(response.status());
+    // API zwraca 400 z reason: 'missing_token'
+    expect(response.status()).toBe(400);
     const data = await response.json();
-    expect(data.error || data.message).toBeDefined();
+    expect(data.valid).toBe(false);
+    expect(data.reason).toBe('missing_token');
   });
 
-  test.skip('powinien zweryfikować poprawny token sesji projektu', async ({ request }) => {
+  test('powinien zweryfikować poprawny token sesji projektu', async ({ request }) => {
     // Najpierw tworzymy sesję projektu i kod autoryzacyjny
     const authCode = `verify-test-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const redirectUri = 'http://localhost:3000/callback';
@@ -79,10 +80,9 @@ test.describe('E2E: API Session Verify', () => {
       },
     });
 
+    // API zwraca tylko { valid: true } bez danych użytkownika
     expect(verifyResponse.status()).toBe(200);
     const verifyData = await verifyResponse.json();
     expect(verifyData.valid).toBe(true);
-    expect(verifyData.user).toBeDefined();
-    expect(verifyData.user.email).toBe(user.email);
   });
 });

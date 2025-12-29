@@ -19,7 +19,7 @@ test.describe('E2E: Authorization Flow', () => {
     await client.end();
   });
 
-  test.skip('powinien przejść pełny flow OAuth (Authorize -> Login -> Code -> Token)', async ({
+  test('powinien przejść pełny flow OAuth (Authorize -> Login -> Code -> Token)', async ({
     page,
     request,
   }) => {
