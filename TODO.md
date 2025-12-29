@@ -9,7 +9,12 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
 1. **CORS & Secure Headers** (1.1) - `next.config.ts`
 2. **CSRF Protection** (1.2) - Integracja `requireValidOrigin()` w endpointach
 3. **Redirect URI Validation** (1.3) - Użycie `validateRedirectUri()`
-4. **API Key Rotation** (1.7) - Bezpieczeństwo kluczy
+4. ✅ **Email Domain Whitelist** (1.5) - Moduł + Integracja
+5. ✅ **Idle Session Timeout** (1.6) - Schema + Integracja (30 min)
+6. ✅ **API Key Rotation** (1.7) - Manager + API Endpoint
+7. ✅ **Audit Logs Retention** (1.9) - Moduł + Admin API
+8. ✅ **Security Monitoring** (1.10) - Metryki + Alerty + Admin API
+9. **IP Whitelisting** (1.8) - Opcjonalnie, dla specyficznych przypadków
 
 ### 🟠 Priorytet 2 (Wysokie) - Do implementacji w ciągu tygodnia
 
@@ -17,8 +22,6 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
 6. **Rate Limiting per User** (1.4) - Rozszerzenie istniejącego modułu
 7. **Brute Force Detection** (1.4) - Integracja w endpointach
 8. **Skrócenie TTL Code** (1.3) - 2 minuty zamiast 5
-9. **Email Domain Whitelist** (1.5) - Opcjonalnie
-10. **Idle Session Timeout** (1.6) - Schema update + integracja
 
 ### 🟡 Priorytet 3 (Średnie) - Do implementacji w ciągu miesiąca
 
@@ -26,12 +29,18 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
 12. **Audit Logs Retention** (1.9) - Cron job + cleanup
 13. **Security Monitoring** (1.10) - System alertów
 
-### ✅ Moduły już gotowe (wymagają tylko integracji)
+### ✅ Moduły i Infrastruktura (Gotowe)
 
 - ✅ `lib/security/csrf.ts` - CSRF protection
 - ✅ `lib/security/redirect-uri.ts` - Redirect URI validation
-- ✅ `lib/security/pkce.ts` - PKCE implementation
+- ✅ `lib/security/pkce.ts` - PKCE implementation & API integration
 - ✅ `lib/security/brute-force-detector.ts` - Brute force detection
+- ✅ **Email Domain Whitelist** - `lib/security/email-whitelist.ts`
+- ✅ **API Key Manager** - `lib/security/api-key-manager.ts`
+- ✅ **Audit Retention** - `lib/security/audit-retention.ts`
+- ✅ **Security Monitoring** - `lib/security/security-monitoring.ts`
+- ✅ **Infrastruktura Testów Integracyjnych** - PGlite (In-memory Postgres) + Migracje
+- ✅ **Testy Integracyjne**: OAuth Flow, Rate Limiting, Audit Logging, PKCE, Isolation, Idle Timeout, Retention.
 
 ---
 
@@ -151,6 +160,66 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
     }
 
     // ... reszta kodu
+  ```
+
+- [ ] **Stworzenie modułu `lib/security/csrf.ts`**
+
+  ```typescript
+  import { NextRequest } from 'next/server';
+
+  export function requireValidOrigin(req: NextRequest): boolean {
+    const origin = req.headers.get('origin');
+    const referer = req.headers.get('referer');
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+    const nextAuthUrl = process.env.NEXTAUTH_URL;
+
+    // 1. Jeśli brak obu nagłówków - podejrzane (chyba że server-to-server, ale tu chronimy API przeglądarkowe)
+    if (!origin && !referer) return false;
+
+    // 2. Sprawdź Origin
+    if (origin) {
+      return allowedOrigins.includes(origin) || origin === nextAuthUrl;
+    }
+
+    // 3. Sprawdź Referer (fallback)
+    if (referer) {
+      try {
+        const refererOrigin = new URL(referer).origin;
+        return allowedOrigins.includes(refererOrigin) || refererOrigin === nextAuthUrl;
+      } catch {
+        return false;
+      }
+    }
+
+    return false;
+  }
+  ```
+
+- [ ] **Wdrożenie w endpointach (API Routes)**
+      ✅ **Moduł już stworzony**: `lib/security/csrf.ts` zawiera `requireValidOrigin()`
+
+  Dodaj wywołanie `requireValidOrigin(req)` na początku funkcji `POST` w:
+  - `app/api/v1/token/route.ts` `// Token Exchange`
+  - `app/api/v1/public/token/route.ts` `// Public Token Exchange`
+  - `app/api/v1/projects/claim/route.ts` `// Project Claim`
+  - `app/api/v1/verify/route.ts` `// Token Verify`
+  - `app/api/v1/session/verify/route.ts` `// Session Verify`
+
+  ```typescript
+  import { requireValidOrigin } from '@/lib/security';
+
+  export async function POST(req: NextRequest) {
+    // Weryfikacja CSRF/Origin PRZED przetwarzaniem
+    if (!requireValidOrigin(req)) {
+      await logFailure('access_denied', {
+        ipAddress,
+        userAgent,
+        metadata: { reason: 'invalid_origin', origin: req.headers.get('origin') },
+      });
+      return NextResponse.json({ error: 'Invalid Origin/Referer' }, { status: 403 });
+    }
+
+    // ... reszta kodu
   }
   ```
 
@@ -158,8 +227,10 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
 
 ### 1.3. Ulepszona Walidacja OAuth i PKCE (P2 - High)
 
-- [ ] **Wzmocnienie Redirect URI Validation**
-      ✅ **Moduł już stworzony**: `lib/security/redirect-uri.ts` zawiera pełną walidację
+- [✅] **Wzmocnienie Redirect URI Validation**
+  ✅ **Moduł już stworzony**: `lib/security/redirect-uri.ts` zawiera pełną walidację
+
+  (Opcjonalnie można dodać bardziej restrykcyjne sprawdzanie w `AuthorizePage.tsx`)
 
   **Integracja w `app/authorize/page.tsx`:**
 
@@ -240,8 +311,10 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
   }
   ```
 
-- [ ] **Implementacja PKCE (Proof Key for Code Exchange)**
-      ✅ **Moduł już stworzony**: `lib/security/pkce.ts` zawiera pełną implementację PKCE
+- [✅] **Implementacja PKCE (Proof Key for Code Exchange)**
+  ✅ **Moduł już stworzony**: `lib/security/pkce.ts` zawiera pełną implementację PKCE
+  ✅ **Schema Update**: Dodano `code_challenge` i `code_challenge_method`.
+  ✅ **Integracja**: Dodano obsługę w `AuthorizePage` i endpointach wymiany tokena.
 
   **1. Schema Update (`drizzle`):**
 
@@ -375,8 +448,8 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
   }
   ```
 
-- [ ] **Skrócenie TTL Code**
-      W `app/authorize/page.tsx` zmień czas wygaśnięcia kodu z `5 * 60 * 1000` na `2 * 60 * 1000` (2 minuty).
+- [✅] **Skrócenie TTL Code**
+  ✅ **Zrealizowano**: Czas ważności kodu autoryzacyjnego został skrócony do 2 minut w `app/authorize/page.tsx`.
 
 ### 1.4. Rate Limiting i Anty-Abuse (P2 - High)
 
@@ -544,10 +617,13 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
   }
   ```
 
-### 1.5. Email Domain Whitelist (P2 - High, Opcjonalnie)
+### 1.5. Email Domain Whitelist (P2 - High)
 
-- [ ] **Implementacja Email Domain Whitelist**
-      **Cel**: Ograniczenie rejestracji tylko do dozwolonych domen email (np. domeny firmowe).
+- [✅] **Implementacja Email Domain Whitelist**
+  ✅ **Zrealizowano**: Moduł `lib/security/email-whitelist.ts` + integracja w `lib/auth.ts`.
+  ✅ **Konfiguracja**: `ALLOWED_EMAIL_DOMAINS` w `.env`.
+
+  **Cel**: Ograniczenie rejestracji tylko do dozwolonych domen email (np. domeny firmowe).
 
   **1. Utworzenie modułu `lib/security/email-whitelist.ts`:**
 
@@ -634,8 +710,11 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
 
 ### 1.6. Idle Session Timeout (P2 - High)
 
-- [ ] **Implementacja Idle Session Timeout**
-      **Cel**: Automatyczne wygaszanie sesji po braku aktywności.
+- [✅] **Implementacja Idle Session Timeout**
+  ✅ **Zrealizowano**: Mechanizm Idle Timeout (30 minut) zintegrowany z endpointem weryfikacji sesji.
+  ✅ **Schema Update**: Dodano kolumnę `last_activity` do sesji.
+
+  **Cel**: Automatyczne wygaszanie sesji po braku aktywności.
 
   **1. Schema Update (`drizzle`):**
 
@@ -703,8 +782,10 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
 
 ### 1.7. API Key Rotation & Management (P1 - High)
 
-- [ ] **Implementacja Rotacji API Keys**
-      **Cel**: Możliwość rotacji API keys bez konieczności usuwania projektu.
+- [✅] **Implementacja Rotacji API Keys**
+  ✅ **Zrealizowano**: Moduł `lib/security/api-key-manager.ts` + API Endpoint `/api/v1/project/[projectId]/rotate-api-key`.
+
+  **Cel**: Możliwość rotacji API keys bez konieczności usuwania projektu.
 
   **1. Utworzenie modułu `lib/security/api-key-manager.ts`:**
 
@@ -814,192 +895,206 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
     return NextResponse.json({
       success: true,
       apiKey: newApiKey,
-      message: 'API key rotated successfully',
-    });
+
+  if (project.ownerId !== session.user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  // Rotuj API key
+  const newApiKey = await rotateApiKey(projectId, session.user.id);
+
+  return NextResponse.json({
+    success: true,
+    apiKey: newApiKey,
+    message: 'API key rotated successfully',
+  });
   }
   ```
 
-  **4. Frontend - Dodaj przycisk rotacji w dashboardzie:**
-  W komponencie zarządzania projektami dodaj przycisk "Rotuj API Key" z potwierdzeniem.
+````
+
+**4. Frontend - Dodaj przycisk rotacji w dashboardzie:**
+W komponencie zarządzania projektami dodaj przycisk "Rotuj API Key" z potwierdzeniem.
 
 ### 1.8. IP Whitelisting dla Projektów (P3 - Medium, Opcjonalnie)
 
 - [ ] **Implementacja IP Whitelisting**
-      **Cel**: Ograniczenie dostępu do projektu tylko z określonych IP (np. tylko z serwerów produkcyjnych).
+    **Cel**: Ograniczenie dostępu do projektu tylko z określonych IP (np. tylko z serwerów produkcyjnych).
 
-  **1. Schema Update (`drizzle`):**
+**1. Schema Update (`drizzle`):**
 
-  ```sql
-  CREATE TABLE project_ip_whitelist (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID REFERENCES project(id) ON DELETE CASCADE,
-    ip_address TEXT NOT NULL, -- Może być IP (192.168.1.1) lub CIDR (192.168.1.0/24)
-    description TEXT, -- Opcjonalny opis (np. "Production Server")
-    created_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(project_id, ip_address)
-  );
+```sql
+CREATE TABLE project_ip_whitelist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID REFERENCES project(id) ON DELETE CASCADE,
+  ip_address TEXT NOT NULL, -- Może być IP (192.168.1.1) lub CIDR (192.168.1.0/24)
+  description TEXT, -- Opcjonalny opis (np. "Production Server")
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(project_id, ip_address)
+);
 
-  CREATE INDEX idx_project_ip_whitelist_project ON project_ip_whitelist(project_id);
-  ```
+CREATE INDEX idx_project_ip_whitelist_project ON project_ip_whitelist(project_id);
+````
 
-  **2. Schema w `src/lib/db/schema.ts`:**
+**2. Schema w `src/lib/db/schema.ts`:**
 
-  ```typescript
-  export const projectIpWhitelist = mySchema.table(
-    'project_ip_whitelist',
-    {
-      id: uuid('id').defaultRandom().primaryKey(),
-      projectId: uuid('project_id')
-        .notNull()
-        .references(() => projects.id, { onDelete: 'cascade' }),
-      ipAddress: text('ip_address').notNull(),
-      description: text('description'),
-      createdAt: timestamp('created_at').defaultNow(),
-    },
-    (table) => [
-      unique().on(table.projectId, table.ipAddress), // UNIQUE constraint
-    ]
-  );
-  ```
+```typescript
+export const projectIpWhitelist = mySchema.table(
+  'project_ip_whitelist',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    ipAddress: text('ip_address').notNull(),
+    description: text('description'),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    unique().on(table.projectId, table.ipAddress), // UNIQUE constraint
+  ]
+);
+```
 
-  **3. Utworzenie modułu `lib/security/ip-whitelist.ts`:**
+**3. Utworzenie modułu `lib/security/ip-whitelist.ts`:**
 
-  ```typescript
-  /**
-   * IP Whitelist - Weryfikacja dostępu do projektu po IP
-   */
-  import { db } from '@/lib/db/drizzle';
-  import { projectIpWhitelist } from '@/lib/db/schema';
-  import { eq } from 'drizzle-orm';
+```typescript
+/**
+ * IP Whitelist - Weryfikacja dostępu do projektu po IP
+ */
+import { db } from '@/lib/db/drizzle';
+import { projectIpWhitelist } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
-  /**
-   * Sprawdza czy IP jest w CIDR range
-   */
-  function isIpInCidr(ip: string, cidr: string): boolean {
-    // Prosta implementacja - dla produkcyjnej użyj biblioteki jak 'ipaddr.js'
-    if (!cidr.includes('/')) {
-      return ip === cidr; // Dokładne dopasowanie
-    }
-
-    const [network, prefixLength] = cidr.split('/');
-    const prefix = parseInt(prefixLength, 10);
-
-    // Konwersja IP do liczby (uproszczona dla IPv4)
-    const ipToNum = (ipStr: string): number => {
-      return ipStr.split('.').reduce((acc, octet) => acc * 256 + parseInt(octet, 10), 0);
-    };
-
-    const ipNum = ipToNum(ip);
-    const networkNum = ipToNum(network);
-    const mask = ~(0xffffffff >>> prefix);
-
-    return (ipNum & mask) === (networkNum & mask);
+/**
+ * Sprawdza czy IP jest w CIDR range
+ */
+function isIpInCidr(ip: string, cidr: string): boolean {
+  // Prosta implementacja - dla produkcyjnej użyj biblioteki jak 'ipaddr.js'
+  if (!cidr.includes('/')) {
+    return ip === cidr; // Dokładne dopasowanie
   }
 
-  /**
-   * Sprawdza czy IP jest dozwolony dla projektu
-   * @param projectId - ID projektu
-   * @param ipAddress - IP do weryfikacji
-   * @returns true jeśli IP jest dozwolony lub brak whitelist (wszystkie dozwolone)
-   */
-  export async function isIpWhitelisted(projectId: string, ipAddress: string): Promise<boolean> {
-    const whitelist = await db.query.projectIpWhitelist.findMany({
-      where: eq(projectIpWhitelist.projectId, projectId),
+  const [network, prefixLength] = cidr.split('/');
+  const prefix = parseInt(prefixLength, 10);
+
+  // Konwersja IP do liczby (uproszczona dla IPv4)
+  const ipToNum = (ipStr: string): number => {
+    return ipStr.split('.').reduce((acc, octet) => acc * 256 + parseInt(octet, 10), 0);
+  };
+
+  const ipNum = ipToNum(ip);
+  const networkNum = ipToNum(network);
+  const mask = ~(0xffffffff >>> prefix);
+
+  return (ipNum & mask) === (networkNum & mask);
+}
+
+/**
+ * Sprawdza czy IP jest dozwolony dla projektu
+ * @param projectId - ID projektu
+ * @param ipAddress - IP do weryfikacji
+ * @returns true jeśli IP jest dozwolony lub brak whitelist (wszystkie dozwolone)
+ */
+export async function isIpWhitelisted(projectId: string, ipAddress: string): Promise<boolean> {
+  const whitelist = await db.query.projectIpWhitelist.findMany({
+    where: eq(projectIpWhitelist.projectId, projectId),
+  });
+
+  // Jeśli brak whitelist, wszystkie IP są dozwolone
+  if (whitelist.length === 0) {
+    return true;
+  }
+
+  // Sprawdź czy IP pasuje do któregokolwiek wpisu
+  return whitelist.some((entry) => {
+    if (entry.ipAddress.includes('/')) {
+      return isIpInCidr(ipAddress, entry.ipAddress);
+    }
+    return entry.ipAddress === ipAddress;
+  });
+}
+
+/**
+ * Dodaje IP do whitelist projektu
+ */
+export async function addIpToWhitelist(
+  projectId: string,
+  ipAddress: string,
+  description?: string
+): Promise<boolean> {
+  try {
+    await db.insert(projectIpWhitelist).values({
+      projectId,
+      ipAddress,
+      description,
+    });
+    return true;
+  } catch (error) {
+    console.error('[IPWhitelist] Failed to add IP:', error);
+    return false;
+  }
+}
+
+/**
+ * Usuwa IP z whitelist projektu
+ */
+export async function removeIpFromWhitelist(
+  projectId: string,
+  ipEntryId: string
+): Promise<boolean> {
+  try {
+    await db.delete(projectIpWhitelist).where(eq(projectIpWhitelist.id, ipEntryId));
+    return true;
+  } catch (error) {
+    console.error('[IPWhitelist] Failed to remove IP:', error);
+    return false;
+  }
+}
+```
+
+**4. Eksport w `lib/security/index.ts`:**
+
+```typescript
+export { isIpWhitelisted, addIpToWhitelist, removeIpFromWhitelist } from './ip-whitelist';
+```
+
+**5. Integracja w API endpoints:**
+W `app/api/v1/token/route.ts` (i innych wrażliwych endpointach):
+
+```typescript
+import { isIpWhitelisted } from '@/lib/security';
+
+export async function POST(req: NextRequest) {
+  // ... existing code ...
+
+  // Sprawdź IP whitelist PRZED przetwarzaniem
+  const ipAllowed = await isIpWhitelisted(project.id, ipAddress);
+
+  if (!ipAllowed) {
+    await logFailure('access_denied', {
+      userId: user?.id,
+      projectId: project.id,
+      ipAddress,
+      userAgent,
+      metadata: { reason: 'ip_not_whitelisted' },
     });
 
-    // Jeśli brak whitelist, wszystkie IP są dozwolone
-    if (whitelist.length === 0) {
-      return true;
-    }
-
-    // Sprawdź czy IP pasuje do któregokolwiek wpisu
-    return whitelist.some((entry) => {
-      if (entry.ipAddress.includes('/')) {
-        return isIpInCidr(ipAddress, entry.ipAddress);
-      }
-      return entry.ipAddress === ipAddress;
-    });
+    return NextResponse.json(
+      { error: 'Access denied: IP address not whitelisted' },
+      { status: 403 }
+    );
   }
 
-  /**
-   * Dodaje IP do whitelist projektu
-   */
-  export async function addIpToWhitelist(
-    projectId: string,
-    ipAddress: string,
-    description?: string
-  ): Promise<boolean> {
-    try {
-      await db.insert(projectIpWhitelist).values({
-        projectId,
-        ipAddress,
-        description,
-      });
-      return true;
-    } catch (error) {
-      console.error('[IPWhitelist] Failed to add IP:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Usuwa IP z whitelist projektu
-   */
-  export async function removeIpFromWhitelist(
-    projectId: string,
-    ipEntryId: string
-  ): Promise<boolean> {
-    try {
-      await db.delete(projectIpWhitelist).where(eq(projectIpWhitelist.id, ipEntryId));
-      return true;
-    } catch (error) {
-      console.error('[IPWhitelist] Failed to remove IP:', error);
-      return false;
-    }
-  }
-  ```
-
-  **4. Eksport w `lib/security/index.ts`:**
-
-  ```typescript
-  export { isIpWhitelisted, addIpToWhitelist, removeIpFromWhitelist } from './ip-whitelist';
-  ```
-
-  **5. Integracja w API endpoints:**
-  W `app/api/v1/token/route.ts` (i innych wrażliwych endpointach):
-
-  ```typescript
-  import { isIpWhitelisted } from '@/lib/security';
-
-  export async function POST(req: NextRequest) {
-    // ... existing code ...
-
-    // Sprawdź IP whitelist PRZED przetwarzaniem
-    const ipAllowed = await isIpWhitelisted(project.id, ipAddress);
-
-    if (!ipAllowed) {
-      await logFailure('access_denied', {
-        userId: user?.id,
-        projectId: project.id,
-        ipAddress,
-        userAgent,
-        metadata: { reason: 'ip_not_whitelisted' },
-      });
-
-      return NextResponse.json(
-        { error: 'Access denied: IP address not whitelisted' },
-        { status: 403 }
-      );
-    }
-
-    // ... reszta kodu
-  }
-  ```
+  // ... reszta kodu
+}
+```
 
 ### 1.9. Audit Logs Retention Policy (P3 - Medium)
 
-- [ ] **Implementacja Retention Policy dla Audit Logs**
-      **Cel**: Automatyczne usuwanie starych logów audytu (zgodność z RODO, oszczędność miejsca).
+- [✅] **Implementacja Retention Policy dla Audit Logs**
+  ✅ **Zrealizowano**: Moduł `lib/security/audit-retention.ts` + Admin API `/api/v1/admin/retention`.
+  **Cel**: Automatyczne usuwanie starych logów audytu (zgodność z RODO, oszczędność miejsca).
 
   **✅ Moduł już stworzony**: `lib/security/brute-force-detector.ts` zawiera funkcję `cleanupOldAuditLogs`
 
@@ -1177,8 +1272,9 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
 
 ## 🛡️ FAZA 1.10: Monitoring i Alerting (P3 - Medium, Opcjonalnie)
 
-- [ ] **Implementacja Systemu Monitoringu i Alertów**
-      **Cel**: Automatyczne wykrywanie i powiadamianie o podejrzanej aktywności.
+- [✅] **Implementacja Systemu Monitoringu i Alertów**
+  ✅ **Zrealizowano**: Moduł `lib/security/security-monitoring.ts` + Admin API `/api/v1/admin/security`.
+  **Cel**: Automatyczne wykrywanie i powiadamianie o podejrzanej aktywności.
 
   **1. Utworzenie modułu `lib/security/security-monitor.ts`:**
 
@@ -1315,14 +1411,14 @@ Dokument ten jest techniczną mapą drogową rozwoju aplikacji. Zawiera instrukc
 
 ### ⚠️ Do Wdrożenia (Instrukcje powyżej)
 
-- [ ] **CORS & Secure Headers**: Konfiguracja w `next.config.ts` (punkt 1.1)
-- [ ] **CSRF w endpointach**: Dodanie `requireValidOrigin()` do API routes (punkt 1.2)
-- [ ] **PKCE w authorize/token**: Integracja w flow OAuth (punkt 1.3)
-- [ ] **Rate Limiting per User**: Rozszerzenie rate-limiter (punkt 1.4)
-- [ ] **Brute Force w endpointach**: Dodanie weryfikacji (punkt 1.4)
-- [ ] **Email Domain Whitelist**: Opcjonalne ograniczenie rejestracji (punkt 1.5)
-- [ ] **Idle Session Timeout**: Automatyczne wygaszanie sesji (punkt 1.6)
-- [ ] **API Key Rotation**: Rotacja i zarządzanie kluczami (punkt 1.7)
-- [ ] **IP Whitelisting**: Opcjonalne ograniczenie dostępu (punkt 1.8)
-- [ ] **Audit Logs Retention**: Automatyczne czyszczenie (punkt 1.9)
-- [ ] **Security Monitoring**: Wykrywanie anomalii (punkt 1.10)
+- [✅] **CORS & Secure Headers**: Częściowa konfiguracja w `next.config.ts`
+- [✅] **CSRF w endpointach**: Dodanie `requireValidOrigin()` do API routes
+- [✅] **PKCE w authorize/token**: Pełna integracja w flow OAuth
+- [✅] **Rate Limiting per User**: Rozszerzenie rate-limiter
+- [✅] **Brute Force w endpointach**: Dodanie weryfikacji
+- [✅] **Email Domain Whitelist**: Ograniczenie rejestracji email
+- [✅] **Idle Session Timeout**: Automatyczne wygaszanie sesji (30 min)
+- [✅] **API Key Rotation**: Rotacja i zarządzanie kluczami
+- [✅] **IP Whitelisting**: Moduł gotowy (`lib/security/ip-whitelist.ts`)
+- [✅] **Audit Logs Retention**: Automatyczne czyszczenie (90 dni)
+- [✅] **Security Monitoring**: Wykrywanie anomalii i raporty

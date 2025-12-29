@@ -15,8 +15,10 @@ System łączy bezpieczeństwo klasy enterprise (Kill Switch, Audit Logs, Rate L
 5. [Bezpieczeństwo](#-bezpieczeństwo)
 6. [Dokumentacja API](#-dokumentacja-api)
 7. [Integracja (Quick Connect)](#-integracja-quick-connect)
-8. [Dashboard Zarządzania](#-dashboard-zarządzania)
-9. [Testy Mutacyjne](#-testy-mutacyjne-mutation-testing)
+8. [Dema i Przykłady Integracji](#-dema-i-przykłady-integracji)
+9. [Dashboard Zarządzania](#-dashboard-zarządzania)
+10. [Testy Mutacyjne](#-testy-mutacyjne-mutation-testing)
+11. [Testowanie Wizualne](#-testowanie-wizualne-visual-regression-testing)
 
 ---
 
@@ -311,7 +313,56 @@ To eliminuje błędy ludzkie przy kopiowaniu długich ciągów znaków i kluczy 
 
 ---
 
-## 8. Dashboard Zarządzania
+## 8. Dema i Przykłady Integracji
+
+W repozytorium znajdują się przykładowe aplikacje demonstrujące dwa główne modele integracji z Centrum Logowania.
+
+### Model 1: Client-Side (SPA / Frontend Only)
+
+Przeznaczony dla aplikacji typu Single Page Application (React, Vue, statyczny HTML) bez własnego backendu, które komunikują się bezpośrednio z API Centrum Logowania.
+
+- **Lokalizacja**: `public/demo-apps/shop`
+- **Uruchomienie**: Aplikacja jest dostępna pod adresem `/demo-apps/shop/index.html` po uruchomieniu głównego serwera (`npm run dev`).
+- **Cechy**:
+  - Używa `public/sdk/auth.js`.
+  - Weryfikacja sesji odbywa się przez publiczny endpoint.
+  - Mniej bezpieczny (tokeny w localStorage).
+
+### Model 2: Server-Side (Backend / Next.js)
+
+Przeznaczony dla aplikacji posiadających własny backend (np. Next.js, Express, PHP), które wymagają najwyższego poziomu bezpieczeństwa. Wszystkie operacje (wymiana kodu, weryfikacja sesji) odbywają się bezpośrednio między serwerami (Back-channel).
+
+- **Lokalizacja**: `examples/server-integration`
+- **Wymagania**: Node.js v18+
+- **Uruchomienie**:
+
+  ```bash
+  # W osobnej konsoli (wymaga działającego CLA na porcie 3000)
+  npm run demo:server
+  # LUB uruchom razem z główną aplikacją
+  npm run dev:demo
+  ```
+
+  Aplikacja uruchomi się na pierwszym wolnym porcie (np. **3001**, **3002**...). Adres zostanie wyświetlony w konsoli.
+
+- **Nowe Funkcje (v2)**:
+  - **Single View Architecture**: Cały proces (Setup -> Login -> Dashboard) odbywa się na jednym widoku bez zbędnych przekierowań.
+  - **Smart Setup**: Automatycznie wykrywa brak połączenia z CLA (Status Check) i wyświetla ostrzeżenie.
+  - **Dynamic Redirect URI**: Wyświetla dokładny adres `redirect_uri` (z uwzględnieniem losowego portu), który należy dodać w Dashboardzie CLA.
+  - **Pełna Diagnostyka**: W konsoli wyświetlane są szczegółowe, kolorowe logi każdego Requestu/Response (Header, Body, Status).
+  - **Dark Mode**: Interfejs przyjazny dla oczu (High Contrast).
+
+- **Workflow**:
+  1.  **Ekran Startowy**: Jeśli brak konfiguracji, zobaczysz formularz Setupu.
+      - Użyj **Quick Connect** (wklej Setup Code z CLA) lub wpisz klucze ręcznie.
+      - **Ważne**: Skopiuj wyświetlony `http://localhost:XXXX/callback` do ustawień projektu w CLA!
+  2.  **Ekran Logowania**: Po konfiguracji pojawi się przycisk "Zaloguj przez Centrum".
+  3.  **Dashboard**: Po zalogowaniu widzisz swoje dane i status sesji.
+      - Możesz zarządzać połączeniem (Re-konfiguracja, Pełny Reset) bezpośrednio z tego poziomu.
+
+---
+
+## 9. Dashboard Zarządzania
 
 Dostępny pod adresem `/dashboard` dla zalogowanych użytkowników. Umożliwia:
 
@@ -577,3 +628,79 @@ npm run test:mutation -- --concurrency 2
 # GitHub Actions
 # → Actions → "Mutation Testing (Stryker)" → "Run workflow"
 ```
+
+---
+
+## 🎨 Testowanie Wizualne (Visual Regression Testing)
+
+System testowania wizualnego pozwala na automatyczne sprawdzanie wyglądu aplikacji na różnych urządzeniach i rozdzielczościach, oraz porównywanie zmian przed i po aktualizacjach.
+
+### Czym jest Visual Regression Testing?
+
+Testowanie wizualne automatycznie:
+
+- ✅ Robi screenshoty kluczowych widoków aplikacji
+- ✅ Porównuje je z wcześniejszymi wersjami (baseline)
+- ✅ Wykrywa nieoczekiwane zmiany wizualne
+- ✅ Generuje raporty z różnicami
+
+### Narzędzia
+
+Projekt używa dwóch narzędzi:
+
+1. **Percy.io** (Rekomendowane) - zewnętrzna usługa z zaawansowanymi raportami
+2. **Playwright Visual Comparisons** - lokalne rozwiązanie wbudowane w Playwright
+
+### Szybki Start
+
+```bash
+# Instalacja
+npm install --save-dev @percy/playwright
+
+# Konfiguracja Percy (wymaga tokenu - zobacz VISUAL_TESTING_SETUP.md)
+export PERCY_TOKEN="your-token-here"
+
+# Uruchomienie testów wizualnych z Percy
+npm run test:visual
+
+# Uruchomienie lokalnych testów wizualnych
+npm run test:visual:local
+```
+
+### Testowane Widoki
+
+- Strona główna (`/`)
+- Dashboard (`/dashboard`)
+- Szczegóły projektu (`/dashboard/projects/[id]`)
+- Formularze i dialogi
+- Responsywność (Desktop, Tablet, Mobile)
+
+### Urządzenia i Rozdzielczości
+
+- **Desktop**: 1920x1080 (Chrome, Firefox)
+- **Tablet**: iPad Pro (1024x1366)
+- **Mobile**: iPhone 14 Pro (390x844)
+
+### Raporty
+
+**Percy.io:**
+
+- Automatyczne raporty po każdym uruchomieniu
+- Link do dashboardu z porównaniami
+- Integracja z GitHub (komentarze w PR)
+
+**Playwright Visual:**
+
+- Lokalne raporty HTML
+- Screenshoty różnic w `test-results/`
+
+### Dokumentacja
+
+- 📋 [Plan Testowania Wizualnego](./VISUAL_TESTING_PLAN.md) - szczegółowy plan i strategia
+- 🚀 [Instrukcja Konfiguracji](./VISUAL_TESTING_SETUP.md) - krok po kroku
+- 📚 [README Testów Wizualnych](./tests/visual/README.md) - szczegóły techniczne
+
+### Przydatne Linki
+
+- [Percy.io Documentation](https://docs.percy.io)
+- [Playwright Visual Comparisons](https://playwright.dev/docs/test-screenshots)
