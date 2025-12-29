@@ -46,6 +46,10 @@ test-results/
 blob-report/
 playwright/.cache/
 
+# Visual testing snapshots
+tests/visual/**/__snapshots__/
+tests/visual/**/*-snapshots/
+
 # Pliki tymczasowe testów E2E
 tests/.test-port
 tests/.server-info.json
@@ -55,4 +59,8 @@ reports/
 .stryker-tmp/
 
 # Logi debugowania (development only)
+# Logi debugowania (development only)
 logi.txt
+
+# Demo App Local Config
+examples/server-integration/demo-config.json
