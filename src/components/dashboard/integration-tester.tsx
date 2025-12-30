@@ -1,27 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import {
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Globe,
-  Users,
-  Zap,
-  TestTube,
-} from 'lucide-react';
+import { Loader2, Globe, Users, Zap, TestTube } from 'lucide-react';
 import { toast } from 'sonner';
+import { ColoredButton, StatusIcon, StatusBadge, type StatusType } from '@/components/atoms';
+import { ModalContainer, ModalFooter } from '@/components/molecules';
 
 interface TestResult {
   domain: {
@@ -45,45 +28,6 @@ interface IntegrationTesterProps {
   projectId: string;
   projectName: string;
 }
-
-const StatusIcon = ({ status }: { status: string }) => {
-  switch (status) {
-    case 'success':
-      return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-    case 'error':
-      return <XCircle className="w-5 h-5 text-red-500" />;
-    case 'warning':
-      return <AlertCircle className="w-5 h-5 text-amber-500" />;
-    case 'skipped':
-      return <AlertCircle className="w-5 h-5 text-zinc-400" />;
-    default:
-      return <AlertCircle className="w-5 h-5 text-blue-500" />;
-  }
-};
-
-const StatusBadge = ({ status }: { status: string }) => {
-  const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    success: 'default',
-    error: 'destructive',
-    warning: 'secondary',
-    info: 'outline',
-    skipped: 'outline',
-  };
-
-  const labels: Record<string, string> = {
-    success: 'OK',
-    error: 'Błąd',
-    warning: 'Uwaga',
-    info: 'Info',
-    skipped: 'Pominięto',
-  };
-
-  return (
-    <Badge variant={variants[status] || 'outline'} className="ml-auto">
-      {labels[status] || status}
-    </Badge>
-  );
-};
 
 export const IntegrationTester = ({ projectId, projectName }: IntegrationTesterProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -117,145 +61,127 @@ export const IntegrationTester = ({ projectId, projectName }: IntegrationTesterP
   const handleOpen = (open: boolean) => {
     setIsOpen(open);
     if (open) {
-      // Zawsze wykonuj test przy otwarciu modala
       setResults(null);
       runTest();
     }
   };
 
+  const getIntegrationBgClass = (status: string) => {
+    switch (status) {
+      case 'success':
+        return 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-900';
+      case 'error':
+        return 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900';
+      default:
+        return 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900';
+    }
+  };
+
+  const getIntegrationIconClass = (status: string) => {
+    switch (status) {
+      case 'success':
+        return 'text-green-600';
+      case 'error':
+        return 'text-red-600';
+      default:
+        return 'text-amber-600';
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="sm"
-          className="w-full gap-1.5 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30 hover:bg-cyan-500/20 hover:border-cyan-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-          variant="outline"
-        >
-          <TestTube className="w-4 h-4" />
+    <ModalContainer
+      isOpen={isOpen}
+      onOpenChange={handleOpen}
+      trigger={
+        <ColoredButton color="cyan" icon={<TestTube className="w-4 h-4" />}>
           <span className="text-xs">Testuj</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-primary" />
-            Test integracji
-          </DialogTitle>
-          <DialogDescription>
-            Sprawdzanie statusu projektu <strong>{projectName}</strong>
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Trwa testowanie...</p>
-            </div>
-          ) : results ? (
-            <div className="space-y-3">
-              {/* Test domeny */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border">
-                <Globe className="w-5 h-5 mt-0.5 text-muted-foreground" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">Domena</span>
-                    <StatusBadge status={results.domain.status} />
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">{results.domain.message}</p>
-                  {results.domain.responseTime && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Czas odpowiedzi: {results.domain.responseTime}ms
-                    </p>
-                  )}
+        </ColoredButton>
+      }
+      title="Test integracji"
+      titleIcon={<Zap className="w-5 h-5 text-primary" />}
+      description={
+        <>
+          Sprawdzanie statusu projektu <strong>{projectName}</strong>
+        </>
+      }
+      maxWidth="md"
+      footer={
+        <ModalFooter
+          onClose={() => setIsOpen(false)}
+          primaryAction={{
+            label: 'Testuj ponownie',
+            loadingLabel: 'Testowanie...',
+            icon: <TestTube className="w-3 h-3 sm:w-4 sm:h-4" />,
+            onClick: runTest,
+            isLoading: isLoading,
+          }}
+        />
+      }
+    >
+      <div className="space-y-4 py-4">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Trwa testowanie...</p>
+          </div>
+        ) : results ? (
+          <div className="space-y-3">
+            {/* Test domeny */}
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border">
+              <Globe className="w-5 h-5 mt-0.5 text-muted-foreground" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">Domena</span>
+                  <StatusBadge status={results.domain.status as StatusType} />
                 </div>
-                <StatusIcon status={results.domain.status} />
-              </div>
-
-              {/* Sesje */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border">
-                <Users className="w-5 h-5 mt-0.5 text-muted-foreground" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">Sesje ({results.sessions.count})</span>
-                    <StatusBadge status={results.sessions.status} />
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">{results.sessions.message}</p>
-                  {results.sessions.lastActivity && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Ostatnia aktywność:{' '}
-                      {new Date(results.sessions.lastActivity).toLocaleString('pl-PL')}
-                    </p>
-                  )}
-                </div>
-                <StatusIcon status={results.sessions.status} />
-              </div>
-
-              {/* Ogólna ocena */}
-              <div
-                className={`flex items-start gap-3 p-3 rounded-lg border ${
-                  results.integration.status === 'success'
-                    ? 'bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-900'
-                    : results.integration.status === 'error'
-                      ? 'bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900'
-                      : 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900'
-                }`}
-              >
-                <Zap
-                  className={`w-5 h-5 mt-0.5 ${
-                    results.integration.status === 'success'
-                      ? 'text-green-600'
-                      : results.integration.status === 'error'
-                        ? 'text-red-600'
-                        : 'text-amber-600'
-                  }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">Integracja</span>
-                    <StatusBadge status={results.integration.status} />
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {results.integration.message}
+                <p className="text-sm text-muted-foreground mt-1">{results.domain.message}</p>
+                {results.domain.responseTime && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Czas odpowiedzi: {results.domain.responseTime}ms
                   </p>
-                </div>
-                <StatusIcon status={results.integration.status} />
+                )}
               </div>
+              <StatusIcon status={results.domain.status as StatusType} />
             </div>
-          ) : null}
-        </div>
 
-        {/* Stopka - przyciski obok siebie jak w modalu sesji */}
-        <div className="shrink-0 flex flex-row gap-2 justify-between pt-2 border-t mt-2">
-          <Button
-            onClick={runTest}
-            disabled={isLoading}
-            variant="outline"
-            size="sm"
-            className="flex-1 sm:flex-none text-xs sm:text-sm"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
-                Testowanie...
-              </>
-            ) : (
-              <>
-                <TestTube className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                Testuj ponownie
-              </>
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsOpen(false)}
-            className="flex-1 sm:flex-none text-xs sm:text-sm"
-          >
-            Zamknij
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            {/* Sesje */}
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border">
+              <Users className="w-5 h-5 mt-0.5 text-muted-foreground" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">Sesje ({results.sessions.count})</span>
+                  <StatusBadge status={results.sessions.status as StatusType} />
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">{results.sessions.message}</p>
+                {results.sessions.lastActivity && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ostatnia aktywność:{' '}
+                    {new Date(results.sessions.lastActivity).toLocaleString('pl-PL')}
+                  </p>
+                )}
+              </div>
+              <StatusIcon status={results.sessions.status as StatusType} />
+            </div>
+
+            {/* Ogólna ocena */}
+            <div
+              className={`flex items-start gap-3 p-3 rounded-lg border ${getIntegrationBgClass(results.integration.status)}`}
+            >
+              <Zap
+                className={`w-5 h-5 mt-0.5 ${getIntegrationIconClass(results.integration.status)}`}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">Integracja</span>
+                  <StatusBadge status={results.integration.status as StatusType} />
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">{results.integration.message}</p>
+              </div>
+              <StatusIcon status={results.integration.status as StatusType} />
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </ModalContainer>
   );
 };

@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, Globe, Trash2, Copy, Check, Lock } from 'lucide-react';
+import { Key, Globe, Trash2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteProject } from '@/actions/project';
 import { useTransition, useState, useEffect } from 'react';
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { CopyButton } from '@/components/atoms';
 import { IntegrationTester } from './integration-tester';
 import { SessionsMonitor } from './sessions-monitor';
 import { ProjectMembers } from './project-members';
@@ -39,44 +40,15 @@ interface ProjectListProps {
   totalCount: number;
 }
 
-const CopyButton = ({ text, label }: { text: string; label: string }) => {
-  const [isCopied, setIsCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    toast.success(`Skopiowano ${label}`);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-6 w-6 ml-2 transition-all duration-200"
-      onClick={handleCopy}
-      title={`Kopiuj ${label}`}
-    >
-      {isCopied ? (
-        <Check className="w-3 h-3 text-green-500 scale-110" />
-      ) : (
-        <Copy className="w-3 h-3" />
-      )}
-    </Button>
-  );
-};
-
 export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectListProps) => {
   const [isPending, startTransition] = useTransition();
   const [projects, setProjects] = useState(initialProjects);
   const router = useRouter();
 
-  // Synchronizuj stan gdy props się zmienia (np. po router.refresh())
   useEffect(() => {
     setProjects(initialProjects);
   }, [initialProjects]);
 
-  // Aktualizacja stanu projektu przy zmianie widoczności
   const handleVisibilityChange = (projectId: string, isPublic: boolean) => {
     setProjects((prev) =>
       prev.map((p) => (p.id === projectId ? { ...p, isPublic: isPublic ? 'true' : 'false' } : p))
@@ -88,7 +60,6 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
       deleteProject(id).then((data) => {
         if (data.success) {
           toast.success(data.success);
-          // Optymistyczna aktualizacja stanu - usuń z listy natychmiast
           setProjects((prev) => prev.filter((p) => p.id !== id));
           router.refresh();
         } else {
@@ -192,7 +163,13 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
                 <span className="truncate max-w-[200px] text-zinc-600 dark:text-zinc-300">
                   {project.slug}
                 </span>
-                <CopyButton text={project.slug} label="Client ID" />
+                <CopyButton
+                  text={project.slug}
+                  label="Kopiuj Client ID"
+                  successMessage="Skopiowano Client ID"
+                  size="icon"
+                  showLabel={false}
+                />
               </div>
             </div>
 
@@ -205,7 +182,13 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
                 <span className="truncate max-w-[200px] text-zinc-600 dark:text-zinc-300">
                   {project.apiKey}
                 </span>
-                <CopyButton text={project.apiKey!} label="API Key" />
+                <CopyButton
+                  text={project.apiKey!}
+                  label="Kopiuj API Key"
+                  successMessage="Skopiowano API Key"
+                  size="icon"
+                  showLabel={false}
+                />
               </div>
             </div>
 

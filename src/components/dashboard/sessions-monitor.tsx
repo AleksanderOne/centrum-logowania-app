@@ -2,14 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -35,6 +27,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { ColoredButton } from '@/components/atoms';
+import { ModalContainer, ModalFooter } from '@/components/molecules';
 
 interface Session {
   id: string;
@@ -60,7 +54,6 @@ interface SessionsMonitorProps {
   projectName: string;
 }
 
-// Prosty parser user-agent do wykrywania typu urządzenia
 const getDeviceIcon = (userAgent: string | null) => {
   if (!userAgent) return <Monitor className="w-4 h-4" />;
 
@@ -78,7 +71,6 @@ const getBrowserName = (userAgent: string | null): string => {
   if (!userAgent) return 'Nieznana przeglądarka';
 
   const ua = userAgent.toLowerCase();
-  // Kolejność jest ważna - Opera i Edge mają "chrome" w user agent
   if (ua.includes('opera') || ua.includes('opr')) return 'Opera';
   if (ua.includes('edg')) return 'Edge';
   if (ua.includes('firefox')) return 'Firefox';
@@ -151,180 +143,164 @@ export const SessionsMonitor = ({ projectId, projectName }: SessionsMonitorProps
   }, [isOpen, fetchSessions]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="sm"
-          className="w-full gap-1.5 bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border-fuchsia-500/30 hover:bg-fuchsia-500/20 hover:border-fuchsia-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-          variant="outline"
-        >
-          <Users className="w-4 h-4" />
+    <ModalContainer
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      trigger={
+        <ColoredButton color="fuchsia" icon={<Users className="w-4 h-4" />}>
           <span className="text-xs">Sesje</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] sm:max-h-[80vh] flex flex-col overflow-hidden">
-        <DialogHeader className="shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-            Aktywne sesje
-          </DialogTitle>
-          <DialogDescription className="text-xs sm:text-sm">
-            Projekt: <strong>{projectName}</strong>
-          </DialogDescription>
-        </DialogHeader>
+        </ColoredButton>
+      }
+      title="Aktywne sesje"
+      titleIcon={<Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />}
+      description={
+        <>
+          Projekt: <strong>{projectName}</strong>
+        </>
+      }
+      maxWidth="2xl"
+      useScrollArea
+      footer={
+        <ModalFooter
+          onClose={() => setIsOpen(false)}
+          primaryAction={{
+            label: 'Odśwież',
+            icon: (
+              <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            ),
+            onClick: fetchSessions,
+            disabled: isLoading,
+          }}
+        />
+      }
+    >
+      {/* Statystyki */}
+      {data?.stats && (
+        <div className="shrink-0 flex sm:grid sm:grid-cols-3 gap-1.5 sm:gap-4 py-1 sm:py-2">
+          <div className="flex-1 flex items-center justify-center gap-1.5 sm:flex-col sm:gap-0 p-1.5 sm:p-3 rounded-md sm:rounded-lg bg-muted/50 border">
+            <span className="text-sm sm:text-2xl font-bold text-primary">{data.stats.total}</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">wszystkie</span>
+          </div>
+          <div className="flex-1 flex items-center justify-center gap-1.5 sm:flex-col sm:gap-0 p-1.5 sm:p-3 rounded-md sm:rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
+            <span className="text-sm sm:text-2xl font-bold text-green-600">
+              {data.stats.activeToday}
+            </span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">dziś</span>
+          </div>
+          <div className="flex-1 flex items-center justify-center gap-1.5 sm:flex-col sm:gap-0 p-1.5 sm:p-3 rounded-md sm:rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
+            <span className="text-sm sm:text-2xl font-bold text-blue-600">
+              {data.stats.activeThisWeek}
+            </span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">tydzień</span>
+          </div>
+        </div>
+      )}
 
-        {/* Statystyki - kompaktowe na mobile */}
-        {data?.stats && (
-          <div className="shrink-0 flex sm:grid sm:grid-cols-3 gap-1.5 sm:gap-4 py-1 sm:py-2">
-            <div className="flex-1 flex items-center justify-center gap-1.5 sm:flex-col sm:gap-0 p-1.5 sm:p-3 rounded-md sm:rounded-lg bg-muted/50 border">
-              <span className="text-sm sm:text-2xl font-bold text-primary">{data.stats.total}</span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground">wszystkie</span>
-            </div>
-            <div className="flex-1 flex items-center justify-center gap-1.5 sm:flex-col sm:gap-0 p-1.5 sm:p-3 rounded-md sm:rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
-              <span className="text-sm sm:text-2xl font-bold text-green-600">
-                {data.stats.activeToday}
-              </span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground">dziś</span>
-            </div>
-            <div className="flex-1 flex items-center justify-center gap-1.5 sm:flex-col sm:gap-0 p-1.5 sm:p-3 rounded-md sm:rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
-              <span className="text-sm sm:text-2xl font-bold text-blue-600">
-                {data.stats.activeThisWeek}
-              </span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground">tydzień</span>
+      {/* Lista sesji */}
+      <ScrollArea className="flex-1 min-h-0 pr-2 sm:pr-4">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Ładowanie sesji...</p>
+          </div>
+        ) : data?.sessions?.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
+            <Users className="w-12 h-12 text-muted-foreground/50" />
+            <div>
+              <p className="font-medium">Brak aktywnych sesji</p>
+              <p className="text-sm text-muted-foreground">
+                Nikt jeszcze nie zalogował się przez SSO do tego projektu.
+              </p>
             </div>
           </div>
-        )}
-
-        {/* Lista sesji */}
-        <ScrollArea className="flex-1 min-h-0 pr-2 sm:pr-4">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Ładowanie sesji...</p>
-            </div>
-          ) : data?.sessions?.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-              <Users className="w-12 h-12 text-muted-foreground/50" />
-              <div>
-                <p className="font-medium">Brak aktywnych sesji</p>
-                <p className="text-sm text-muted-foreground">
-                  Nikt jeszcze nie zalogował się przez SSO do tego projektu.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2 sm:space-y-3">
-              {data?.sessions.map((session) => (
-                <div
-                  key={session.id}
-                  className="relative p-2.5 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                >
-                  {/* Przycisk usuń - prawy górny róg na mobile */}
-                  <div className="absolute top-1.5 right-1.5 sm:static sm:float-right">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50"
-                          disabled={deletingId === session.id}
+        ) : (
+          <div className="space-y-2 sm:space-y-3">
+            {data?.sessions.map((session) => (
+              <div
+                key={session.id}
+                className="relative p-2.5 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+              >
+                {/* Przycisk usuń */}
+                <div className="absolute top-1.5 right-1.5 sm:static sm:float-right">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50"
+                        disabled={deletingId === session.id}
+                      >
+                        {deletingId === session.id ? (
+                          <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Usuń sesję?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Usunięcie sesji spowoduje wylogowanie użytkownika{' '}
+                          <strong>{session.userEmail}</strong> z tego projektu. Będzie musiał
+                          zalogować się ponownie.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteSession(session.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                          {deletingId === session.id ? (
-                            <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          )}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Usuń sesję?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Usunięcie sesji spowoduje wylogowanie użytkownika{' '}
-                            <strong>{session.userEmail}</strong> z tego projektu. Będzie musiał
-                            zalogować się ponownie.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Anuluj</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteSession(session.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Usuń sesję
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          Usuń sesję
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+
+                {/* Treść sesji */}
+                <div className="flex items-start gap-2 sm:gap-4 pr-8 sm:pr-0">
+                  <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    {getDeviceIcon(session.userAgent)}
                   </div>
 
-                  {/* Treść sesji */}
-                  <div className="flex items-start gap-2 sm:gap-4 pr-8 sm:pr-0">
-                    <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      {getDeviceIcon(session.userAgent)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <span className="font-medium text-xs sm:text-base truncate">
+                        {session.userName || session.userEmail}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] sm:text-xs shrink-0 px-1 sm:px-2"
+                      >
+                        {getBrowserName(session.userAgent)}
+                      </Badge>
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1 sm:gap-2">
-                        <span className="font-medium text-xs sm:text-base truncate">
-                          {session.userName || session.userEmail}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="text-[9px] sm:text-xs shrink-0 px-1 sm:px-2"
-                        >
-                          {getBrowserName(session.userAgent)}
-                        </Badge>
-                      </div>
+                    <p className="text-[10px] sm:text-sm text-muted-foreground truncate">
+                      {session.userEmail}
+                    </p>
 
-                      <p className="text-[10px] sm:text-sm text-muted-foreground truncate">
-                        {session.userEmail}
-                      </p>
-
-                      <div className="flex items-center gap-2 sm:gap-4 mt-0.5 sm:mt-2 text-[9px] sm:text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 sm:gap-4 mt-0.5 sm:mt-2 text-[9px] sm:text-xs text-muted-foreground">
+                      <span className="flex items-center gap-0.5 sm:gap-1">
+                        <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                        {formatTimeAgo(session.lastSeenAt)}
+                      </span>
+                      {session.ipAddress && (
                         <span className="flex items-center gap-0.5 sm:gap-1">
-                          <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                          {formatTimeAgo(session.lastSeenAt)}
+                          <Globe className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          {session.ipAddress}
                         </span>
-                        {session.ipAddress && (
-                          <span className="flex items-center gap-0.5 sm:gap-1">
-                            <Globe className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                            {session.ipAddress}
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-
-        {/* Stopka - zawsze wewnątrz modalu */}
-        <div className="shrink-0 flex flex-row gap-2 justify-between pt-2 border-t mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchSessions}
-            disabled={isLoading}
-            className="flex-1 sm:flex-none text-xs sm:text-sm"
-          >
-            <RefreshCw
-              className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`}
-            />
-            Odśwież
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsOpen(false)}
-            className="flex-1 sm:flex-none text-xs sm:text-sm"
-          >
-            Zamknij
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+              </div>
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+    </ModalContainer>
   );
 };

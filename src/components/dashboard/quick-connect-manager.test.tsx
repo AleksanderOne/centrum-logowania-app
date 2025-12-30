@@ -222,8 +222,10 @@ describe('QuickConnectManager', () => {
     const copyBtn = screen.getByRole('button', { name: /^Kopiuj$/i });
     fireEvent.click(copyBtn);
 
-    expect(writeTextMock).toHaveBeenCalledWith('setup_abc123');
-    expect(toast.success).toHaveBeenCalledWith('Skopiowano kod!');
+    await waitFor(() => {
+      expect(writeTextMock).toHaveBeenCalledWith('setup_abc123');
+      expect(toast.success).toHaveBeenCalledWith('Skopiowano kod!');
+    });
   });
 
   it('resetuje ikonę kopiowania po 2 sekundach', async () => {
