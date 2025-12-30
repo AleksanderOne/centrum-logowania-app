@@ -1,3 +1,10 @@
+# [2.10.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.9.0...v2.10.0) (2025-12-30)
+
+
+### Features
+
+* ulepszone UI i responsywność dialogów Quick Connect i sesji ([0d55ae3](https://github.com/AleksanderOne/centrum-logowania-app/commit/0d55ae3664e49f6f2c596dc934d3ef988054ede7))
+
 # [2.9.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.8.0...v2.9.0) (2025-12-29)
 
 
