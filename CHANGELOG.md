@@ -1,3 +1,10 @@
+# [2.11.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.10.0...v2.11.0) (2025-12-30)
+
+
+### Features
+
+* dodano dedykowaną stronę do tworzenia nowych projektów, przenosząc formularz z pulpitu i aktualizując nawigację ([1ef4e69](https://github.com/AleksanderOne/centrum-logowania-app/commit/1ef4e691095b2a2ce31b7ba8d0f16aeed04ce9e9))
+
 # [2.10.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.9.0...v2.10.0) (2025-12-30)
 
 
