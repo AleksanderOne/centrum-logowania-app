@@ -1,3 +1,10 @@
+# [2.12.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.11.0...v2.12.0) (2025-12-30)
+
+
+### Features
+
+* nowy widok strony głównej ([6487b49](https://github.com/AleksanderOne/centrum-logowania-app/commit/6487b49d14b676da8d0526df9ccc8a14e883a149))
+
 # [2.11.0](https://github.com/AleksanderOne/centrum-logowania-app/compare/v2.10.0...v2.11.0) (2025-12-30)
 
 
