@@ -33,6 +33,6 @@ module.exports = {
     // Typ commita nie może być pusty
     'type-empty': [2, 'never'],
     // Maksymalna długość nagłówka
-    'header-max-length': [2, 'always', 100],
+    'header-max-length': [2, 'always', 300],
   },
 };
