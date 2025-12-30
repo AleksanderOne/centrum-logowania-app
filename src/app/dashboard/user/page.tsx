@@ -8,7 +8,6 @@ import {
 } from '@/components/dashboard/logout-buttons';
 import { ThemeCard } from '@/components/dashboard/theme-card';
 import { ThemeToggleMini } from '@/components/dashboard/theme-toggle-mini';
-import { Separator } from '@/components/ui/separator';
 import { UserIdSection } from '@/components/dashboard/user-id-section';
 
 export default async function UserProfilePage() {
@@ -22,7 +21,6 @@ export default async function UserProfilePage() {
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Profil Użytkownika</h2>
           <p className="text-muted-foreground">Zarządzaj swoim kontem i sesjami logowania.</p>
         </div>
-        <Separator />
 
         {/* ============================================= */}
         {/* UKŁAD DLA MOBILE I TABLET (< lg) */}

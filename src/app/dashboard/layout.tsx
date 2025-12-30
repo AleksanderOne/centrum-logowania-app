@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { SidebarNav } from '@/components/dashboard/sidebar-nav';
 import { DashboardFooter } from '@/components/dashboard/dashboard-footer';
 import Link from 'next/link';
-import { LayoutGrid, User, History } from 'lucide-react';
+import { LayoutGrid, User, History, Plus } from 'lucide-react';
 
 import { ClaLogo } from '@/components/cla-logo';
 
@@ -30,6 +30,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <span className="text-primary">Centrum</span>
           </Link>
           <nav className="flex gap-3">
+            <Link
+              href="/dashboard/new-project"
+              className="flex items-center gap-1 text-sm font-medium transition-colors text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300"
+            >
+              <Plus className="w-4 h-4" suppressHydrationWarning />
+              <span className="hidden xs:inline">Nowy</span>
+            </Link>
             <Link
               href="/dashboard"
               className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors"
