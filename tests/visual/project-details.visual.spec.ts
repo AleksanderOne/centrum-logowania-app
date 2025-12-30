@@ -26,10 +26,8 @@ const VIEWPORTS = [
 ];
 
 test.describe('Szczegóły Projektu - Testy Wizualne (UI Flow)', () => {
-
   for (const viewport of VIEWPORTS) {
     test.describe(`Urządzenie: ${viewport.name} (${viewport.width}x${viewport.height})`, () => {
-
       test.beforeEach(async ({ page }) => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
         await loginAsTestUser(page);
@@ -37,8 +35,10 @@ test.describe('Szczegóły Projektu - Testy Wizualne (UI Flow)', () => {
 
       test(`Tworzenie projektu i Test Integracji - ${viewport.name}`, async ({ page }) => {
         // Debugowanie: Logi z przeglądarki
-        page.on('console', msg => console.log(`[Browser ${viewport.name}] ${msg.text()}`));
-        page.on('pageerror', exception => console.log(`[Browser Error ${viewport.name}] ${exception}`));
+        page.on('console', (msg) => console.log(`[Browser ${viewport.name}] ${msg.text()}`));
+        page.on('pageerror', (exception) =>
+          console.log(`[Browser Error ${viewport.name}] ${exception}`)
+        );
 
         // 1. Dashboard (Zakładka Projekty)
         await page.goto('/dashboard');
@@ -63,7 +63,7 @@ test.describe('Szczegóły Projektu - Testy Wizualne (UI Flow)', () => {
         // 3. Snapshot po utworzeniu (bez sprawdzania toastów assertami)
         await page.waitForTimeout(3000);
 
-        await expect(page).toHaveScreenshot(`05_projekt_po_utworzeniu-${viewport.name}.png`, {
+        await expect(page).toHaveScreenshot(`05_${viewport.name}_projekt_po_utworzeniu.png`, {
           fullPage: true,
           animations: 'disabled',
           mask: [
@@ -77,7 +77,10 @@ test.describe('Szczegóły Projektu - Testy Wizualne (UI Flow)', () => {
         await page.waitForTimeout(500); // Stabilizacja po utworzeniu
 
         // Znajdź kartę projektu (używamy data-slot="card" i szukamy po nazwie projektu)
-        const projectCard = page.locator('[data-slot="card"]').filter({ hasText: projectName }).first();
+        const projectCard = page
+          .locator('[data-slot="card"]')
+          .filter({ hasText: projectName })
+          .first();
         await expect(projectCard).toBeVisible({ timeout: 10000 });
 
         // Kliknij Testuj
@@ -92,7 +95,7 @@ test.describe('Szczegóły Projektu - Testy Wizualne (UI Flow)', () => {
         await page.waitForTimeout(1000); // Stabilizacja animacji
 
         // 5. Snapshot modala
-        await expect(page).toHaveScreenshot(`06_projekt_modal_test-${viewport.name}.png`, {
+        await expect(page).toHaveScreenshot(`06_${viewport.name}_projekt_modal_test.png`, {
           fullPage: true,
           animations: 'disabled',
           mask: [
@@ -116,12 +119,12 @@ test.describe('Szczegóły Projektu - Testy Wizualne (UI Flow)', () => {
         await page.waitForTimeout(1000); // Stabilizacja
 
         // 8. Snapshot modala Sesje
-        await expect(page).toHaveScreenshot(`07_projekt_modal_sesje-${viewport.name}.png`, {
+        await expect(page).toHaveScreenshot(`07_${viewport.name}_projekt_modal_sesje.png`, {
           fullPage: true,
           animations: 'disabled',
           mask: [
             // page.locator('.font-mono'),
-          ]
+          ],
         });
 
         // 9. Zamknij modal "Sesje"
@@ -140,27 +143,30 @@ test.describe('Szczegóły Projektu - Testy Wizualne (UI Flow)', () => {
         await page.waitForTimeout(1000); // Stabilizacja
 
         // 11. Snapshot modala Quick Connect
-        await expect(page).toHaveScreenshot(`08_projekt_modal_quick_connect-${viewport.name}.png`, {
+        await expect(page).toHaveScreenshot(`08_${viewport.name}_projekt_modal_quick_connect.png`, {
           fullPage: true,
           animations: 'disabled',
           mask: [
             // page.locator('.font-mono'),
-          ]
+          ],
         });
 
         // 12. Wygeneruj kod
-        await qcDialog.getByRole('button', { name: 'Wygeneruj nowy kod' }).click();
+        await qcDialog.getByRole('button', { name: 'Wygeneruj' }).click();
         await expect(qcDialog).toContainText('Aktywne kody');
         await page.waitForTimeout(1000); // Stabilizacja
 
         // 13. Snapshot po wygenerowaniu
-        await expect(page).toHaveScreenshot(`09_projekt_modal_quick_connect_wygenerowany-${viewport.name}.png`, {
-          fullPage: true,
-          animations: 'disabled',
-          mask: [
-            // page.locator('.font-mono'),
-          ]
-        });
+        await expect(page).toHaveScreenshot(
+          `09_${viewport.name}_projekt_modal_quick_connect_wygenerowany.png`,
+          {
+            fullPage: true,
+            animations: 'disabled',
+            mask: [
+              // page.locator('.font-mono'),
+            ],
+          }
+        );
 
         // 14. Zamknij modal Quick Connect
         await qcDialog.getByRole('button', { name: 'Zamknij' }).click();
@@ -178,12 +184,12 @@ test.describe('Szczegóły Projektu - Testy Wizualne (UI Flow)', () => {
         await page.waitForTimeout(1000); // Stabilizacja
 
         // 16. Snapshot modala Członkowie
-        await expect(page).toHaveScreenshot(`10_projekt_modal_czlonkowie-${viewport.name}.png`, {
+        await expect(page).toHaveScreenshot(`10_${viewport.name}_projekt_modal_czlonkowie.png`, {
           fullPage: true,
           animations: 'disabled',
           mask: [
             // page.locator('.font-mono'),
-          ]
+          ],
         });
 
         // 17. Zmień widoczność (Publiczny <-> Prywatny)
@@ -193,15 +199,17 @@ test.describe('Szczegóły Projektu - Testy Wizualne (UI Flow)', () => {
         await page.waitForTimeout(2000); // Stabilizacja
 
         // 18. Snapshot po zmianie widoczności
-        await expect(page).toHaveScreenshot(`11_projekt_modal_czlonkowie_zmiana-${viewport.name}.png`, {
-          fullPage: true,
-          animations: 'disabled',
-          mask: [
-            // page.locator('.font-mono'),
-            // page.locator('.sonner-toast'), // Maskujemy toasty
-          ]
-        });
-
+        await expect(page).toHaveScreenshot(
+          `11_${viewport.name}_projekt_modal_czlonkowie_zmiana.png`,
+          {
+            fullPage: true,
+            animations: 'disabled',
+            mask: [
+              // page.locator('.font-mono'),
+              // page.locator('.sonner-toast'), // Maskujemy toasty
+            ],
+          }
+        );
       });
     });
   }

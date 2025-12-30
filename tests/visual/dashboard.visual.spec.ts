@@ -4,12 +4,12 @@ import { loginAsTestUser } from '../helpers/auth';
 /**
  * Testy wizualne dla Dashboard
  * Pokrycie 3 kluczowych widoków na 3 urządzeniach (łącznie 9 snapshotów).
- * 
+ *
  * Widoki:
  * 1. Projekty (/dashboard)
  * 2. Logi (/dashboard/audit)
  * 3. Użytkownik (/dashboard/user)
- * 
+ *
  * Urządzenia:
  * - Desktop: 1920x1080
  * - Tablet: 1024x768
@@ -48,7 +48,7 @@ test.describe('Dashboard - Testy Wizualne (Pełna Macierz)', () => {
 
         await page.waitForTimeout(500); // Stabilizacja animacji
 
-        await expect(page).toHaveScreenshot(`02_panel_projekty-${viewport.name}.png`, {
+        await expect(page).toHaveScreenshot(`02_${viewport.name}_panel_projekty.png`, {
           fullPage: true,
           animations: 'disabled',
         });
@@ -60,7 +60,7 @@ test.describe('Dashboard - Testy Wizualne (Pełna Macierz)', () => {
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(500); // Stabilizacja animacji
 
-        await expect(page).toHaveScreenshot(`03_panel_logi-${viewport.name}.png`, {
+        await expect(page).toHaveScreenshot(`03_${viewport.name}_panel_logi.png`, {
           fullPage: true,
           animations: 'disabled',
         });
@@ -72,7 +72,7 @@ test.describe('Dashboard - Testy Wizualne (Pełna Macierz)', () => {
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(500); // Stabilizacja animacji
 
-        await expect(page).toHaveScreenshot(`04_panel_profil-${viewport.name}.png`, {
+        await expect(page).toHaveScreenshot(`04_${viewport.name}_panel_profil.png`, {
           fullPage: true,
           animations: 'disabled',
         });

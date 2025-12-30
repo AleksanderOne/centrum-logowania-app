@@ -3,10 +3,10 @@ import { test, expect } from '@playwright/test';
 /**
  * Testy wizualne dla strony głównej (Homepage / Login)
  * Pokrycie głównego widoku na 3 urządzeniach (łącznie 3 snapshoty).
- * 
+ *
  * Widok:
  * 1. Strona Główna (/)
- * 
+ *
  * Urządzenia:
  * - Desktop: 1920x1080
  * - Tablet: 1024x768
@@ -20,7 +20,6 @@ const VIEWPORTS = [
 ];
 
 test.describe('Strona Główna - Testy Wizualne', () => {
-
   for (const viewport of VIEWPORTS) {
     test.describe(`Urządzenie: ${viewport.name} (${viewport.width}x${viewport.height})`, () => {
       test.beforeEach(async ({ page }) => {
@@ -32,7 +31,7 @@ test.describe('Strona Główna - Testy Wizualne', () => {
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(500); // Stabilizacja
 
-        await expect(page).toHaveScreenshot(`01_strona_glowna-${viewport.name}.png`, {
+        await expect(page).toHaveScreenshot(`01_${viewport.name}_strona_glowna.png`, {
           fullPage: true,
           animations: 'disabled',
         });

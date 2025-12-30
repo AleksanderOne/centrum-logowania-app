@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Key, Globe, Trash2, Copy, Check, Users, Lock } from 'lucide-react';
+import { Key, Globe, Trash2, Copy, Check, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { deleteProject } from '@/actions/project';
 import { useTransition, useState, useEffect } from 'react';
@@ -19,13 +19,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { IntegrationTester } from './integration-tester';
 import { SessionsMonitor } from './sessions-monitor';
 import { ProjectMembers } from './project-members';
@@ -221,31 +214,12 @@ export const ProjectList = ({ projects: initialProjects, totalCount }: ProjectLi
               <IntegrationTester projectId={project.id} projectName={project.name} />
               <SessionsMonitor projectId={project.id} projectName={project.name} />
               <QuickConnectManager projectId={project.id} projectName={project.name} />
-
-              {/* Zarządzanie członkami */}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full gap-1.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/20 hover:border-indigo-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-                  >
-                    <Users className="w-4 h-4" />
-                    <span className="text-xs">Członkowie</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Zarządzanie dostępem</DialogTitle>
-                  </DialogHeader>
-                  <ProjectMembers
-                    projectId={project.id}
-                    projectName={project.name}
-                    isPublic={project.isPublic === 'true'}
-                    onVisibilityChange={(isPublic) => handleVisibilityChange(project.id, isPublic)}
-                  />
-                </DialogContent>
-              </Dialog>
+              <ProjectMembers
+                projectId={project.id}
+                projectName={project.name}
+                isPublic={project.isPublic === 'true'}
+                onVisibilityChange={(isPublic) => handleVisibilityChange(project.id, isPublic)}
+              />
             </div>
           </CardContent>
         </Card>

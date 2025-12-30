@@ -106,8 +106,8 @@ describe('QuickConnectManager', () => {
       json: async () => ({ ...mockCode, id: 'code_new', code: 'setup_new' }),
     });
 
-    // Kliknij generuj
-    fireEvent.click(screen.getByText('Wygeneruj nowy kod'));
+    // Kliknij generuj (przycisk w stopce)
+    fireEvent.click(screen.getByRole('button', { name: /Wygeneruj/i }));
 
     await waitFor(() => {
       expect(screen.getByText('setup_new')).toBeInTheDocument();
@@ -130,8 +130,8 @@ describe('QuickConnectManager', () => {
     // Mock delete success
     fetchMock.mockResolvedValueOnce({ ok: true });
 
-    // Kliknij usuń (kosz)
-    const deleteBtn = screen.getByTitle('Usuń kod');
+    // Kliknij usuń (przycisk tekstowy "Usuń")
+    const deleteBtn = screen.getByRole('button', { name: /^Usuń$/i });
     fireEvent.click(deleteBtn);
 
     await waitFor(() => {
@@ -218,8 +218,8 @@ describe('QuickConnectManager', () => {
 
     await waitFor(() => expect(screen.getByText('setup_abc123')).toBeInTheDocument());
 
-    // Kliknij przycisk kopiowania
-    const copyBtn = screen.getByTitle('Kopiuj kod');
+    // Kliknij przycisk kopiowania (tekstowy "Kopiuj")
+    const copyBtn = screen.getByRole('button', { name: /^Kopiuj$/i });
     fireEvent.click(copyBtn);
 
     expect(writeTextMock).toHaveBeenCalledWith('setup_abc123');
@@ -254,8 +254,8 @@ describe('QuickConnectManager', () => {
       await vi.advanceTimersByTimeAsync(100); // Pozwól na fetch
     });
 
-    // Kliknij kopiuj
-    const copyBtn = screen.getByTitle('Kopiuj kod');
+    // Kliknij kopiuj (tekstowy "Kopiuj")
+    const copyBtn = screen.getByRole('button', { name: /^Kopiuj$/i });
     await act(async () => {
       fireEvent.click(copyBtn);
     });
@@ -285,8 +285,8 @@ describe('QuickConnectManager', () => {
     // Mock błąd generowania
     fetchMock.mockResolvedValueOnce({ ok: false });
 
-    // Kliknij generuj
-    fireEvent.click(screen.getByText('Wygeneruj nowy kod'));
+    // Kliknij generuj (przycisk w stopce)
+    fireEvent.click(screen.getByRole('button', { name: /Wygeneruj/i }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Nie udało się wygenerować kodu');
@@ -307,8 +307,8 @@ describe('QuickConnectManager', () => {
     // Mock błąd usuwania
     fetchMock.mockResolvedValueOnce({ ok: false });
 
-    // Kliknij usuń
-    const deleteBtn = screen.getByTitle('Usuń kod');
+    // Kliknij usuń (przycisk tekstowy "Usuń")
+    const deleteBtn = screen.getByRole('button', { name: /^Usuń$/i });
     fireEvent.click(deleteBtn);
 
     await waitFor(() => {

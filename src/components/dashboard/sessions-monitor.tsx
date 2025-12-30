@@ -162,37 +162,41 @@ export const SessionsMonitor = ({ projectId, projectName }: SessionsMonitorProps
           <span className="text-xs">Sesje</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] sm:max-h-[80vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             Aktywne sesje
           </DialogTitle>
-          <DialogDescription>
-            Użytkownicy zalogowani w projekcie <strong>{projectName}</strong>
+          <DialogDescription className="text-xs sm:text-sm">
+            Projekt: <strong>{projectName}</strong>
           </DialogDescription>
         </DialogHeader>
 
-        {/* Statystyki */}
+        {/* Statystyki - kompaktowe na mobile */}
         {data?.stats && (
-          <div className="grid grid-cols-3 gap-4 py-2">
-            <div className="flex flex-col items-center p-3 rounded-lg bg-muted/50 border">
-              <span className="text-2xl font-bold text-primary">{data.stats.total}</span>
-              <span className="text-xs text-muted-foreground">Wszystkie sesje</span>
+          <div className="shrink-0 flex sm:grid sm:grid-cols-3 gap-1.5 sm:gap-4 py-1 sm:py-2">
+            <div className="flex-1 flex items-center justify-center gap-1.5 sm:flex-col sm:gap-0 p-1.5 sm:p-3 rounded-md sm:rounded-lg bg-muted/50 border">
+              <span className="text-sm sm:text-2xl font-bold text-primary">{data.stats.total}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">wszystkie</span>
             </div>
-            <div className="flex flex-col items-center p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
-              <span className="text-2xl font-bold text-green-600">{data.stats.activeToday}</span>
-              <span className="text-xs text-muted-foreground">Aktywne dziś</span>
+            <div className="flex-1 flex items-center justify-center gap-1.5 sm:flex-col sm:gap-0 p-1.5 sm:p-3 rounded-md sm:rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900">
+              <span className="text-sm sm:text-2xl font-bold text-green-600">
+                {data.stats.activeToday}
+              </span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">dziś</span>
             </div>
-            <div className="flex flex-col items-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
-              <span className="text-2xl font-bold text-blue-600">{data.stats.activeThisWeek}</span>
-              <span className="text-xs text-muted-foreground">Aktywne (tydzień)</span>
+            <div className="flex-1 flex items-center justify-center gap-1.5 sm:flex-col sm:gap-0 p-1.5 sm:p-3 rounded-md sm:rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900">
+              <span className="text-sm sm:text-2xl font-bold text-blue-600">
+                {data.stats.activeThisWeek}
+              </span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">tydzień</span>
             </div>
           </div>
         )}
 
         {/* Lista sesji */}
-        <ScrollArea className="h-[400px] pr-4">
+        <ScrollArea className="flex-1 min-h-0 pr-2 sm:pr-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -209,89 +213,114 @@ export const SessionsMonitor = ({ projectId, projectName }: SessionsMonitorProps
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {data?.sessions.map((session) => (
                 <div
                   key={session.id}
-                  className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                  className="relative p-2.5 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    {getDeviceIcon(session.userAgent)}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">
-                        {session.userName || session.userEmail}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {getBrowserName(session.userAgent)}
-                      </Badge>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground truncate">{session.userEmail}</p>
-
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatTimeAgo(session.lastSeenAt)}
-                      </span>
-                      {session.ipAddress && (
-                        <span className="flex items-center gap-1">
-                          <Globe className="w-3 h-3" />
-                          {session.ipAddress}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-zinc-400 hover:text-red-500 hover:bg-red-50"
-                        disabled={deletingId === session.id}
-                      >
-                        {deletingId === session.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Usuń sesję?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Usunięcie sesji spowoduje wylogowanie użytkownika{' '}
-                          <strong>{session.userEmail}</strong> z tego projektu. Będzie musiał
-                          zalogować się ponownie.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Anuluj</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteSession(session.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  {/* Przycisk usuń - prawy górny róg na mobile */}
+                  <div className="absolute top-1.5 right-1.5 sm:static sm:float-right">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50"
+                          disabled={deletingId === session.id}
                         >
-                          Usuń sesję
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                          {deletingId === session.id ? (
+                            <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          )}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Usuń sesję?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Usunięcie sesji spowoduje wylogowanie użytkownika{' '}
+                            <strong>{session.userEmail}</strong> z tego projektu. Będzie musiał
+                            zalogować się ponownie.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteSession(session.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Usuń sesję
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+
+                  {/* Treść sesji */}
+                  <div className="flex items-start gap-2 sm:gap-4 pr-8 sm:pr-0">
+                    <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                      {getDeviceIcon(session.userAgent)}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <span className="font-medium text-xs sm:text-base truncate">
+                          {session.userName || session.userEmail}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] sm:text-xs shrink-0 px-1 sm:px-2"
+                        >
+                          {getBrowserName(session.userAgent)}
+                        </Badge>
+                      </div>
+
+                      <p className="text-[10px] sm:text-sm text-muted-foreground truncate">
+                        {session.userEmail}
+                      </p>
+
+                      <div className="flex items-center gap-2 sm:gap-4 mt-0.5 sm:mt-2 text-[9px] sm:text-xs text-muted-foreground">
+                        <span className="flex items-center gap-0.5 sm:gap-1">
+                          <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          {formatTimeAgo(session.lastSeenAt)}
+                        </span>
+                        {session.ipAddress && (
+                          <span className="flex items-center gap-0.5 sm:gap-1">
+                            <Globe className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            {session.ipAddress}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </ScrollArea>
 
-        <div className="flex justify-between pt-2 border-t">
-          <Button variant="outline" onClick={fetchSessions} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+        {/* Stopka - zawsze wewnątrz modalu */}
+        <div className="shrink-0 flex flex-row gap-2 justify-between pt-2 border-t mt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchSessions}
+            disabled={isLoading}
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
+          >
+            <RefreshCw
+              className={`w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`}
+            />
             Odśwież
           </Button>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsOpen(false)}
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
+          >
             Zamknij
           </Button>
         </div>

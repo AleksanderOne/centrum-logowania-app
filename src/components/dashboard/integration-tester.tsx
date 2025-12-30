@@ -225,22 +225,34 @@ export const IntegrationTester = ({ projectId, projectName }: IntegrationTesterP
           ) : null}
         </div>
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
-            Zamknij
-          </Button>
-          <Button onClick={runTest} disabled={isLoading}>
+        {/* Stopka - przyciski obok siebie jak w modalu sesji */}
+        <div className="shrink-0 flex flex-row gap-2 justify-between pt-2 border-t mt-2">
+          <Button
+            onClick={runTest}
+            disabled={isLoading}
+            variant="outline"
+            size="sm"
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
+          >
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
                 Testowanie...
               </>
             ) : (
               <>
-                <TestTube className="w-4 h-4 mr-2" />
+                <TestTube className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 Testuj ponownie
               </>
             )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsOpen(false)}
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
+          >
+            Zamknij
           </Button>
         </div>
       </DialogContent>

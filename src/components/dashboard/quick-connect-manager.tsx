@@ -27,7 +27,7 @@ interface QuickConnectManagerProps {
   projectName: string;
 }
 
-const CopyButton = ({ text }: { text: string }) => {
+const CopyButton = ({ text, fullWidth = false }: { text: string; fullWidth?: boolean }) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
@@ -37,6 +37,31 @@ const CopyButton = ({ text }: { text: string }) => {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  // Wersja z tekstem dla mobile
+  if (fullWidth) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="flex-1 text-xs gap-1 bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30 hover:bg-green-500/20 hover:border-green-500/50"
+        onClick={handleCopy}
+      >
+        {isCopied ? (
+          <>
+            <Check className="w-3 h-3" />
+            Skopiowano
+          </>
+        ) : (
+          <>
+            <Copy className="w-3 h-3" />
+            Kopiuj
+          </>
+        )}
+      </Button>
+    );
+  }
+
+  // Wersja ikonowa dla desktop
   return (
     <Button
       variant="ghost"
@@ -176,21 +201,21 @@ export const QuickConnectManager = ({ projectId, projectName }: QuickConnectMana
           <span className="text-xs">Quick Connect</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <KeyRound className="w-5 h-5 text-violet-500" />
+      <DialogContent className="sm:max-w-lg max-h-[85vh] sm:max-h-[80vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <KeyRound className="w-4 h-4 sm:w-5 sm:h-5 text-violet-500" />
             Quick Connect
           </DialogTitle>
-          <DialogDescription>
-            Jednorazowe kody do szybkiego podłączenia nowych aplikacji do projektu{' '}
+          <DialogDescription className="text-xs sm:text-sm">
+            Jednorazowe kody do szybkiego podłączenia aplikacji do projektu{' '}
             <strong>{projectName}</strong>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Instrukcja */}
-          <div className="bg-muted/50 p-3 rounded-lg border text-sm">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3 sm:space-y-4 py-2 sm:py-4">
+          {/* Instrukcja - kompaktowa na mobile */}
+          <div className="bg-muted/50 p-2 sm:p-3 rounded-lg border text-xs sm:text-sm">
             <p className="text-muted-foreground">
               Quick Connect pozwala nowej aplikacji automatycznie pobrać konfigurację (API Key,
               Slug). Kod jest ważny <strong>1 minutę</strong> i może być użyty{' '}
@@ -198,87 +223,108 @@ export const QuickConnectManager = ({ projectId, projectName }: QuickConnectMana
             </p>
           </div>
 
-          {/* Przycisk generowania */}
-          <Button onClick={generateCode} disabled={isGenerating} className="w-full gap-2">
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Generowanie...
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4" />
-                Wygeneruj nowy kod
-              </>
-            )}
-          </Button>
-
           {/* Lista kodów */}
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : codes.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground">
-              <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Brak aktywnych kodów</p>
-              <p className="text-xs">Wygeneruj nowy kod powyżej</p>
+            <div className="text-center py-4 sm:py-6 text-muted-foreground">
+              <AlertCircle className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-xs sm:text-sm">Brak aktywnych kodów</p>
+              <p className="text-[10px] sm:text-xs">Wygeneruj nowy kod poniżej</p>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-medium">
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
                 Aktywne kody ({codes.length})
               </p>
               {codes.map((code) => (
-                <div
-                  key={code.id}
-                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border"
-                >
-                  <div className="flex-1 min-w-0">
-                    <code className="text-xs font-mono text-violet-600 dark:text-violet-400 block truncate">
+                <div key={code.id} className="p-2 sm:p-3 rounded-lg bg-muted/30 border space-y-2">
+                  {/* Dymek z kodem */}
+                  <div className="bg-violet-500/10 rounded-md px-2 py-1.5 sm:px-3 sm:py-2 border border-violet-500/20">
+                    <code className="text-[10px] sm:text-xs font-mono text-violet-600 dark:text-violet-400 block truncate">
                       {code.code}
                     </code>
-                    <div className="flex items-center gap-2 mt-1">
-                      {(() => {
-                        const { text, seconds } = formatTimeRemaining(code.expiresAt);
-                        const isUrgent = seconds <= 15;
-                        return (
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] gap-1 tabular-nums transition-colors duration-300 ${
-                              isUrgent ? 'border-red-500/50 text-red-500 animate-pulse' : ''
-                            }`}
-                          >
-                            <Clock className={`w-3 h-3 ${isUrgent ? 'text-red-500' : ''}`} />
-                            {text}
-                          </Badge>
-                        );
-                      })()}
-                    </div>
                   </div>
-                  <CopyButton text={code.code} />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-red-500 shrink-0"
-                    onClick={() => deleteCode(code.id)}
-                    disabled={deletingId === code.id}
-                    title="Usuń kod"
-                  >
-                    {deletingId === code.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </Button>
+
+                  {/* Odliczanie */}
+                  <div className="flex items-center">
+                    {(() => {
+                      const { text, seconds } = formatTimeRemaining(code.expiresAt);
+                      const isUrgent = seconds <= 15;
+                      return (
+                        <Badge
+                          variant="outline"
+                          className={`text-xs sm:text-[10px] gap-1 tabular-nums transition-colors duration-300 px-2 py-0.5 ${
+                            isUrgent
+                              ? 'border-red-500/50 text-red-500 bg-red-500/10 animate-pulse'
+                              : 'border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10'
+                          }`}
+                        >
+                          <Clock className={`w-3 h-3 ${isUrgent ? 'text-red-500' : ''}`} />
+                          {text}
+                        </Badge>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Przyciski: Kopiuj (zielony) | Usuń (czerwony) */}
+                  <div className="flex gap-2">
+                    <CopyButton text={code.code} fullWidth />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-xs gap-1 bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30 hover:bg-red-500/20 hover:border-red-500/50"
+                      onClick={() => deleteCode(code.id)}
+                      disabled={deletingId === code.id}
+                    >
+                      {deletingId === code.id ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Usuwanie...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-3 h-3" />
+                          Usuń
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+        {/* Stopka - przyciski obok siebie jak w modalu sesji */}
+        <div className="shrink-0 flex flex-row gap-2 justify-between pt-2 border-t mt-2">
+          <Button
+            onClick={generateCode}
+            disabled={isGenerating}
+            variant="outline"
+            size="sm"
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 animate-spin" />
+                Generowanie...
+              </>
+            ) : (
+              <>
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                Wygeneruj
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsOpen(false)}
+            className="flex-1 sm:flex-none text-xs sm:text-sm"
+          >
             Zamknij
           </Button>
         </div>

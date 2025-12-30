@@ -118,14 +118,14 @@ describe('SessionsMonitor', () => {
     fireEvent.click(screen.getByRole('button', { name: /Sesje/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Wszystkie sesje')).toBeInTheDocument();
+      expect(screen.getByText('wszystkie')).toBeInTheDocument();
     });
 
     // Sprawdź czy statystyki są wyświetlane
-    expect(screen.getByText('Aktywne dziś')).toBeInTheDocument();
-    expect(screen.getByText('Aktywne (tydzień)')).toBeInTheDocument();
+    expect(screen.getByText('dziś')).toBeInTheDocument();
+    expect(screen.getByText('tydzień')).toBeInTheDocument();
     // Sprawdź czy są jakieś liczby w statystykach
-    const statsContainer = screen.getByText('Wszystkie sesje').closest('div')?.parentElement;
+    const statsContainer = screen.getByText('wszystkie').closest('div')?.parentElement;
     expect(statsContainer).toBeInTheDocument();
   });
 
